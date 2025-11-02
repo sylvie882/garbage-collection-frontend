@@ -92,7 +92,7 @@ export default function Carousel() {
           }`}
         >
           <img
-            src={`http://localhost:8000/storage/${carousel.image_path}`}
+            src={`https://sylviegarbagecollection.co.ke/api/storage/${carousel.image_path}`}
             alt={carousel.title}
             className="w-full h-full object-cover"
           />
