@@ -1,12 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Use static export for Vercel
-  output: 'export',
+  // Remove output: 'export' since you have dynamic routes
+  // output: 'export', // REMOVE THIS LINE
   
-  // Image optimization for static export
+  // Image optimization
   images: {
     domains: ['sylviegarbagecollection.co.ke'],
-    unoptimized: true, // Required for static exports
+    unoptimized: false,
   },
   
   // Environment variables
@@ -27,8 +27,8 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   
-  // Trailing slashes for better SEO
-  trailingSlash: true,
+  // Trailing slashes
+  trailingSlash: false,
   
   // Custom headers for security
   async headers() {
@@ -53,7 +53,7 @@ const nextConfig = {
     ];
   },
   
-  // Optional: Enable SWC minification for better performance
+  // Enable SWC minification
   swcMinify: true,
 }
 
