@@ -38,6 +38,7 @@ export interface Service {
   image?: string;
   youtubeUrl?: string;  // Add this
   imageUrl?: string;    // Add this
+  imagePath?: string; // camelCase
   createdAt?: string;
   updatedAt?: string;
   slug: string;  // Make sure this exists

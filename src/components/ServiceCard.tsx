@@ -22,15 +22,18 @@ export default function ServiceCard({ service }: ServiceCardProps) {
     return match ? match[1] : null;
   };
 
-  const videoId = service.youtube_url ? getYouTubeId(service.youtube_url) : null;
+  // FIXED: Use youtubeUrl instead of youtube_url
+  const videoId = service.youtubeUrl ? getYouTubeId(service.youtubeUrl) : null;
 
-  // Get image URL
+  // Get image URL - FIXED: Use imagePath instead of image_path
   const getImageUrl = () => {
-    if (service.image_path) {
-      if (service.image_path.startsWith('http')) {
-        return service.image_path;
+    if (service.imagePath) {
+      if (service.imagePath.startsWith('http')) {
+        return service.imagePath;
       } else {
-        return `http://localhost:8000/storage/${service.image_path}`;
+        // Use environment variable for API URL
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        return `${API_URL}/storage/${service.imagePath}`;
       }
     }
     return null;
@@ -97,7 +100,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
     };
   }, [videoId, videoStarted]);
 
-  // FIXED: Generate proper service URL that matches your API
+  // Generate proper service URL that matches your API
   const getServiceUrl = () => {
     // Priority: Use the service's actual slug if it exists and is valid
     if (service.slug && service.slug.trim() !== '' && service.slug !== 'd') {
@@ -128,6 +131,8 @@ export default function ServiceCard({ service }: ServiceCardProps) {
       id: service.id,
       name: service.name,
       slug: service.slug,
+      youtubeUrl: service.youtubeUrl, // FIXED: Use camelCase
+      imagePath: service.imagePath,   // FIXED: Use camelCase
       finalUrl: serviceUrl
     });
   }, [service, serviceUrl]);
@@ -269,8 +274,8 @@ export default function ServiceCard({ service }: ServiceCardProps) {
           {service.price ? (
             <div className="text-left">
               <span className="text-2xl font-bold text-green-600">KSh {service.price}</span>
-              {service.price_unit && (
-                <span className="text-gray-500 text-sm ml-1">/{service.price_unit}</span>
+              {service.priceUnit && ( // FIXED: Use priceUnit instead of price_unit
+                <span className="text-gray-500 text-sm ml-1">/{service.priceUnit}</span>
               )}
             </div>
           ) : (
@@ -279,7 +284,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             </div>
           )}
           
-          {/* FIXED: Use the generated serviceUrl */}
+          {/* Use the generated serviceUrl */}
           <Link
             href={serviceUrl}
             className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors text-sm flex items-center gap-2 group/btn"
