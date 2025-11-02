@@ -27,6 +27,7 @@ export interface QuoteRequest {
 export interface Service {
   id: string;
   name: string;
+  fullDescription?: string; // camelCase
   description?: string;
   category?: string;
   price?: string;

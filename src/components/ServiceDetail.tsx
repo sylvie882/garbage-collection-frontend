@@ -11,13 +11,15 @@ interface ServiceDetailProps {
 export default function ServiceDetail({ service }: ServiceDetailProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'features' | 'benefits'>('overview');
 
-  // Get image URL
+  // Get image URL - FIXED: Use imagePath instead of image_path
   const getImageUrl = () => {
-    if (service.image_path) {
-      if (service.image_path.startsWith('http')) {
-        return service.image_path;
+    if (service.imagePath) {
+      if (service.imagePath.startsWith('http')) {
+        return service.imagePath;
       } else {
-        return `http://localhost:8000/storage/${service.image_path}`;
+        // Use environment variable for API URL
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        return `${API_URL}/storage/${service.imagePath}`;
       }
     }
     return null;
@@ -32,7 +34,8 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
     return match ? match[1] : null;
   };
 
-  const videoId = service.youtube_url ? getYouTubeId(service.youtube_url) : null;
+  // FIXED: Use youtubeUrl instead of youtube_url
+  const videoId = service.youtubeUrl ? getYouTubeId(service.youtubeUrl) : null;
 
   return (
     <>
@@ -72,7 +75,8 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-4 border border-white/20">
                   <div className="text-2xl font-bold text-white">KSh {service.price}</div>
                   <div className="text-green-200 text-sm">
-                    {service.price_unit ? `per ${service.price_unit}` : 'Starting from'}
+                    {/* FIXED: Use priceUnit instead of price_unit */}
+                    {service.priceUnit ? `per ${service.priceUnit}` : 'Starting from'}
                   </div>
                 </div>
               )}
@@ -160,7 +164,8 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                   <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-4 text-center shadow-lg">
                     <div className="text-2xl font-bold">KSh {service.price}</div>
                     <div className="text-green-100 text-sm">
-                      {service.price_unit ? `per ${service.price_unit}` : 'Starting from'}
+                      {/* FIXED: Use priceUnit instead of price_unit */}
+                      {service.priceUnit ? `per ${service.priceUnit}` : 'Starting from'}
                     </div>
                   </div>
                 )}
@@ -182,7 +187,7 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                   {['overview', 'features', 'benefits'].map((tab) => (
                     <button
                       key={tab}
-                      onClick={() => setActiveTab(tab as any)}
+                      onClick={() => setActiveTab(tab as 'overview' | 'features' | 'benefits')}
                       className={`py-3 px-2 border-b-2 font-medium text-sm capitalize transition-all duration-300 ${
                         activeTab === tab
                           ? 'border-green-500 text-green-600'
@@ -199,9 +204,10 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
               <div className="prose prose-lg max-w-none">
                 {activeTab === 'overview' && (
                   <div>
-                    {service.full_description ? (
+                    {/* FIXED: Use fullDescription instead of full_description */}
+                    {service.fullDescription ? (
                       <div className="text-gray-600 leading-relaxed text-lg">
-                        {service.full_description}
+                        {service.fullDescription}
                       </div>
                     ) : (
                       <div className="text-gray-600 leading-relaxed text-lg">

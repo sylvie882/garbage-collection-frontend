@@ -48,11 +48,19 @@ export default function QuoteForm() {
       setSubmitMessage(response.data.message);
       setIsSuccess(true);
       reset();
-    } catch (error: any) {
-      setSubmitMessage(
-        error.response?.data?.message || 
-        'Failed to submit quote request. Please try again.'
-      );
+    } catch (error: unknown) {
+      // Proper TypeScript error handling
+      if (error instanceof Error) {
+        setSubmitMessage(error.message || 'Failed to submit quote request. Please try again.');
+      } else if (typeof error === 'object' && error !== null && 'response' in error) {
+        const apiError = error as { response?: { data?: { message?: string } } };
+        setSubmitMessage(
+          apiError.response?.data?.message || 
+          'Failed to submit quote request. Please try again.'
+        );
+      } else {
+        setSubmitMessage('Failed to submit quote request. Please try again.');
+      }
       setIsSuccess(false);
     } finally {
       setIsSubmitting(false);
