@@ -1,12 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Output configuration for better performance
-  output: 'standalone',
+  // Use static export for Vercel
+  output: 'export',
   
-  // Image optimization
+  // Image optimization for static export
   images: {
     domains: ['sylviegarbagecollection.co.ke'],
-    unoptimized: process.env.NODE_ENV === 'production' ? false : true,
+    unoptimized: true, // Required for static exports
   },
   
   // Environment variables
@@ -14,7 +14,7 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
   
-  // Enable React strict mode for better development
+  // Enable React strict mode
   reactStrictMode: true,
   
   // ESLint configuration
@@ -27,8 +27,8 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   
-  // Enable trailing slashes for better SEO (optional)
-  trailingSlash: false,
+  // Trailing slashes for better SEO
+  trailingSlash: true,
   
   // Custom headers for security
   async headers() {
@@ -52,6 +52,9 @@ const nextConfig = {
       },
     ];
   },
+  
+  // Optional: Enable SWC minification for better performance
+  swcMinify: true,
 }
 
 export default nextConfig
