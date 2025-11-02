@@ -38,7 +38,7 @@ export default function QuotesPage() {
   const fetchQuotes = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:8000/api/admin/quote-requests', {
+      const response = await fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/quote-requests', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -60,7 +60,7 @@ export default function QuotesPage() {
   const updateStatus = async (id: number, status: string) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:8000/api/admin/quote-requests/${id}`, {
+      const response = await fetch(`https://sylviegarbagecollection.co.ke/api/public/api/admin/quote-requests/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -90,7 +90,7 @@ export default function QuotesPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:8000/api/admin/quote-requests/${id}`, {
+      const response = await fetch(`https://sylviegarbagecollection.co.ke/api/public/api/admin/quote-requests/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

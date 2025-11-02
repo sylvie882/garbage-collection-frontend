@@ -52,12 +52,12 @@ export default function AdminDashboard() {
       const token = localStorage.getItem('adminToken');
       
       const [servicesRes, quotesRes] = await Promise.all([
-        fetch('http://localhost:8000/api/admin/services', {
+        fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/services', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         }),
-        fetch('http://localhost:8000/api/admin/quote-requests', {
+        fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/quote-requests', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },

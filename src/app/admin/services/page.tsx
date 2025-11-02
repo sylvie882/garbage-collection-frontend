@@ -78,7 +78,7 @@ export default function ServicesPage() {
         return;
       }
 
-      const response = await fetch('http://localhost:8000/api/services', {
+      const response = await fetch('https://sylviegarbagecollection.co.ke/api/public/api/services', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -165,8 +165,8 @@ export default function ServicesPage() {
       }
 
       const url = editingService 
-        ? `http://localhost:8000/api/services/${editingService.id}`
-        : 'http://localhost:8000/api/services';
+        ? `https://sylviegarbagecollection.co.ke/api/public/api/services/${editingService.id}`
+        : 'https://sylviegarbagecollection.co.ke/api/public/api/services';
       
       const method = editingService ? 'PUT' : 'POST';
 
@@ -314,7 +314,7 @@ export default function ServicesPage() {
       featured: service.featured,
       is_active: service.is_active,
     });
-    setImagePreview(service.image_path ? `http://localhost:8000/storage/${service.image_path}` : '');
+    setImagePreview(service.image_path ? `https://sylviegarbagecollection.co.ke/api/storage/${service.image_path}` : '');
     setShowForm(true);
   };
 
@@ -324,7 +324,7 @@ export default function ServicesPage() {
     try {
       const token = localStorage.getItem('adminToken');
       
-      const response = await fetch(`http://localhost:8000/api/services/${id}`, {
+      const response = await fetch(`https://sylviegarbagecollection.co.ke/api/public/api/services/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

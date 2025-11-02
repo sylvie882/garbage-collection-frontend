@@ -74,7 +74,7 @@ export default function AdminDashboard() {
       }
 
       const [servicesRes, quotesRes, carouselsRes] = await Promise.all([
-        fetch('http://localhost:8000/api/admin/services', {
+        fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/services', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -88,7 +88,7 @@ export default function AdminDashboard() {
           },
           credentials: 'include',
         }),
-        fetch('http://localhost:8000/api/admin/carousels', {
+        fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/carousels', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -132,7 +132,7 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      await fetch('http://localhost:8000/api/admin/logout', {
+      await fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/logout', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

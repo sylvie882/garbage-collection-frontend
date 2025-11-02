@@ -17,11 +17,11 @@ export default function AdminLogin() {
 
     try {
       // First get CSRF cookie
-      await fetch('http://localhost:8000/sanctum/csrf-cookie', {
+      await fetch('https://sylviegarbagecollection.co.ke/api/public/api/sanctum/csrf-cookie', {
         credentials: 'include',
       });
 
-      const response = await fetch('http://localhost:8000/api/admin/login', {
+      const response = await fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

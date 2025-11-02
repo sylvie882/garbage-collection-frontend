@@ -43,7 +43,7 @@ export default function SettingsPage() {
   const fetchAdminData = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:8000/api/admin/me', {
+      const response = await fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/me', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -73,7 +73,7 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:8000/api/admin/profile', {
+      const response = await fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/profile', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -105,7 +105,7 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:8000/api/admin/change-password', {
+      const response = await fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/change-password', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -137,7 +137,7 @@ export default function SettingsPage() {
   const handleLogout = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      await fetch('http://localhost:8000/api/admin/logout', {
+      await fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/logout', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

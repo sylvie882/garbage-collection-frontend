@@ -48,7 +48,7 @@ export default function CarouselsPage() {
   const fetchCarousels = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:8000/api/admin/carousels', {
+      const response = await fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/carousels', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -82,8 +82,8 @@ export default function CarouselsPage() {
 
     try {
       const url = editingCarousel 
-        ? `http://localhost:8000/api/admin/carousels/${editingCarousel.id}`
-        : 'http://localhost:8000/api/admin/carousels';
+        ? `https://sylviegarbagecollection.co.ke/api/public/api/admin/carousels/${editingCarousel.id}`
+        : 'https://sylviegarbagecollection.co.ke/api/public/api/admin/carousels';
       
       const method = editingCarousel ? 'PUT' : 'POST';
 
@@ -126,7 +126,7 @@ export default function CarouselsPage() {
       order: carousel.order,
       is_active: carousel.is_active,
     });
-    setImagePreview(carousel.image_path ? `http://localhost:8000/storage/${carousel.image_path}` : '');
+    setImagePreview(carousel.image_path ? `https://sylviegarbagecollection.co.ke/api/storage/${carousel.image_path}` : '');
     setShowForm(true);
   };
 
@@ -135,7 +135,7 @@ export default function CarouselsPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:8000/api/admin/carousels/${id}`, {
+      const response = await fetch(`https://sylviegarbagecollection.co.ke/api/public/api/admin/carousels/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -209,7 +209,7 @@ export default function CarouselsPage() {
               <div className="aspect-video bg-gray-200 relative">
                 {carousel.image_path && (
                   <img 
-                    src={`http://localhost:8000/storage/${carousel.image_path}`}
+                    src={`https://sylviegarbagecollection.co.ke/api/storage/${carousel.image_path}`}
                     alt={carousel.title}
                     className="w-full h-full object-cover"
                   />
