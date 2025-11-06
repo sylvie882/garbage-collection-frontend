@@ -93,12 +93,11 @@ export default function Carousel() {
           }`}
         >
           <img
-  src={`https://www.sylviegarbagecollection.co.ke/storage/${carousel.image_path.replace(/\\/g, '/')}`}
-  alt={carousel.title || 'Carousel Image'}
-  className="w-full h-full object-cover"
-  loading="lazy"
-/>
-
+            src={carousel.image_url} // Use full URL returned by API
+            alt={carousel.title || 'Carousel Image'}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
 
           <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
             <div className="text-center text-white max-w-4xl mx-auto px-4">
