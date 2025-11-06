@@ -3,6 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// ✅ Configure API base URL
+// Use environment variable in production for flexibility
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://www.sylviegarbagecollection.co.ke/api/public/api';
+
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,12 +22,17 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      // First get CSRF cookie
-      await fetch('https://sylviegarbagecollection.co.ke/api/public/api/sanctum/csrf-cookie', {
+      // Step 1️⃣: Get CSRF cookie from Sanctum
+      const csrfResponse = await fetch(`${API_BASE_URL}/sanctum/csrf-cookie`, {
         credentials: 'include',
       });
 
-      const response = await fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/login', {
+      if (!csrfResponse.ok) {
+        throw new Error('Failed to get CSRF cookie');
+      }
+
+      // Step 2️⃣: Send login request
+      const response = await fetch(`${API_BASE_URL}/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,17 +45,19 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (response.ok) {
+        // Save token and user details
         localStorage.setItem('adminToken', data.token);
         if (data.user) {
           localStorage.setItem('adminUser', JSON.stringify(data.user));
         }
+
         router.push('/admin/dashboard');
       } else {
-        setError(data.message || 'Login failed');
+        setError(data.message || 'Invalid credentials. Please try again.');
       }
     } catch (error) {
-      setError('Network error. Please check if the server is running.');
       console.error('Login error:', error);
+      setError('Network error. Please check your connection or server status.');
     } finally {
       setLoading(false);
     }
@@ -54,6 +67,7 @@ export default function AdminLogin() {
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="bg-white rounded-2xl shadow-xl p-8">
+          {/* Logo */}
           <div className="text-center">
             <div className="mx-auto h-12 w-12 bg-green-600 rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-lg">S</span>
@@ -65,15 +79,21 @@ export default function AdminLogin() {
               Sylvie Garbage Collection Management System
             </p>
           </div>
+
+          {/* Form */}
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
+
             <div className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Email Address
                 </label>
                 <input
@@ -87,8 +107,12 @@ export default function AdminLogin() {
                   placeholder="Enter your email"
                 />
               </div>
+
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Password
                 </label>
                 <input
@@ -122,6 +146,7 @@ export default function AdminLogin() {
             </div>
           </form>
         </div>
+
         <div className="text-center text-xs text-gray-500">
           Secure admin access only
         </div>
