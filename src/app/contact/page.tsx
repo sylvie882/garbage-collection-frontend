@@ -118,8 +118,8 @@ export default function Contact() {
                     </div>
                     <div className={styles.contactText}>
                       <h3>Phone Number</h3>
-                      <p>(+254) 794 416 120</p>
-                      <p>Mon-Fri: 8:00 AM - 5:00 PM</p>
+                      <p>(+254) 711515752</p>
+                      <p>Mon-Mon: 24 Hours</p>
                     </div>
                   </div>
 
@@ -129,7 +129,7 @@ export default function Contact() {
                     </div>
                     <div className={styles.contactText}>
                       <h3>Email Address</h3>
-                      <p>info@sylviegarbagecollection.co.ke</p>
+                      <p>sylviegarbagecollection@gmail.com</p>
                       <p>We respond within 24 hours</p>
                     </div>
                   </div>
@@ -140,9 +140,7 @@ export default function Contact() {
                     </div>
                     <div className={styles.contactText}>
                       <h3>Business Hours</h3>
-                      <p>Monday - Friday: 8:00 AM - 5:00 PM</p>
-                      <p>Saturday: 9:00 AM - 1:00 PM</p>
-                      <p>Sunday: Closed</p>
+                      <p>Monday - Monday: 24 Hours</p>
                     </div>
                   </div>
                 </div>

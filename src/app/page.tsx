@@ -27,7 +27,7 @@ export default async function Home() {
   console.log('📊 [HOME] Services to display:', displayedServices.length);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50 w-full overflow-x-hidden">
+    <div className="min-h-screen pt-32 bg-gradient-to-br from-gray-50 to-green-50 w-full overflow-x-hidden">
       <Header />
 
       {/* Hero Section */}

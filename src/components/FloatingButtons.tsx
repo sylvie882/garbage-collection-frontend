@@ -30,7 +30,7 @@ export default function FloatingButtons() {
 
   // WhatsApp message
   const whatsappMessage = "Hello! I'm interested in your waste management services. Could you provide more information?";
-  const whatsappNumber = "+254794416120"; // Your WhatsApp number
+  const whatsappNumber = "+254711515752"; // Your WhatsApp number
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
