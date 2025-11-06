@@ -12,6 +12,7 @@ export default function Carousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Fetch carousels on mount
   useEffect(() => {
     const fetchCarousels = async () => {
       try {
@@ -24,17 +25,15 @@ export default function Carousel() {
         setIsLoading(false);
       }
     };
-
     fetchCarousels();
   }, []);
 
+  // Auto-slide every 5 seconds
   useEffect(() => {
     if (carousels.length === 0) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) =>
-        prevIndex === carousels.length - 1 ? 0 : prevIndex + 1
-      );
+      setCurrentIndex((prev) => (prev === carousels.length - 1 ? 0 : prev + 1));
     }, 5000);
 
     return () => clearInterval(interval);
@@ -89,16 +88,15 @@ export default function Carousel() {
         <div
           key={carousel.id}
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-            index === currentIndex ? 'opacity-100' : 'opacity-0'
+            index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
           }`}
         >
           <img
-            src={carousel.image_url} // Use full URL returned by API
+            src={carousel.image_url}
             alt={carousel.title || 'Carousel Image'}
             className="w-full h-full object-cover"
             loading="lazy"
           />
-
           <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
             <div className="text-center text-white max-w-4xl mx-auto px-4">
               <h2 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg">
