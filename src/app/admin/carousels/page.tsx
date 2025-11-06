@@ -109,12 +109,12 @@ export default function CarouselsPage() {
       }
 
       let url = 'https://api.sylviegarbagecollection.co.ke/api/admin/carousels';
-      let method: 'POST' | 'POST' = 'POST';
+      let method: 'POST' | 'PUT' = 'POST';
 
       if (editingCarousel) {
         url = `https://api.sylviegarbagecollection.co.ke/api/admin/carousels/${editingCarousel.id}`;
         formToSend.append('_method', 'PUT');
-        method = 'POST';
+        method = 'POST'; // Using POST with _method=PUT for Laravel compatibility
         console.log('Making PUT request to:', url);
       } else {
         console.log('Making POST request to:', url);
@@ -225,9 +225,11 @@ export default function CarouselsPage() {
         console.error('Failed to delete carousel:', response.status);
         const errorText = await response.text();
         console.error('Delete error:', errorText);
+        setError('Failed to delete carousel');
       }
     } catch (err) {
       console.error('Error deleting carousel:', err);
+      setError('Error deleting carousel');
     }
   };
 
@@ -242,6 +244,22 @@ export default function CarouselsPage() {
       setImageFile(null);
       setImagePreview('');
     }
+  };
+
+  const resetForm = () => {
+    setShowForm(false);
+    setEditingCarousel(null);
+    setFormData({
+      title: '',
+      description: '',
+      button_text: '',
+      button_link: '',
+      order: 0,
+      is_active: true,
+    });
+    setImageFile(null);
+    setImagePreview('');
+    setError('');
   };
 
   if (loading) {
@@ -264,12 +282,8 @@ export default function CarouselsPage() {
           <button
             onClick={() => {
               console.log('Opening form to create new carousel');
+              resetForm();
               setShowForm(true);
-              setEditingCarousel(null);
-              setFormData({ title: '', description: '', button_text: '', button_link: '', order: 0, is_active: true });
-              setImageFile(null);
-              setImagePreview('');
-              setError('');
             }}
             className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
           >
@@ -291,41 +305,59 @@ export default function CarouselsPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {carousels.map((carousel) => (
-            <div key={carousel.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="aspect-video bg-gray-200 relative">
-                {carousel.image_url && (
-                  <img src={carousel.image_url} alt={carousel.title} className="w-full h-full object-cover" />
-                )}
-                <div className="absolute top-2 right-2">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      carousel.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {carousel.is_active ? 'Active' : 'Inactive'}
-                  </span>
+        {carousels.length === 0 && !loading ? (
+          <div className="text-center py-12">
+            <div className="bg-white rounded-lg shadow-sm p-8">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">No carousels</h3>
+              <p className="mt-2 text-gray-500">Get started by creating your first carousel slide.</p>
+              <button
+                onClick={() => setShowForm(true)}
+                className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Add New Carousel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {carousels.map((carousel) => (
+              <div key={carousel.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="aspect-video bg-gray-200 relative">
+                  {carousel.image_url && (
+                    <img src={carousel.image_url} alt={carousel.title} className="w-full h-full object-cover" />
+                  )}
+                  <div className="absolute top-2 right-2">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        carousel.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {carousel.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">{carousel.title}</h3>
-                <p className="text-gray-600 text-sm mb-3 line-clamp-2">{carousel.description}</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">Order: {carousel.order}</span>
-                  <div className="flex space-x-2">
-                    <button onClick={() => handleEdit(carousel)} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                      Edit
-                    </button>
-                    <button onClick={() => handleDelete(carousel.id)} className="text-red-600 hover:text-red-800 text-sm font-medium">
-                      Delete
-                    </button>
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-900 mb-2">{carousel.title}</h3>
+                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{carousel.description}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-500">Order: {carousel.order}</span>
+                    <div className="flex space-x-2">
+                      <button onClick={() => handleEdit(carousel)} className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        Edit
+                      </button>
+                      <button onClick={() => handleDelete(carousel.id)} className="text-red-600 hover:text-red-800 text-sm font-medium">
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Form Modal */}
         {showForm && (
@@ -434,7 +466,7 @@ export default function CarouselsPage() {
                   <div className="flex justify-end space-x-3 pt-4">
                     <button
                       type="button"
-                      onClick={() => setShowForm(false)}
+                      onClick={resetForm}
                       disabled={submitting}
                       className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                     >
