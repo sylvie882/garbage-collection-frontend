@@ -48,7 +48,7 @@ export default function CarouselsPage() {
   const fetchCarousels = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/carousels', {
+      const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/admin/carousels', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -82,8 +82,8 @@ export default function CarouselsPage() {
 
     try {
       const url = editingCarousel 
-        ? `https://sylviegarbagecollection.co.ke/api/public/api/admin/carousels/${editingCarousel.id}`
-        : 'https://sylviegarbagecollection.co.ke/api/public/api/admin/carousels';
+        ? `https://api.sylviegarbagecollection.co.ke/api/admin/carousels/${editingCarousel.id}`
+        : 'https://api.sylviegarbagecollection.co.ke/api/admin/carousels';
       
       const method = editingCarousel ? 'PUT' : 'POST';
 
@@ -135,7 +135,7 @@ export default function CarouselsPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`https://sylviegarbagecollection.co.ke/api/public/api/admin/carousels/${id}`, {
+      const response = await fetch(`https://api.sylviegarbagecollection.co.ke/api/admin/carousels/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
