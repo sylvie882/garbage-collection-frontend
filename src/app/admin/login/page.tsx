@@ -3,10 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// ✅ Correct API Base URL (removed extra /api)
+// ✅ Correct Sanctum API Base URL (Now points to your API subdomain)
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  'https://www.sylviegarbagecollection.co.ke/api/public';
+  process.env.NEXT_PUBLIC_API_URL || 'https://api.sylviegarbagecollection.co.ke';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -21,7 +20,7 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      // Step 1️⃣: Get CSRF cookie
+      // Step 1️⃣: Get CSRF cookie first
       const csrfResponse = await fetch(`${API_BASE_URL}/sanctum/csrf-cookie`, {
         credentials: 'include',
       });
@@ -34,18 +33,20 @@ export default function AdminLogin() {
       const response = await fetch(`${API_BASE_URL}/admin/login`, {
         method: 'POST',
         headers: {
+          Accept: 'application/json',
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
         },
-        credentials: 'include',
+        credentials: 'include', // crucial for cookies
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Save token and user details
-        localStorage.setItem('adminToken', data.token);
+        // ✅ Save token + user info if provided
+        if (data.token) {
+          localStorage.setItem('adminToken', data.token);
+        }
         if (data.user) {
           localStorage.setItem('adminUser', JSON.stringify(data.user));
         }
@@ -54,9 +55,9 @@ export default function AdminLogin() {
       } else {
         setError(data.message || 'Invalid credentials. Please try again.');
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      setError('Network error. Please check your connection or server status.');
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Network error. Please check your connection or server.');
     } finally {
       setLoading(false);
     }
@@ -97,12 +98,11 @@ export default function AdminLogin() {
                 </label>
                 <input
                   id="email"
-                  name="email"
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 transition-colors"
+                  className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                   placeholder="Enter your email"
                 />
               </div>
@@ -116,12 +116,11 @@ export default function AdminLogin() {
                 </label>
                 <input
                   id="password"
-                  name="password"
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:z-10 transition-colors"
+                  className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                   placeholder="Enter your password"
                 />
               </div>
