@@ -3,11 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// ✅ Configure API base URL
-// Use environment variable in production for flexibility
+// ✅ Correct API Base URL (removed extra /api)
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  'https://www.sylviegarbagecollection.co.ke/api/public/api';
+  'https://www.sylviegarbagecollection.co.ke/api/public';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -22,7 +21,7 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      // Step 1️⃣: Get CSRF cookie from Sanctum
+      // Step 1️⃣: Get CSRF cookie
       const csrfResponse = await fetch(`${API_BASE_URL}/sanctum/csrf-cookie`, {
         credentials: 'include',
       });
