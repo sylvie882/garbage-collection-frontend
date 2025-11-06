@@ -14,7 +14,9 @@ export default function Carousel() {
     const fetchCarousels = async () => {
       try {
         const response = await carouselApi.getAll();
-        setCarousels(response.data);
+        // Filter only active slides
+        const activeSlides = response.data.filter((c: CarouselType) => c.is_active);
+        setCarousels(activeSlides);
       } catch (error) {
         console.error('Error fetching carousels:', error);
       } finally {
@@ -29,7 +31,7 @@ export default function Carousel() {
     if (carousels.length === 0) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => 
+      setCurrentIndex((prevIndex) =>
         prevIndex === carousels.length - 1 ? 0 : prevIndex + 1
       );
     }, 5000);
@@ -46,9 +48,7 @@ export default function Carousel() {
   };
 
   if (isLoading) {
-    return (
-      <div className="w-full h-96 bg-gray-200 animate-pulse rounded-lg"></div>
-    );
+    return <div className="w-full h-96 bg-gray-200 animate-pulse rounded-lg"></div>;
   }
 
   if (carousels.length === 0) {
@@ -63,14 +63,14 @@ export default function Carousel() {
               Kenya&apos;s First Digital Waste Management Solution
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link 
-                href="/quote" 
+              <Link
+                href="/quote"
                 className="bg-orange-500 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-orange-600 transition-colors inline-block"
               >
                 Get Free Quote
               </Link>
-              <Link 
-                href="/services" 
+              <Link
+                href="/services"
                 className="bg-transparent border-2 border-white text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-white hover:text-green-800 transition-colors inline-block"
               >
                 Our Services
@@ -92,18 +92,20 @@ export default function Carousel() {
           }`}
         >
           <img
-            src={`https://sylviegarbagecollection.co.ke/api/storage/${carousel.image_path}`}
-            alt={carousel.title}
+            src={`https://sylviegarbagecollection.co.ke/api/storage/${carousel.image_path.replace(
+              /\\/g,
+              '/'
+            )}`}
+            alt={carousel.title || 'Carousel Image'}
             className="w-full h-full object-cover"
+            loading="lazy"
           />
           <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
             <div className="text-center text-white max-w-4xl mx-auto px-4">
               <h2 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg">
                 {carousel.title}
               </h2>
-              <p className="text-xl md:text-2xl mb-8 drop-shadow-lg">
-                {carousel.description}
-              </p>
+              <p className="text-xl md:text-2xl mb-8 drop-shadow-lg">{carousel.description}</p>
               {carousel.button_text && carousel.button_link && (
                 <Link
                   href={carousel.button_link}
@@ -116,15 +118,15 @@ export default function Carousel() {
           </div>
         </div>
       ))}
-      
+
       {/* Navigation Dots */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
         {carousels.map((_, index) => (
           <button
             key={index}
             className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              index === currentIndex 
-                ? 'bg-white scale-125' 
+              index === currentIndex
+                ? 'bg-white scale-125'
                 : 'bg-white bg-opacity-50 hover:bg-opacity-75'
             }`}
             onClick={() => setCurrentIndex(index)}
