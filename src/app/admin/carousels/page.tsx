@@ -62,40 +62,70 @@ export default function CarouselsPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const token = localStorage.getItem('adminToken');
+  e.preventDefault();
+  const token = localStorage.getItem('adminToken');
 
-    try {
-      const formToSend = new FormData();
-      Object.entries(formData).forEach(([key, value]) => formToSend.append(key, value.toString()));
-      if (imageFile) formToSend.append('image', imageFile);
+  try {
+    // Prepare FormData for file upload
+    const formToSend = new FormData();
+    formToSend.append('title', formData.title);
+    formToSend.append('description', formData.description);
+    formToSend.append('button_text', formData.button_text);
+    formToSend.append('button_link', formData.button_link);
+    formToSend.append('order', formData.order.toString());
+    formToSend.append('is_active', formData.is_active ? '1' : '0');
 
-      const url = editingCarousel
-        ? `https://api.sylviegarbagecollection.co.ke/api/admin/carousels/${editingCarousel.id}`
-        : 'https://api.sylviegarbagecollection.co.ke/api/admin/carousels';
-      const method = editingCarousel ? 'POST' : 'POST'; // Laravel can handle PUT via POST + _method
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: 'include',
-        body: formToSend,
-      });
-
-      if (response.ok) {
-        setShowForm(false);
-        setEditingCarousel(null);
-        setFormData({ title: '', description: '', button_text: '', button_link: '', order: 0, is_active: true });
-        setImageFile(null);
-        setImagePreview('');
-        fetchCarousels();
-      }
-    } catch (err) {
-      console.error('Error saving carousel:', err);
+    if (imageFile) {
+      formToSend.append('image', imageFile); // important: send actual file
     }
-  };
+
+    let url = 'https://api.sylviegarbagecollection.co.ke/api/admin/carousels';
+    let method: 'POST' | 'POST' = 'POST';
+
+    if (editingCarousel) {
+      // Laravel can handle PUT via POST + _method
+      url = `https://api.sylviegarbagecollection.co.ke/api/admin/carousels/${editingCarousel.id}`;
+      formToSend.append('_method', 'PUT'); // Laravel expects _method for PUT
+      method = 'POST';
+    }
+
+    const response = await fetch(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // DO NOT set 'Content-Type'; browser sets multipart boundary automatically
+      },
+      credentials: 'include',
+      body: formToSend,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('Server error:', text);
+      return;
+    }
+
+    // Reset form and reload carousels
+    setShowForm(false);
+    setEditingCarousel(null);
+    setFormData({
+      title: '',
+      description: '',
+      button_text: '',
+      button_link: '',
+      order: 0,
+      is_active: true,
+    });
+    setImageFile(null);
+    setImagePreview('');
+    fetchCarousels();
+  } catch (err) {
+    console.error('Error saving carousel:', err);
+  }
+};
+
+
+
 
   const handleEdit = (carousel: Carousel) => {
     setEditingCarousel(carousel);
