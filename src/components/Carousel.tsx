@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Carousel as CarouselType } from '../types';
-import { carouselApi } from '../lib/api';
+import axios from 'axios';
 import Link from 'next/link';
+
+const API_URL = 'https://api.sylviegarbagecollection.co.ke/api';
 
 export default function Carousel() {
   const [carousels, setCarousels] = useState<CarouselType[]>([]);
@@ -13,9 +15,8 @@ export default function Carousel() {
   useEffect(() => {
     const fetchCarousels = async () => {
       try {
-        const response = await carouselApi.getAll();
-        // Filter only active slides
-        const activeSlides = response.data.filter((c: CarouselType) => c.is_active);
+        const response = await axios.get<CarouselType[]>(`${API_URL}/carousels`);
+        const activeSlides = response.data.filter((c) => c.is_active);
         setCarousels(activeSlides);
       } catch (error) {
         console.error('Error fetching carousels:', error);
@@ -92,10 +93,7 @@ export default function Carousel() {
           }`}
         >
           <img
-            src={`https://sylviegarbagecollection.co.ke/api/storage/${carousel.image_path.replace(
-              /\\/g,
-              '/'
-            )}`}
+            src={`${API_URL}/storage/${carousel.image_path.replace(/\\/g, '/')}`}
             alt={carousel.title || 'Carousel Image'}
             className="w-full h-full object-cover"
             loading="lazy"
