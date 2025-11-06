@@ -30,7 +30,7 @@ export default function AdminLogin() {
       }
 
       // Step 2️⃣: Send login request
-      const response = await fetch(`${API_BASE_URL}/admin/login`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/login`, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
