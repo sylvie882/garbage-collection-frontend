@@ -3,6 +3,7 @@ export interface Carousel {
   title: string;
   description: string;
   image_path: string;
+  image_url: string;    // new property for frontend
   button_text?: string;
   button_link?: string;
   order: number;
