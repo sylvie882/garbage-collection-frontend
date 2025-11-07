@@ -1,19 +1,27 @@
-// src/app/page.tsx (DEBUG VERSION)
+// src/app/page.tsx
 import Carousel from '../components/Carousel';
 import Link from 'next/link';
-import { serviceApi } from '../lib/api';
 import { Service } from '../types';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ServiceCard from '../components/ServiceCard';
-import FloatingButtons from '../components/FloatingButtons'; // Add this import
+import FloatingButtons from '../components/FloatingButtons';
 
 async function getServices(): Promise<Service[]> {
   try {
     console.log('🔄 [HOME] Fetching services...');
-    const response = await serviceApi.getAll();
-    console.log('✅ [HOME] Services fetched:', response.data.length);
-    return response.data;
+    const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/services', {
+      next: { revalidate: 60 } // Cache for 60 seconds
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch services: ${response.status}`);
+    }
+    
+    const services = await response.json();
+    console.log('✅ [HOME] Services fetched:', services.length);
+    
+    return Array.isArray(services) ? services : [];
   } catch (error) {
     console.error('❌ [HOME] Error fetching services:', error);
     return [];
@@ -22,8 +30,9 @@ async function getServices(): Promise<Service[]> {
 
 export default async function Home() {
   const services = await getServices();
-  const displayedServices = services.slice(0, 6);
+  const displayedServices = services.slice(0, 6); // Show first 6 services
 
+  console.log('📊 [HOME] Total services:', services.length);
   console.log('📊 [HOME] Services to display:', displayedServices.length);
 
   return (
@@ -100,6 +109,7 @@ export default async function Home() {
 
           {displayedServices.length > 0 ? (
             <>
+              {/* Display 6 services in grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
                 {displayedServices.map((service) => (
                   <div key={service.id} className="transform hover:-translate-y-2 transition-all duration-500">
@@ -108,20 +118,23 @@ export default async function Home() {
                 ))}
               </div>
 
-              <div className="text-center">
-                <Link 
-                  href="/services"
-                  className="group bg-gradient-to-r from-green-800 to-emerald-800 text-white px-10 py-5 rounded-2xl text-lg font-semibold hover:from-green-900 hover:to-emerald-900 transition-all duration-300 inline-flex items-center gap-3 shadow-2xl hover:shadow-green-700/30 hover:scale-105"
-                >
-                  <svg className="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                  Explore All Services
-                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
+              {/* View All Services Button */}
+              {services.length > 6 && (
+                <div className="text-center">
+                  <Link 
+                    href="/services"
+                    className="group bg-gradient-to-r from-green-600 to-emerald-600 text-white px-12 py-4 rounded-xl text-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 inline-flex items-center gap-3 shadow-2xl hover:shadow-green-700/30 hover:scale-105"
+                  >
+                    <span>View All Services</span>
+                    <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                  <p className="text-gray-600 mt-4">
+                    Showing 6 of {services.length} services
+                  </p>
+                </div>
+              )}
             </>
           ) : (
             <div className="text-center py-16">
