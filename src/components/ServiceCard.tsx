@@ -31,15 +31,21 @@ export default function ServiceCard({ service }: ServiceCardProps) {
   const videoId = service.youtubeUrl ? getYouTubeId(service.youtubeUrl) : null;
 
   // ✅ Consistent image URL resolution
-  const getImageUrl = () => {
-    if (service.image_url) return service.image_url; // If backend returns full URL
-    if (service.imagePath) {
-      return service.imagePath.startsWith('http')
-        ? service.imagePath
-        : `${API_URL}/storage/${service.imagePath}`;
-    }
-    return '/placeholder.jpg';
-  };
+ const getImageUrl = () => {
+  // ✅ Prefer full URL from backend if available
+  if (service.imageUrl) return service.imageUrl;
+
+  if (service.imagePath) {
+    // ✅ Use environment variable for API URL
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    return service.imagePath.startsWith('http')
+      ? service.imagePath
+      : `${API_URL}/storage/${service.imagePath}`;
+  }
+
+  return null;
+};
+
 
   const imageUrl = getImageUrl();
 
