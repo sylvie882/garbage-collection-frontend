@@ -12,13 +12,21 @@ export default function Carousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch carousels on mount
   useEffect(() => {
     const fetchCarousels = async () => {
       try {
         const response = await axios.get<CarouselType[]>(`${API_URL}/carousels`);
         const activeSlides = response.data.filter((c) => c.is_active);
-        setCarousels(activeSlides);
+        // ✅ Normalize image URLs for local storage
+        const normalizedSlides = activeSlides.map((slide) => ({
+          ...slide,
+          image_url: slide.image_url || slide.image_path
+            ? slide.image_path.startsWith('http')
+              ? slide.image_path
+              : `${API_URL.replace('/api', '')}${slide.image_path}`
+            : '/placeholder.jpg',
+        }));
+        setCarousels(normalizedSlides);
       } catch (error) {
         console.error('Error fetching carousels:', error);
       } finally {
@@ -28,14 +36,11 @@ export default function Carousel() {
     fetchCarousels();
   }, []);
 
-  // Auto-slide every 5 seconds
   useEffect(() => {
     if (carousels.length === 0) return;
-
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev === carousels.length - 1 ? 0 : prev + 1));
     }, 5000);
-
     return () => clearInterval(interval);
   }, [carousels.length]);
 
@@ -116,7 +121,7 @@ export default function Carousel() {
         </div>
       ))}
 
-      {/* Navigation Dots */}
+      {/* Dots */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
         {carousels.map((_, index) => (
           <button
@@ -132,7 +137,7 @@ export default function Carousel() {
         ))}
       </div>
 
-      {/* Navigation Arrows */}
+      {/* Arrows */}
       <button
         className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all duration-300 backdrop-blur-sm"
         onClick={prevSlide}
