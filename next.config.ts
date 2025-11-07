@@ -1,60 +1,39 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove output: 'export' since you have dynamic routes
-  // output: 'export', // REMOVE THIS LINE
-  
-  // Image optimization
-  images: {
-    domains: ['sylviegarbagecollection.co.ke'],
-    unoptimized: false,
-  },
-  
-  // Environment variables
+  reactStrictMode: true,
+  trailingSlash: false,
+
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
-  
-  // Enable React strict mode
-  reactStrictMode: true,
-  
-  // ESLint configuration
-  eslint: {
-    ignoreDuringBuilds: false,
+
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'api.sylviegarbagecollection.co.ke',
+        pathname: '/storage/**',
+      },
+    ],
+    unoptimized: false,
   },
-  
-  // TypeScript configuration
-  typescript: {
-    ignoreBuildErrors: false,
-  },
-  
-  // Trailing slashes
-  trailingSlash: false,
-  
-  // Custom headers for security
+
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
-          },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
         ],
       },
     ];
   },
-  
-  // Enable SWC minification
-  swcMinify: true,
-}
 
-export default nextConfig
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+};
+
+export default nextConfig;
