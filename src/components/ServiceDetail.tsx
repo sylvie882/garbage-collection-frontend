@@ -11,31 +11,38 @@ interface ServiceDetailProps {
 export default function ServiceDetail({ service }: ServiceDetailProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'features' | 'benefits'>('overview');
 
-  // Get image URL - FIXED: Use imagePath instead of image_path
+  // Get image URL - CORRECTED: Use image_path and image_url
   const getImageUrl = () => {
-    if (service.imagePath) {
-      if (service.imagePath.startsWith('http')) {
-        return service.imagePath;
+    // Prefer image_url if available (full URL from backend)
+    if (service.image_url) {
+      return service.image_url;
+    }
+    
+    // Fall back to image_path (relative path)
+    if (service.image_path) {
+      if (service.image_path.startsWith('http')) {
+        return service.image_path;
       } else {
         // Use environment variable for API URL
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        return `${API_URL}/storage/${service.imagePath}`;
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.sylviegarbagecollection.co.ke';
+        return `${API_URL}/storage/${service.image_path}`;
       }
     }
+    
     return null;
   };
 
   const imageUrl = getImageUrl();
 
   // Extract YouTube video ID from URL
-  const getYouTubeId = (url: string) => {
+  const getYouTubeId = (url: string | null) => {
     if (!url) return null;
     const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
     return match ? match[1] : null;
   };
 
-  // FIXED: Use youtubeUrl instead of youtube_url
-  const videoId = service.youtubeUrl ? getYouTubeId(service.youtubeUrl) : null;
+  // CORRECTED: Use youtube_url instead of youtubeUrl
+  const videoId = service.youtube_url ? getYouTubeId(service.youtube_url) : null;
 
   return (
     <>
@@ -75,8 +82,8 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                 <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-4 border border-white/20">
                   <div className="text-2xl font-bold text-white">KSh {service.price}</div>
                   <div className="text-green-200 text-sm">
-                    {/* FIXED: Use priceUnit instead of price_unit */}
-                    {service.priceUnit ? `per ${service.priceUnit}` : 'Starting from'}
+                    {/* CORRECTED: Use price_unit instead of priceUnit */}
+                    {service.price_unit ? `per ${service.price_unit}` : 'Starting from'}
                   </div>
                 </div>
               )}
@@ -164,8 +171,8 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                   <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl p-4 text-center shadow-lg">
                     <div className="text-2xl font-bold">KSh {service.price}</div>
                     <div className="text-green-100 text-sm">
-                      {/* FIXED: Use priceUnit instead of price_unit */}
-                      {service.priceUnit ? `per ${service.priceUnit}` : 'Starting from'}
+                      {/* CORRECTED: Use price_unit instead of priceUnit */}
+                      {service.price_unit ? `per ${service.price_unit}` : 'Starting from'}
                     </div>
                   </div>
                 )}
@@ -204,10 +211,10 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
               <div className="prose prose-lg max-w-none">
                 {activeTab === 'overview' && (
                   <div>
-                    {/* FIXED: Use fullDescription instead of full_description */}
-                    {service.fullDescription ? (
+                    {/* CORRECTED: Use full_description instead of fullDescription */}
+                    {service.full_description ? (
                       <div className="text-gray-600 leading-relaxed text-lg">
-                        {service.fullDescription}
+                        {service.full_description}
                       </div>
                     ) : (
                       <div className="text-gray-600 leading-relaxed text-lg">
