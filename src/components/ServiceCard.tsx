@@ -129,14 +129,15 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             }}
           />
         ) : (
-          <img
-            src={imageUrl}
-            alt={service.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = '/placeholder.jpg';
-            }}
-          />
+        <img
+          src={imageUrl || '/placeholder.jpg'}  // ✅ ensure a string, not null
+          alt={service.name}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = '/placeholder.jpg';
+          }}
+        />
+
         )}
 
         {/* Category Badge */}
