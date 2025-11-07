@@ -462,7 +462,7 @@ export default function ServicesPage() {
               <div className="aspect-video bg-gray-200 relative">
                 {service.image_path ? (
                   <img 
-                    src={`http://localhost:8000/storage/${service.image_path}`}
+                    src={`https://api.sylviegarbagecollection.co.ke/storage/${service.image_path}`}
                     alt={service.name}
                     className="w-full h-full object-cover"
                   />
