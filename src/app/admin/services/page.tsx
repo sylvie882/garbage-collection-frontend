@@ -8,15 +8,15 @@ interface Service {
   name: string;
   slug: string;
   description: string;
-  full_description: string;
-  icon: string;
-  image_path: string;
-  youtube_url: string;
-  category: string;
-  price: number;
-  price_unit: string;
-  duration: string;
-  frequency: string;
+  full_description: string | null;
+  icon: string | null;
+  image_path: string | null;
+  youtube_url: string | null;
+  category: string | null;
+  price: string | null;
+  price_unit: string | null;
+  duration: string | null;
+  frequency: string | null;
   features: string[];
   benefits: string[];
   order: number;
@@ -24,6 +24,7 @@ interface Service {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  image_url?: string | null;
 }
 
 export default function ServicesPage() {
