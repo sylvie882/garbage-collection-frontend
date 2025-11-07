@@ -1,4 +1,4 @@
-// src/app/services/[slug]/page.tsx (UPDATED)
+// src/app/services/[slug]/page.tsx (FIXED for your API structure)
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { serviceApi } from '@/lib/api';
@@ -16,9 +16,20 @@ async function getService(slug: string): Promise<Service | null> {
   try {
     console.log('🔄 [SERVER] getService called with slug:', slug);
     
-    // First, get all services and find the matching one
+    // First try the direct API method
+    try {
+      console.log('🔄 [SERVER] Trying direct API lookup...');
+      const service = await serviceApi.getByIdentifier(slug);
+      console.log('✅ [SERVER] Service found via API:', service.name);
+      return service;
+    } catch (apiError) {
+      console.log('⚠️ [SERVER] Direct API lookup failed, falling back to getAll...');
+    }
+    
+    // Fallback: get all services and find matching one
     console.log('🔄 [SERVER] Fetching all services to find matching slug...');
     const allResponse = await serviceApi.getAll();
+    // Using your API structure that wraps in data property
     const services = allResponse.data.data;
     
     console.log('📦 [SERVER] Total services found:', services.length);
@@ -50,18 +61,6 @@ async function getService(slug: string): Promise<Service | null> {
       }
     }
     
-    // Try to find by URL-friendly slug (replace special characters)
-    const urlFriendlySlug = slug.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    foundService = services.find((service: Service) => {
-      const serviceSlug = service.slug?.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      return serviceSlug === urlFriendlySlug;
-    });
-    
-    if (foundService) {
-      console.log('✅ [SERVER] Service found by URL-friendly slug:', foundService.name);
-      return foundService;
-    }
-    
     // Try case-insensitive match
     foundService = services.find((service: Service) => 
       service.slug?.toLowerCase() === slug.toLowerCase()
@@ -91,7 +90,6 @@ async function getService(slug: string): Promise<Service | null> {
     
     if (error instanceof Error) {
       console.error('Error message:', error.message);
-      console.error('Error name:', error.name);
     }
     
     return null;
@@ -101,6 +99,7 @@ async function getService(slug: string): Promise<Service | null> {
 async function getRelatedServices(currentService: Service): Promise<Service[]> {
   try {
     const response = await serviceApi.getAll();
+    // Using your API structure that wraps in data property
     const services = response.data.data.filter(
       (service: Service) => 
         service.id !== currentService.id && 
@@ -140,35 +139,7 @@ export default async function ServiceDetailPage({
 
   if (!service) {
     console.log('❌ [PAGE] Service not found for slug:', slug);
-    
-    // Return a custom 404 page instead of the default notFound()
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-4xl mx-auto py-16 px-4 text-center">
-          <h1 className="text-6xl font-bold text-gray-300 mb-4">404</h1>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Service Not Found</h2>
-          <p className="text-xl text-gray-600 mb-8">
-            The service "{slug}" could not be found.
-          </p>
-          <div className="space-x-4">
-            <Link 
-              href="/services"
-              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              View All Services
-            </Link>
-            <Link 
-              href="/"
-              className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              Go Home
-            </Link>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
+    notFound();
   }
 
   console.log('✅ [PAGE] Service loaded successfully:', service.name);
@@ -242,6 +213,7 @@ export async function generateStaticParams() {
   console.log('🔄 [STATIC] Generating static params');
   try {
     const response = await serviceApi.getAll();
+    // Using your API structure that wraps in data property
     const services = response.data.data;
     
     console.log('📦 [STATIC] Services found:', services.length);
