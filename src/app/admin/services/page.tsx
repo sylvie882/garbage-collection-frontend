@@ -77,12 +77,11 @@ export default function ServicesPage() {
       const token = localStorage.getItem('adminToken');
       console.log('Fetching services...');
       
-      const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/admin/services', {
+      // Use public API endpoint for fetching services
+      const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/services', {
         headers: { 
-          Authorization: `Bearer ${token}`, 
           Accept: 'application/json' 
         },
-        credentials: 'include',
       });
       
       console.log('Fetch response status:', response.status);
@@ -90,10 +89,7 @@ export default function ServicesPage() {
       if (response.ok) {
         const data = await response.json();
         console.log('Fetched services data:', data);
-        setServices(Array.isArray(data) ? data : data.data || []);
-      } else if (response.status === 401) {
-        console.log('Unauthorized, redirecting to login');
-        router.push('/admin/login');
+        setServices(Array.isArray(data) ? data : []);
       } else {
         console.error('Failed to fetch services:', response.status);
         setError('Failed to fetch services');
@@ -112,6 +108,12 @@ export default function ServicesPage() {
     setError('');
     
     const token = localStorage.getItem('adminToken');
+    if (!token) {
+      setError('No authentication token found');
+      setSubmitting(false);
+      return;
+    }
+
     console.log('Starting form submission...');
     console.log('Form data:', formData);
     console.log('Image file:', imageFile ? imageFile.name : 'No image file');
@@ -279,6 +281,11 @@ export default function ServicesPage() {
     
     try {
       const token = localStorage.getItem('adminToken');
+      if (!token) {
+        setError('No authentication token found');
+        return;
+      }
+
       const response = await fetch(`https://api.sylviegarbagecollection.co.ke/api/admin/services/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },

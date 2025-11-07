@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { serviceApi } from '../../lib/api';
 import { Service } from '../../types';
 import ServicesSearch from '../../components/ServicesSearch';
 import ServiceCard from '../../components/ServiceCard';
@@ -20,8 +19,22 @@ async function getServices(params: SearchParams = {}): Promise<{
 }> {
   try {
     const { search, category, page = '1' } = params;
-    const response = await serviceApi.getAll();
-    let services = response.data;
+    
+    // Use direct fetch instead of serviceApi
+    const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/services', {
+      next: { revalidate: 60 }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch services: ${response.status}`);
+    }
+    
+    let services = await response.json();
+    
+    // Ensure services is an array
+    if (!Array.isArray(services)) {
+      services = [];
+    }
 
     // Apply search filter
     if (search) {
@@ -67,8 +80,21 @@ async function getServices(params: SearchParams = {}): Promise<{
 // Get unique categories for filter
 async function getCategories(): Promise<string[]> {
   try {
-    const response = await serviceApi.getAll();
-    const categories = response.data
+    const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/services', {
+      next: { revalidate: 60 }
+    });
+    
+    if (!response.ok) {
+      return ['all'];
+    }
+    
+    const services = await response.json();
+    
+    if (!Array.isArray(services)) {
+      return ['all'];
+    }
+    
+    const categories = services
       .map(service => service.category)
       .filter(Boolean)
       .filter((category, index, self) => 
