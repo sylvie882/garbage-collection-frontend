@@ -1,9 +1,11 @@
+// src/types.ts
+
 export interface Carousel {
   id: number;
   title: string;
   description: string;
-  image_path: string;
-  image_url: string;    // new property for frontend
+  image_path: string;   // backend field (snake_case)
+  image_url?: string;   // new property for frontend (computed full URL)
   button_text?: string;
   button_link?: string;
   order: number;
@@ -28,7 +30,7 @@ export interface QuoteRequest {
 export interface Service {
   id: string;
   name: string;
-  fullDescription?: string; // camelCase
+  fullDescription?: string;
   description?: string;
   category?: string;
   price?: string;
@@ -38,11 +40,11 @@ export interface Service {
   features?: string[];
   benefits?: string[];
   image?: string;
-  youtubeUrl?: string;  // Add this
-  imageUrl?: string;    // Add this
-  imagePath?: string; // camelCase
+  youtubeUrl?: string;
+  imageUrl?: string;    // frontend computed full URL
+  imagePath?: string;   // camelCase version of backend's image_path
   createdAt?: string;
   updatedAt?: string;
-  slug: string;  // Make sure this exists
+  slug: string;
   videoUrl?: string;
 }
