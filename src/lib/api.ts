@@ -1,4 +1,4 @@
-// src/lib/api.ts (COMPLETELY FIXED)
+// src/lib/api.ts (FIXED - handles both response structures)
 import axios from 'axios';
 import { Carousel, QuoteRequest, Service } from '../types';
 
@@ -59,9 +59,27 @@ export const quoteRequestApi = {
 };
 
 export const serviceApi = {
-  getAll: () => api.get<{data: Service[]}>('/services'),
-  getById: (id: number) => api.get<{data: Service}>(`/services/${id}`),
-  getBySlug: (slug: string) => api.get<{data: Service}>(`/services/slug/${slug}`),
+  // FIXED: Handle both response structures
+  getAll: async () => {
+    const response = await api.get('/services');
+    // If response.data is already an array, use it directly
+    // If response.data has a data property that's an array, use that
+    const data = Array.isArray(response.data) ? response.data : 
+                (Array.isArray(response.data.data) ? response.data.data : response.data);
+    return { data };
+  },
+  
+  getById: async (id: number) => {
+    const response = await api.get(`/services/${id}`);
+    const data = response.data.data || response.data;
+    return { data };
+  },
+  
+  getBySlug: async (slug: string) => {
+    const response = await api.get(`/services/slug/${slug}`);
+    const data = response.data.data || response.data;
+    return { data };
+  },
   
   // Simple service lookup without complex logic
   getByIdentifier: async (identifier: string): Promise<Service> => {
@@ -70,9 +88,9 @@ export const serviceApi = {
     // First try slug lookup
     try {
       console.log('🔄 [API] Trying slug endpoint...');
-      const response = await api.get<{data: Service}>(`/services/slug/${identifier}`);
+      const response = await serviceApi.getBySlug(identifier);
       console.log('✅ [API] Slug lookup successful');
-      return response.data.data;
+      return response.data;
     } catch (slugError: any) {
       console.log('⚠️ [API] Slug lookup failed, trying ID...');
       
@@ -80,9 +98,9 @@ export const serviceApi = {
       if (!isNaN(Number(identifier))) {
         try {
           console.log('🔄 [API] Trying ID lookup...');
-          const response = await api.get<{data: Service}>(`/services/${identifier}`);
+          const response = await serviceApi.getById(parseInt(identifier));
           console.log('✅ [API] ID lookup successful');
-          return response.data.data;
+          return response.data;
         } catch (idError) {
           console.error('🚨 [API] ID lookup failed');
           throw new Error(`Service not found with identifier: ${identifier}`);
