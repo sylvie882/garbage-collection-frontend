@@ -28,23 +28,50 @@ export interface QuoteRequest {
 }
 
 export interface Service {
-  id: string;
+  id: number;
   name: string;
-  fullDescription?: string;
-  description?: string;
-  category?: string;
-  price?: string;
-  priceUnit?: string;
-  duration?: string;
-  frequency?: string;
-  features?: string[];
-  benefits?: string[];
-  image?: string;
-  youtubeUrl?: string;
-  imageUrl?: string;    // frontend computed full URL
-  imagePath?: string;   // camelCase version of backend's image_path
-  createdAt?: string;
-  updatedAt?: string;
   slug: string;
-  videoUrl?: string;
+  description: string;
+  full_description: string | null;
+  icon: string | null;
+  image_path: string | null;
+  youtube_url: string | null;
+  category: string | null;
+  price: string | null;
+  price_unit: string | null;
+  duration: string | null;
+  frequency: string | null;
+  features: string[];
+  benefits: string[];
+  order: number;
+  is_active: boolean;
+  featured: boolean;
+  created_at: string;
+  updated_at: string;
+  image_url: string | null;
+}
+
+// Optional: If you need a frontend-friendly version with camelCase
+export interface ServiceFrontend {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  fullDescription: string | null;
+  icon: string | null;
+  imagePath: string | null;
+  youtubeUrl: string | null;
+  category: string | null;
+  price: string | null;
+  priceUnit: string | null;
+  duration: string | null;
+  frequency: string | null;
+  features: string[];
+  benefits: string[];
+  order: number;
+  isActive: boolean;
+  featured: boolean;
+  createdAt: string;
+  updatedAt: string;
+  imageUrl: string | null;
 }

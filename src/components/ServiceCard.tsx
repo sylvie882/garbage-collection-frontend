@@ -15,12 +15,10 @@ export default function ServiceCard({ service }: ServiceCardProps) {
   const videoRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const API_URL =
-    process.env.NEXT_PUBLIC_API_URL ||
-    'https://api.sylviegarbagecollection.co.ke';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.sylviegarbagecollection.co.ke';
 
   // ✅ YouTube video ID extractor
-  const getYouTubeId = (url: string) => {
+  const getYouTubeId = (url: string | null) => {
     if (!url) return null;
     const match = url.match(
       /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
@@ -28,24 +26,21 @@ export default function ServiceCard({ service }: ServiceCardProps) {
     return match ? match[1] : null;
   };
 
-  const videoId = service.youtubeUrl ? getYouTubeId(service.youtubeUrl) : null;
+  const videoId = service.youtube_url ? getYouTubeId(service.youtube_url) : null;
 
   // ✅ Consistent image URL resolution
- const getImageUrl = () => {
-  // ✅ Prefer full URL from backend if available
-  if (service.imageUrl) return service.imageUrl;
+  const getImageUrl = () => {
+    // ✅ Prefer full URL from backend if available
+    if (service.image_url) return service.image_url;
 
-  if (service.imagePath) {
-    // ✅ Use environment variable for API URL
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-    return service.imagePath.startsWith('http')
-      ? service.imagePath
-      : `${API_URL}/storage/${service.imagePath}`;
-  }
+    if (service.image_path) {
+      return service.image_path.startsWith('http')
+        ? service.image_path
+        : `${API_URL}/storage/${service.image_path}`;
+    }
 
-  return null;
-};
-
+    return '/placeholder.jpg';
+  };
 
   const imageUrl = getImageUrl();
 
@@ -129,20 +124,26 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             }}
           />
         ) : (
-        <img
-          src={imageUrl || '/placeholder.jpg'}  // ✅ ensure a string, not null
-          alt={service.name}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = '/placeholder.jpg';
-          }}
-        />
+          <img
+            src={imageUrl}
+            alt={service.name}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/placeholder.jpg';
+            }}
+          />
+        )}
 
+        {/* Featured Badge */}
+        {service.featured && (
+          <span className="absolute top-3 left-3 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+            Featured
+          </span>
         )}
 
         {/* Category Badge */}
         {service.category && (
-          <span className="absolute top-3 left-3 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+          <span className={`absolute top-3 ${service.featured ? 'left-24' : 'left-3'} bg-green-600 text-white px-3 py-1 rounded-full text-xs font-medium`}>
             {service.category}
           </span>
         )}
@@ -181,15 +182,29 @@ export default function ServiceCard({ service }: ServiceCardProps) {
           ))}
         </ul>
 
+        {/* Duration & Frequency */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {service.duration && (
+            <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+              ⏱️ {service.duration}
+            </span>
+          )}
+          {service.frequency && (
+            <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+              🔄 {service.frequency}
+            </span>
+          )}
+        </div>
+
         {/* Price & CTA */}
         <div className="flex items-center justify-between border-t pt-4">
           <div>
             {service.price ? (
               <p className="text-green-600 text-lg font-semibold">
                 KSh {service.price}
-                {service.priceUnit && (
+                {service.price_unit && (
                   <span className="text-gray-500 text-sm ml-1">
-                    /{service.priceUnit}
+                    /{service.price_unit}
                   </span>
                 )}
               </p>
