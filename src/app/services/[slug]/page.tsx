@@ -1,4 +1,4 @@
-// src/app/services/[slug]/page.tsx
+// src/app/services/[slug]/page.tsx (UPDATED)
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { serviceApi } from '@/lib/api';
@@ -8,55 +8,92 @@ import RelatedServices from '@/components/RelatedServices';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
+// Disable caching for this page to prevent stale responses
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 async function getService(slug: string): Promise<Service | null> {
   try {
     console.log('🔄 [SERVER] getService called with slug:', slug);
     
-    // First try to get by slug
-    try {
-      const response = await serviceApi.getBySlug(slug);
-      console.log('✅ [SERVER] Service found by slug:', response.data?.name);
-      return response.data;
-    } catch (slugError: any) {
-      console.log('⚠️ [SERVER] Slug lookup failed, trying ID...');
-      
-      // If slug is numeric, try as ID
-      if (!isNaN(Number(slug))) {
-        try {
-          const idResponse = await serviceApi.getById(parseInt(slug));
-          console.log('✅ [SERVER] Service found by ID:', idResponse.data?.name);
-          return idResponse.data;
-        } catch (idError) {
-          console.error('🚨 [SERVER] ID lookup also failed');
-        }
-      }
-      
-      // Last attempt: get all services and find matching one
-      try {
-        console.log('🔄 [SERVER] Trying to find service in all services...');
-        const allResponse = await serviceApi.getAll();
-        const foundService = allResponse.data.find((service: Service) => 
-          service.slug === slug || 
-          service.id.toString() === slug ||
-          service.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === slug
-        );
-        
-        if (foundService) {
-          console.log('✅ [SERVER] Service found in all services:', foundService.name);
-          return foundService;
-        }
-      } catch (allError) {
-        console.error('🚨 [SERVER] All services lookup failed');
-      }
-      
-      throw slugError;
+    // First, get all services and find the matching one
+    console.log('🔄 [SERVER] Fetching all services to find matching slug...');
+    const allResponse = await serviceApi.getAll();
+    const services = allResponse.data.data;
+    
+    console.log('📦 [SERVER] Total services found:', services.length);
+    
+    // Log all slugs for debugging
+    console.log('📝 [SERVER] Available slugs:', services.map((s: Service) => s.slug));
+    
+    // Try to find service by slug (exact match)
+    let foundService = services.find((service: Service) => 
+      service.slug === slug
+    );
+    
+    if (foundService) {
+      console.log('✅ [SERVER] Service found by exact slug:', foundService.name);
+      return foundService;
     }
-  } catch (error: any) {
-    console.error('🚨 [SERVER] Error fetching service:', {
-      message: error.message,
-      status: error.response?.status,
-      url: error.config?.url
+    
+    console.log('❌ [SERVER] No exact slug match, trying alternative methods...');
+    
+    // Try to find service by ID if slug is numeric
+    if (!isNaN(Number(slug))) {
+      foundService = services.find((service: Service) => 
+        service.id.toString() === slug
+      );
+      
+      if (foundService) {
+        console.log('✅ [SERVER] Service found by ID:', foundService.name);
+        return foundService;
+      }
+    }
+    
+    // Try to find by URL-friendly slug (replace special characters)
+    const urlFriendlySlug = slug.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    foundService = services.find((service: Service) => {
+      const serviceSlug = service.slug?.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      return serviceSlug === urlFriendlySlug;
     });
+    
+    if (foundService) {
+      console.log('✅ [SERVER] Service found by URL-friendly slug:', foundService.name);
+      return foundService;
+    }
+    
+    // Try case-insensitive match
+    foundService = services.find((service: Service) => 
+      service.slug?.toLowerCase() === slug.toLowerCase()
+    );
+    
+    if (foundService) {
+      console.log('✅ [SERVER] Service found by case-insensitive match:', foundService.name);
+      return foundService;
+    }
+    
+    // Try partial match as last resort
+    foundService = services.find((service: Service) => 
+      service.slug?.toLowerCase().includes(slug.toLowerCase()) ||
+      service.name.toLowerCase().includes(slug.toLowerCase())
+    );
+    
+    if (foundService) {
+      console.log('✅ [SERVER] Service found by partial match:', foundService.name);
+      return foundService;
+    }
+    
+    console.log('❌ [SERVER] No service found for slug after all attempts:', slug);
+    return null;
+    
+  } catch (error: unknown) {
+    console.error('🚨 [SERVER] Error in getService:');
+    
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error name:', error.name);
+    }
+    
     return null;
   }
 }
@@ -64,7 +101,7 @@ async function getService(slug: string): Promise<Service | null> {
 async function getRelatedServices(currentService: Service): Promise<Service[]> {
   try {
     const response = await serviceApi.getAll();
-    const services = response.data.filter(
+    const services = response.data.data.filter(
       (service: Service) => 
         service.id !== currentService.id && 
         service.category === currentService.category
@@ -103,7 +140,35 @@ export default async function ServiceDetailPage({
 
   if (!service) {
     console.log('❌ [PAGE] Service not found for slug:', slug);
-    notFound();
+    
+    // Return a custom 404 page instead of the default notFound()
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="max-w-4xl mx-auto py-16 px-4 text-center">
+          <h1 className="text-6xl font-bold text-gray-300 mb-4">404</h1>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Service Not Found</h2>
+          <p className="text-xl text-gray-600 mb-8">
+            The service "{slug}" could not be found.
+          </p>
+          <div className="space-x-4">
+            <Link 
+              href="/services"
+              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              View All Services
+            </Link>
+            <Link 
+              href="/"
+              className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Go Home
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
   }
 
   console.log('✅ [PAGE] Service loaded successfully:', service.name);
@@ -114,23 +179,6 @@ export default async function ServiceDetailPage({
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      {/* Breadcrumb Navigation */}
-      {/* <nav className="bg-white border-b border-gray-200 py-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <Link href="/" className="hover:text-green-600 transition-colors">
-              Home
-            </Link>
-            <span>/</span>
-            <Link href="/services" className="hover:text-green-600 transition-colors">
-              Services
-            </Link>
-            <span>/</span>
-            <span className="text-gray-900">{service.name}</span>
-          </div>
-        </div>
-      </nav> */}
-
       <ServiceDetail service={service} />
 
       {relatedServices.length > 0 && (
@@ -149,7 +197,7 @@ export default async function ServiceDetailPage({
         </section>
       )}
 
-      {/* CTA Section - This should be visible now */}
+      {/* CTA Section */}
       <section className="bg-gradient-to-r from-green-800 to-green-600 py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
@@ -194,13 +242,18 @@ export async function generateStaticParams() {
   console.log('🔄 [STATIC] Generating static params');
   try {
     const response = await serviceApi.getAll();
-    console.log('📦 [STATIC] Services found:', response.data.length);
+    const services = response.data.data;
     
-    const params = response.data.map((service: Service) => ({
-      slug: service.slug || service.id.toString(),
-    }));
+    console.log('📦 [STATIC] Services found:', services.length);
     
-    console.log('✅ [STATIC] Generated params:', params);
+    const params = services
+      .filter((service: Service) => service.slug && service.is_active)
+      .map((service: Service) => ({
+        slug: service.slug!,
+      }));
+    
+    console.log('✅ [STATIC] Generated params:', params.length);
+    console.log('📝 [STATIC] Param slugs:', params.map(p => p.slug));
     return params;
   } catch (error) {
     console.error('🚨 [STATIC] Error generating params:', error);
@@ -231,6 +284,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {
       title: `${service.name} | Sylvie Garbage Collection`,
       description: service.description,
+      openGraph: {
+        title: `${service.name} | Sylvie Garbage Collection`,
+        description: service.description,
+        images: service.image_url ? [service.image_url] : [],
+      },
     };
   } catch (error) {
     return {

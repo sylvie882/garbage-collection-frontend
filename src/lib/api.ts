@@ -1,4 +1,4 @@
-// src/lib/api.ts (FIXED)
+// src/lib/api.ts (COMPLETELY FIXED)
 import axios from 'axios';
 import { Carousel, QuoteRequest, Service } from '../types';
 
@@ -28,16 +28,18 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // FIXED: Safe error logging
-    const errorInfo = {
-      url: error.config?.url || 'Unknown URL',
-      status: error.response?.status || 'No status',
-      statusText: error.response?.statusText || 'No status text',
-      message: error.message || 'Unknown error',
-      data: error.response?.data ? 'Data available' : 'No data'
-    };
-    
-    console.error('🚨 [API] Response error:', errorInfo);
+    // COMPLETE error logging
+    console.error('🚨 [API] Full error details:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      baseURL: error.config?.baseURL,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      message: error.message,
+      data: error.response?.data,
+      headers: error.response?.headers,
+      config: error.config
+    });
     return Promise.reject(error);
   }
 );
@@ -57,9 +59,9 @@ export const quoteRequestApi = {
 };
 
 export const serviceApi = {
-  getAll: () => api.get<Service[]>('/services'),
-  getById: (id: number) => api.get<Service>(`/services/${id}`),
-  getBySlug: (slug: string) => api.get<Service>(`/services/slug/${slug}`),
+  getAll: () => api.get<{data: Service[]}>('/services'),
+  getById: (id: number) => api.get<{data: Service}>(`/services/${id}`),
+  getBySlug: (slug: string) => api.get<{data: Service}>(`/services/slug/${slug}`),
   
   // Simple service lookup without complex logic
   getByIdentifier: async (identifier: string): Promise<Service> => {
@@ -68,9 +70,9 @@ export const serviceApi = {
     // First try slug lookup
     try {
       console.log('🔄 [API] Trying slug endpoint...');
-      const response = await api.get<Service>(`/services/slug/${identifier}`);
+      const response = await api.get<{data: Service}>(`/services/slug/${identifier}`);
       console.log('✅ [API] Slug lookup successful');
-      return response.data;
+      return response.data.data;
     } catch (slugError: any) {
       console.log('⚠️ [API] Slug lookup failed, trying ID...');
       
@@ -78,9 +80,9 @@ export const serviceApi = {
       if (!isNaN(Number(identifier))) {
         try {
           console.log('🔄 [API] Trying ID lookup...');
-          const response = await api.get<Service>(`/services/${identifier}`);
+          const response = await api.get<{data: Service}>(`/services/${identifier}`);
           console.log('✅ [API] ID lookup successful');
-          return response.data;
+          return response.data.data;
         } catch (idError) {
           console.error('🚨 [API] ID lookup failed');
           throw new Error(`Service not found with identifier: ${identifier}`);
