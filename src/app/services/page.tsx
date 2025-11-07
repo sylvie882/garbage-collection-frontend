@@ -36,17 +36,17 @@ async function getServices(params: SearchParams = {}): Promise<{
       services = [];
     }
 
-    // Apply search filter
+    // Apply search filter - FIXED: Added explicit Service type
     if (search) {
-      services = services.filter(service =>
+      services = services.filter((service: Service) =>
         service.name.toLowerCase().includes(search.toLowerCase()) ||
         service.description?.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    // Apply category filter
+    // Apply category filter - FIXED: Added explicit Service type
     if (category && category !== 'all') {
-      services = services.filter(service =>
+      services = services.filter((service: Service) =>
         service.category?.toLowerCase() === category.toLowerCase()
       );
     }
@@ -94,8 +94,9 @@ async function getCategories(): Promise<string[]> {
       return ['all'];
     }
     
+    // FIXED: Added explicit Service type to map function
     const categories = services
-      .map(service => service.category)
+      .map((service: Service) => service.category)
       .filter(Boolean)
       .filter((category, index, self) => 
         self.indexOf(category) === index
