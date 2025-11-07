@@ -66,6 +66,7 @@ export default function ServicesPage() {
   const checkAuth = () => {
     const token = localStorage.getItem('adminToken');
     if (!token) {
+      console.log('No admin token found, redirecting to login');
       router.push('/admin/login');
     }
   };
@@ -73,28 +74,32 @@ export default function ServicesPage() {
   const fetchServices = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      if (!token) {
-        router.push('/admin/login');
-        return;
-      }
-
-      const response = await fetch('https://sylviegarbagecollection.co.ke/api/public/api/services', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
+      console.log('Fetching services...');
+      
+      const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/admin/services', {
+        headers: { 
+          Authorization: `Bearer ${token}`, 
+          Accept: 'application/json' 
         },
+        credentials: 'include',
       });
-
+      
+      console.log('Fetch response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched services data:', data);
         setServices(Array.isArray(data) ? data : data.data || []);
       } else if (response.status === 401) {
-        localStorage.removeItem('adminToken');
+        console.log('Unauthorized, redirecting to login');
         router.push('/admin/login');
+      } else {
+        console.error('Failed to fetch services:', response.status);
+        setError('Failed to fetch services');
       }
-    } catch (error) {
-      console.error('Error fetching services:', error);
-      setError('Failed to fetch services. Please check your connection.');
+    } catch (err) {
+      console.error('Error fetching services:', err);
+      setError('Error fetching services');
     } finally {
       setLoading(false);
     }
@@ -103,162 +108,113 @@ export default function ServicesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setMessage('');
     setError('');
+    
+    const token = localStorage.getItem('adminToken');
+    console.log('Starting form submission...');
+    console.log('Form data:', formData);
+    console.log('Image file:', imageFile ? imageFile.name : 'No image file');
+    console.log('Editing service:', editingService);
 
     try {
-      const token = localStorage.getItem('adminToken');
-      if (!token) {
-        console.error('No admin token found');
-        router.push('/admin/login');
-        return;
-      }
+      // Prepare FormData for file upload
+      const formToSend = new FormData();
+      
+      // Append basic fields
+      formToSend.append('name', formData.name);
+      formToSend.append('slug', formData.slug);
+      formToSend.append('description', formData.description);
+      formToSend.append('full_description', formData.full_description);
+      formToSend.append('icon', formData.icon);
+      formToSend.append('youtube_url', formData.youtube_url);
+      formToSend.append('category', formData.category);
+      formToSend.append('price', formData.price);
+      formToSend.append('price_unit', formData.price_unit);
+      formToSend.append('duration', formData.duration);
+      formToSend.append('frequency', formData.frequency);
+      formToSend.append('order', formData.order.toString());
+      formToSend.append('featured', formData.featured ? '1' : '0');
+      formToSend.append('is_active', formData.is_active ? '1' : '0');
 
-      console.log('=== START FORM SUBMISSION DEBUG ===');
-      console.log('Editing Service:', editingService);
-      console.log('Form Data:', formData);
-      console.log('Image File:', imageFile);
-      console.log('Features array:', formData.features);
-      console.log('Benefits array:', formData.benefits);
-
-      const formDataToSend = new FormData();
-
-      // Append basic fields with logging
-      const fields = [
-        'name', 'slug', 'description', 'full_description', 'icon', 
-        'youtube_url', 'category', 'price', 'price_unit', 'duration', 
-        'frequency', 'order', 'featured', 'is_active'
-      ];
-
-      fields.forEach(field => {
-        const value = formData[field as keyof typeof formData];
-        console.log(`Appending ${field}:`, value, `(type: ${typeof value})`);
-        
-        // Handle boolean values properly
-        if (field === 'featured' || field === 'is_active') {
-          formDataToSend.append(field, value ? '1' : '0');
-        } else {
-          formDataToSend.append(field, value?.toString() || '');
-        }
-      });
-
-      // CORRECTED: Append features and benefits as JSON strings instead of arrays
-      console.log('Processing features array as JSON:', formData.features);
-      formDataToSend.append('features', JSON.stringify(formData.features));
-
-      console.log('Processing benefits array as JSON:', formData.benefits);
-      formDataToSend.append('benefits', JSON.stringify(formData.benefits));
+      // Append features and benefits as JSON strings
+      formToSend.append('features', JSON.stringify(formData.features));
+      formToSend.append('benefits', JSON.stringify(formData.benefits));
 
       if (imageFile) {
-        console.log('Appending image file:', imageFile.name, imageFile.type, imageFile.size);
-        formDataToSend.append('image', imageFile);
+        console.log('Appending image file to form data');
+        formToSend.append('image', imageFile);
+      } else if (editingService && !imageFile) {
+        console.log('No new image file for edit, keeping existing image');
       }
 
-      // Log all FormData entries
-      console.log('=== FORM DATA ENTRIES ===');
-      for (let [key, value] of formDataToSend.entries()) {
-        if (key === 'features' || key === 'benefits') {
-          console.log(`${key}:`, value, `(JSON string)`);
-        } else {
-          console.log(`${key}:`, value, `(type: ${typeof value})`);
-        }
+      let url = 'https://api.sylviegarbagecollection.co.ke/api/admin/services';
+      let method: 'POST' | 'PUT' = 'POST';
+
+      if (editingService) {
+        url = `https://api.sylviegarbagecollection.co.ke/api/admin/services/${editingService.id}`;
+        formToSend.append('_method', 'PUT');
+        method = 'POST'; // Using POST with _method=PUT for Laravel compatibility
+        console.log('Making PUT request to:', url);
+      } else {
+        console.log('Making POST request to:', url);
       }
 
-      const url = editingService 
-        ? `https://sylviegarbagecollection.co.ke/api/public/api/services/${editingService.id}`
-        : 'https://sylviegarbagecollection.co.ke/api/public/api/services';
-      
-      const method = editingService ? 'PUT' : 'POST';
-
-      console.log('=== REQUEST DETAILS ===');
-      console.log('URL:', url);
-      console.log('Method:', method);
-      console.log('Token exists:', !!token);
+      // Log FormData contents (for debugging)
+      console.log('FormData entries:');
+      for (const [key, value] of (formToSend as any).entries()) {
+        console.log(`${key}:`, value);
+      }
 
       const response = await fetch(url, {
         method,
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
+          Authorization: `Bearer ${token}`,
+          // Don't set Content-Type for FormData - let browser set it with boundary
         },
-        body: formDataToSend,
+        credentials: 'include',
+        body: formToSend,
       });
 
-      console.log('=== RESPONSE DETAILS ===');
-      console.log('Status:', response.status);
-      console.log('Status Text:', response.statusText);
-      console.log('OK:', response.ok);
+      console.log('Submission response status:', response.status);
+      console.log('Submission response headers:', response.headers);
 
-      const responseText = await response.text();
-      console.log('Raw response text:', responseText);
-
-      let responseData;
-      try {
-        responseData = responseText ? JSON.parse(responseText) : {};
-        console.log('Parsed response data:', responseData);
-      } catch (parseError) {
-        console.error('Error parsing JSON response:', parseError);
-        responseData = { error: 'Invalid JSON response' };
-      }
-
-      if (response.ok) {
-        console.log('✅ SUCCESS: Service saved successfully');
-        setMessage(editingService ? 'Service updated successfully!' : 'Service created successfully!');
-        setShowForm(false);
-        setEditingService(null);
-        resetForm();
-        fetchServices();
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Server error response:', errorText);
         
-        setTimeout(() => setMessage(''), 3000);
-      } else {
-        console.log('❌ ERROR: Request failed');
-        console.log('Error data:', responseData);
+        let errorMessage = `Failed to ${editingService ? 'update' : 'create'} service`;
         
-        if (responseData.errors) {
-          console.log('Validation errors:', responseData.errors);
-          const errorMessages = Object.values(responseData.errors).flat().join(', ');
-          setError(`Validation errors: ${errorMessages}`);
-        } else if (responseData.message) {
-          console.log('Error message:', responseData.message);
-          setError(responseData.message);
-        } else {
-          console.log('Unknown error structure:', responseData);
-          setError(`Failed to ${editingService ? 'update' : 'create'} service. Status: ${response.status}`);
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+          console.error('Error details:', errorData);
+        } catch (e) {
+          console.error('Could not parse error response as JSON');
         }
         
-        if (response.status === 401) {
-          console.log('🛑 Unauthorized - redirecting to login');
-          localStorage.removeItem('adminToken');
-          router.push('/admin/login');
-        } else if (response.status === 422) {
-          console.log('🛑 Validation error - check the validation rules');
-          if (responseData.errors) {
-            Object.entries(responseData.errors).forEach(([field, errors]) => {
-              console.log(`Validation error for ${field}:`, errors);
-            });
-          }
-        }
+        setError(errorMessage);
+        setSubmitting(false);
+        return;
       }
 
-    } catch (error) {
-      // Properly handle the unknown error type
-      console.error('💥 NETWORK ERROR:', error);
+      const responseData = await response.json();
+      console.log('Success response:', responseData);
+
+      // Reset form and reload services
+      setShowForm(false);
+      setEditingService(null);
+      resetForm();
+      setMessage(editingService ? 'Service updated successfully!' : 'Service created successfully!');
       
-      // Type-safe error handling
-      if (error instanceof Error) {
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
-        setError(`Network error: ${error.message}`);
-      } else if (typeof error === 'string') {
-        console.error('Error string:', error);
-        setError(`Network error: ${error}`);
-      } else {
-        console.error('Unknown error type:', typeof error, error);
-        setError('An unexpected network error occurred. Please try again.');
-      }
+      console.log('Form submitted successfully, refreshing services...');
+      await fetchServices();
+      
+      setTimeout(() => setMessage(''), 3000);
+      
+    } catch (err) {
+      console.error('Network error during submission:', err);
+      setError('Network error. Please check your connection and try again.');
     } finally {
-      console.log('=== END FORM SUBMISSION DEBUG ===');
       setSubmitting(false);
     }
   };
@@ -286,15 +242,11 @@ export default function ServicesPage() {
     setImagePreview('');
     setCurrentFeature('');
     setCurrentBenefit('');
-  };
-
-  const handleAddNewService = () => {
-    setEditingService(null);
-    resetForm();
-    setShowForm(true);
+    setError('');
   };
 
   const handleEdit = (service: Service) => {
+    console.log('Editing service:', service);
     setEditingService(service);
     setFormData({
       name: service.name,
@@ -314,54 +266,53 @@ export default function ServicesPage() {
       featured: service.featured,
       is_active: service.is_active,
     });
-    setImagePreview(service.image_path ? `https://sylviegarbagecollection.co.ke/api/storage/${service.image_path}` : '');
+    setImagePreview(service.image_path ? `https://api.sylviegarbagecollection.co.ke/storage/${service.image_path}` : '');
     setShowForm(true);
+    setError('');
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this service? This action cannot be undone.')) return;
-
+    if (!confirm('Are you sure you want to delete this service?')) return;
+    
+    console.log('Deleting service ID:', id);
+    
     try {
       const token = localStorage.getItem('adminToken');
-      
-      const response = await fetch(`https://sylviegarbagecollection.co.ke/api/public/api/services/${id}`, {
+      const response = await fetch(`https://api.sylviegarbagecollection.co.ke/api/admin/services/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
       });
-
+      
+      console.log('Delete response status:', response.status);
+      
       if (response.ok) {
+        console.log('Service deleted successfully');
         setMessage('Service deleted successfully!');
-        fetchServices();
+        await fetchServices();
         setTimeout(() => setMessage(''), 3000);
+      } else {
+        console.error('Failed to delete service:', response.status);
+        const errorText = await response.text();
+        console.error('Delete error:', errorText);
+        setError('Failed to delete service');
       }
-    } catch (error) {
-      console.error('Error deleting service:', error);
-      setError('Failed to delete service. Please try again.');
+    } catch (err) {
+      console.error('Error deleting service:', err);
+      setError('Error deleting service');
     }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp'];
-      if (!validTypes.includes(file.type)) {
-        setError('Please select a valid image file (JPEG, PNG, GIF, or WebP).');
-        return;
-      }
-
-      // Validate file size (5MB max)
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Image size should be less than 5MB.');
-        return;
-      }
-
+      console.log('Image file selected:', file.name, file.type, file.size);
       setImageFile(file);
-      setError('');
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
+      setImagePreview(URL.createObjectURL(file));
+    } else {
+      console.log('No file selected');
+      setImageFile(null);
+      setImagePreview('');
     }
   };
 
@@ -412,7 +363,7 @@ export default function ServicesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     );
@@ -422,188 +373,184 @@ export default function ServicesPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Services Management</h1>
-              <p className="text-gray-600">Manage your garbage collection services</p>
-            </div>
-            <button
-              onClick={handleAddNewService}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <span>Add New Service</span>
-            </button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Services Management</h1>
+            <p className="text-gray-600">Manage your garbage collection services</p>
           </div>
+          <button
+            onClick={() => {
+              console.log('Opening form to create new service');
+              resetForm();
+              setShowForm(true);
+            }}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            <span>Add New Service</span>
+          </button>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Messages */}
         {message && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-600 rounded-lg">
-            {message}
-          </div>
-        )}
-        
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {services.map((service) => (
-            <div key={service.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-              <div className="aspect-video bg-gray-200 relative">
-                {service.image_path ? (
-                  <img 
-                    src={`https://api.sylviegarbagecollection.co.ke/storage/${service.image_path}`}
-                    alt={service.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                    <span className="text-gray-400 text-4xl">{service.icon || '🔧'}</span>
-                  </div>
-                )}
-                <div className="absolute top-2 right-2 flex space-x-2">
-                  {service.featured && (
-                    <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
-                      Featured
-                    </span>
-                  )}
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    service.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {service.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">{service.name}</h3>
-                <p className="text-gray-600 text-sm mb-3 line-clamp-2">{service.description}</p>
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-green-600 font-semibold">
-                    {service.price ? `KSh ${service.price} ${service.price_unit}` : 'Price on request'}
-                  </span>
-                  {service.category && (
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{service.category}</span>
-                  )}
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">Order: {service.order}</span>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEdit(service)}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(service.id)}
-                      className="text-red-600 hover:text-red-800 text-sm font-medium transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              </div>
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <span className="text-green-700">{message}</span>
             </div>
-          ))}
-        </div>
-
-        {services.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">🔧</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No services yet</h3>
-            <p className="text-gray-600 mb-4">Get started by creating your first service.</p>
-            <button
-              onClick={handleAddNewService}
-              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Create Your First Service
-            </button>
           </div>
         )}
 
-        {/* Add/Edit Service Form Modal */}
+        {/* Error Display */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span className="text-red-700 font-medium">Error: {error}</span>
+            </div>
+          </div>
+        )}
+
+        {services.length === 0 && !loading ? (
+          <div className="text-center py-12">
+            <div className="bg-white rounded-lg shadow-sm p-8">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <h3 className="mt-4 text-lg font-medium text-gray-900">No services</h3>
+              <p className="mt-2 text-gray-500">Get started by creating your first service.</p>
+              <button
+                onClick={() => setShowForm(true)}
+                className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Add New Service
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {services.map((service) => (
+              <div key={service.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                <div className="aspect-video bg-gray-200 relative">
+                  {service.image_path ? (
+                    <img 
+                      src={`https://api.sylviegarbagecollection.co.ke/storage/${service.image_path}`}
+                      alt={service.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                      <span className="text-gray-400 text-4xl">{service.icon || '🔧'}</span>
+                    </div>
+                  )}
+                  <div className="absolute top-2 right-2 flex space-x-2">
+                    {service.featured && (
+                      <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
+                        Featured
+                      </span>
+                    )}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      service.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {service.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-900 mb-2">{service.name}</h3>
+                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{service.description}</p>
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-green-600 font-semibold">
+                      {service.price ? `KSh ${service.price} ${service.price_unit}` : 'Price on request'}
+                    </span>
+                    {service.category && (
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{service.category}</span>
+                    )}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-500">Order: {service.order}</span>
+                    <div className="flex space-x-2">
+                      <button 
+                        onClick={() => handleEdit(service)} 
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(service.id)} 
+                        className="text-red-600 hover:text-red-800 text-sm font-medium transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Form Modal */}
         {showForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">
-                    {editingService ? 'Edit Service' : 'Add New Service'}
-                  </h2>
-                  <button
-                    onClick={() => setShowForm(false)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  {editingService ? 'Edit Service' : 'Add New Service'}
+                </h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Service Name *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
                       <input
                         type="text"
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="e.g., Residential Waste Collection"
+                        placeholder="Enter service name"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        URL Slug
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
                       <input
                         type="text"
                         value={formData.slug}
                         onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="auto-generated-if-empty"
+                        placeholder="URL-friendly slug"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Leave empty to auto-generate from name</p>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Short Description *
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
                     <textarea
                       required
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={2}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder="Brief description of the service..."
+                      placeholder="Brief description"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Description
-                    </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Description</label>
                     <textarea
                       value={formData.full_description}
                       onChange={(e) => setFormData({ ...formData, full_description: e.target.value })}
                       rows={4}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder="Detailed description of the service..."
+                      placeholder="Detailed description"
                     />
                   </div>
 
@@ -615,7 +562,7 @@ export default function ServicesPage() {
                         value={formData.category}
                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="e.g., Residential, Commercial"
+                        placeholder="e.g., Residential"
                       />
                     </div>
                     <div>
@@ -625,7 +572,7 @@ export default function ServicesPage() {
                         value={formData.icon}
                         onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="🔧 or font-awesome class"
+                        placeholder="🔧 or icon class"
                       />
                     </div>
                   </div>
@@ -636,7 +583,6 @@ export default function ServicesPage() {
                       <input
                         type="number"
                         step="0.01"
-                        min="0"
                         value={formData.price}
                         onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -650,7 +596,7 @@ export default function ServicesPage() {
                         value={formData.price_unit}
                         onChange={(e) => setFormData({ ...formData, price_unit: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="per month, per service, etc."
+                        placeholder="per month"
                       />
                     </div>
                   </div>
@@ -663,7 +609,7 @@ export default function ServicesPage() {
                         value={formData.duration}
                         onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="e.g., 30 minutes, 2 hours"
+                        placeholder="e.g., 30 minutes"
                       />
                     </div>
                     <div>
@@ -673,7 +619,7 @@ export default function ServicesPage() {
                         value={formData.frequency}
                         onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="e.g., Weekly, Monthly, One-time"
+                        placeholder="e.g., Weekly"
                       />
                     </div>
                   </div>
@@ -699,7 +645,7 @@ export default function ServicesPage() {
                         onChange={(e) => setCurrentFeature(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="Add a feature (press Enter or click Add)"
+                        placeholder="Add a feature"
                       />
                       <button
                         type="button"
@@ -722,9 +668,6 @@ export default function ServicesPage() {
                           </button>
                         </div>
                       ))}
-                      {formData.features.length === 0 && (
-                        <p className="text-sm text-gray-500 text-center py-2">No features added yet</p>
-                      )}
                     </div>
                   </div>
 
@@ -738,7 +681,7 @@ export default function ServicesPage() {
                         onChange={(e) => setCurrentBenefit(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addBenefit())}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="Add a benefit (press Enter or click Add)"
+                        placeholder="Add a benefit"
                       />
                       <button
                         type="button"
@@ -761,15 +704,12 @@ export default function ServicesPage() {
                           </button>
                         </div>
                       ))}
-                      {formData.benefits.length === 0 && (
-                        <p className="text-sm text-gray-500 text-center py-2">No benefits added yet</p>
-                      )}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Display Order</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
                       <input
                         type="number"
                         value={formData.order}
@@ -778,7 +718,7 @@ export default function ServicesPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Featured Service</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Featured</label>
                       <select
                         value={formData.featured.toString()}
                         onChange={(e) => setFormData({ ...formData, featured: e.target.value === 'true' })}
@@ -803,48 +743,58 @@ export default function ServicesPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Service Image
+                      Image {!editingService && '*'}
                     </label>
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleImageChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      required={!editingService}
                     />
-                    <p className="text-xs text-gray-500 mt-1">Supported formats: JPEG, PNG, GIF, WebP (Max: 5MB)</p>
                     {imagePreview && (
-                      <div className="mt-3">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Image Preview:</p>
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-600 mb-2">Image Preview:</p>
+                        <img src={imagePreview} alt="Preview" className="w-32 h-32 object-cover rounded-lg border" />
+                      </div>
+                    )}
+                    {editingService && !imagePreview && editingService.image_path && (
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-600 mb-2">Current Image:</p>
                         <img 
-                          src={imagePreview} 
-                          alt="Preview" 
-                          className="w-32 h-32 object-cover rounded-lg border shadow-sm"
+                          src={`https://api.sylviegarbagecollection.co.ke/storage/${editingService.image_path}`} 
+                          alt="Current" 
+                          className="w-32 h-32 object-cover rounded-lg border" 
                         />
                       </div>
                     )}
                   </div>
 
-                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                  <div className="flex justify-end space-x-3 pt-4">
                     <button
                       type="button"
-                      onClick={() => setShowForm(false)}
-                      className="px-6 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                      onClick={() => {
+                        setShowForm(false);
+                        setEditingService(null);
+                        resetForm();
+                      }}
                       disabled={submitting}
+                      className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                     >
                       {submitting ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          <span>{editingService ? 'Updating...' : 'Creating...'}</span>
+                          {editingService ? 'Updating...' : 'Creating...'}
                         </>
                       ) : (
-                        <span>{editingService ? 'Update Service' : 'Create Service'}</span>
+                        editingService ? 'Update Service' : 'Create Service'
                       )}
                     </button>
                   </div>
