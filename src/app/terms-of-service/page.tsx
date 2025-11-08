@@ -112,8 +112,8 @@ export default function TermsOfService() {
               <h2 className="text-2xl font-bold mb-4">10. Contact Information</h2>
               <div className="p-4 bg-gray-50 rounded-lg">
                 <p><strong>Sylvie Garbage Collection</strong></p>
-                <p>Email: legal@sylviegarbagecollection.co.ke</p>
-                <p>Phone: +254 XXX XXX XXX</p>
+                <p>Email: sylviegarbagecollection@gmail.com</p>
+                <p>Phone: +254 711 515 752</p>
                 <p>Nairobi, Kenya</p>
               </div>
             </section>

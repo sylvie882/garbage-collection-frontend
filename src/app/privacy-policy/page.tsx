@@ -104,8 +104,8 @@ export default function PrivacyPolicy() {
                 If you have any questions about this Privacy Policy, please contact us at:
               </p>
               <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <p><strong>Email:</strong> privacy@sylviegarbagecollection.co.ke</p>
-                <p><strong>Phone:</strong> +254 XXX XXX XXX</p>
+                <p><strong>Email:</strong> sylviegarbagecollection@gmail.com</p>
+                <p><strong>Phone:</strong> +254 711 515 752</p>
                 <p><strong>Address:</strong> Nairobi, Kenya</p>
               </div>
             </section>
