@@ -1,46 +1,41 @@
-// src/app/services/[slug]/page.tsx (MINIMAL FIXES)
+// src/app/services/[slug]/page.tsx
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { serviceApi } from '@/lib/api';
 import { Service } from '@/types';
 import ServiceDetail from '@/components/ServiceDetail';
 import RelatedServices from '@/components/RelatedServices';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-// Disable all caching and use dynamic rendering
+// Disable caching for dynamic content
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-export const fetchCache = 'force-no-store';
 
 async function getService(slug: string): Promise<Service | null> {
   try {
-    console.log('🔄 [SERVER] getService called with slug:', slug);
+    console.log('🔍 [SERVER] Looking for service with slug:', slug);
     
-    // Use the getByIdentifier method that handles both API structures
-    try {
-      console.log('🔄 [SERVER] Trying direct API lookup...');
-      const service = await serviceApi.getByIdentifier(slug);
-      console.log('✅ [SERVER] Service found via API:', service.name);
-      return service;
-    } catch (apiError) {
-      console.log('⚠️ [SERVER] Direct API lookup failed, falling back to getAll...');
+    // First, try to fetch all services and find the matching one
+    const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/services', {
+      cache: 'no-store'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch services: ${response.status}`);
     }
     
-    // Fallback: get all services and find matching one
-    console.log('🔄 [SERVER] Fetching all services to find matching slug...');
-    const allResponse = await serviceApi.getAll();
-    const services = allResponse.data;
-    
-    console.log('📦 [SERVER] Total services found:', services.length);
+    const services = await response.json();
     
     if (!Array.isArray(services)) {
       console.error('🚨 [SERVER] Services is not an array:', typeof services);
       return null;
     }
     
+    console.log('📦 [SERVER] Total services available:', services.length);
+    
     // Log all slugs for debugging
-    console.log('📝 [SERVER] Available slugs:', services.map((s: Service) => s.slug));
+    const availableSlugs = services.map((s: Service) => s.slug);
+    console.log('📝 [SERVER] Available slugs:', availableSlugs);
     
     // Try to find service by slug (exact match)
     let foundService = services.find((service: Service) => 
@@ -51,8 +46,6 @@ async function getService(slug: string): Promise<Service | null> {
       console.log('✅ [SERVER] Service found by exact slug:', foundService.name);
       return foundService;
     }
-    
-    console.log('❌ [SERVER] No exact slug match, trying alternative methods...');
     
     // Try case-insensitive match
     foundService = services.find((service: Service) => 
@@ -80,21 +73,22 @@ async function getService(slug: string): Promise<Service | null> {
     return null;
     
   } catch (error: unknown) {
-    console.error('🚨 [SERVER] Error in getService:');
-    
-    if (error instanceof Error) {
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-    }
-    
+    console.error('🚨 [SERVER] Error in getService:', error);
     return null;
   }
 }
 
 async function getRelatedServices(currentService: Service): Promise<Service[]> {
   try {
-    const response = await serviceApi.getAll();
-    const services = response.data;
+    const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/services', {
+      cache: 'no-store'
+    });
+    
+    if (!response.ok) {
+      return [];
+    }
+    
+    const services = await response.json();
     
     if (!Array.isArray(services)) {
       return [];
@@ -105,6 +99,7 @@ async function getRelatedServices(currentService: Service): Promise<Service[]> {
         service.id !== currentService.id && 
         service.category === currentService.category
     );
+    
     return related.slice(0, 3);
   } catch (error) {
     console.error('🚨 [SERVER] Error fetching related services:', error);
@@ -140,7 +135,6 @@ export default async function ServiceDetailPage({
   if (!service) {
     console.log('❌ [PAGE] Service not found for slug:', slug);
     
-    // Custom 404 page
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -228,7 +222,6 @@ export default async function ServiceDetailPage({
   );
 }
 
-// Disable static generation for now to fix caching issues
 export async function generateStaticParams() {
   return [];
 }
