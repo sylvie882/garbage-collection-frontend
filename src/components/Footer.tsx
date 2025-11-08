@@ -10,6 +10,12 @@ export default function Footer() {
     { name: 'Free Quote', href: '/quote' },
   ];
 
+  const legalLinks = [
+    { name: 'Privacy Policy', href: '/privacy-policy' },
+    { name: 'Terms of Service', href: '/terms-of-service' },
+    { name: 'Cookie Policy', href: '/cookie-policy' },
+  ];
+
   return (
     <footer className="bg-gray-900 text-white">
       {/* Main Footer */}
@@ -122,9 +128,15 @@ export default function Footer() {
               © {new Date().getFullYear()} Sylvie Garbage Collection Services. All rights reserved.
             </p>
             <div className="flex space-x-6 text-sm">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Cookie Policy</a>
+              {legalLinks.map((link, index) => (
+                <Link
+                  key={index}
+                  href={link.href}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  {link.name}
+                </Link>
+              ))}
             </div>
           </div>
         </div>

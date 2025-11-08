@@ -6,6 +6,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import ServiceCard from '../components/ServiceCard';
 import FloatingButtons from '../components/FloatingButtons';
+import CookieConsent from '../components/CookieConsent';
 
 async function getServices(): Promise<Service[]> {
   try {
@@ -215,6 +216,9 @@ export default async function Home() {
       
       {/* Floating WhatsApp and Scroll-to-Top Buttons */}
       <FloatingButtons />
+
+      {/* Cookie Consent Banner */}
+      <CookieConsent />
     </div>
   );
 }
