@@ -11,6 +11,53 @@ interface SearchParams {
   page?: string;
 }
 
+// SEO Metadata
+export const metadata = {
+  title: 'Waste Management Services | Sylvie Garbage Collection Kenya',
+  description: 'Professional waste management services in Kenya. Garbage collection, recycling, pest control & cleaning services for residential & commercial properties across Nairobi, Nakuru, Narok & Laikipia.',
+  keywords: 'waste management services Kenya, garbage collection Nairobi, recycling services, pest control, cleaning services, commercial waste disposal, residential garbage collection',
+  openGraph: {
+    title: 'Professional Waste Management Services | Sylvie Garbage Collection',
+    description: 'Comprehensive waste management solutions including garbage collection, recycling, pest control and cleaning services across Kenya.',
+    type: 'website',
+    locale: 'en_KE',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+};
+
+// Structured Data for Service Catalog
+const generateStructuredData = (services: Service[]) => ({
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  'name': 'Waste Management Services - Sylvie Garbage Collection',
+  'description': 'Professional waste management and environmental services in Kenya',
+  'url': 'https://sylviegarbagecollection.co.ke/services',
+  'numberOfItems': services.length,
+  'itemListElement': services.map((service, index) => ({
+    '@type': 'Service',
+    'position': index + 1,
+    'name': service.name,
+    'description': service.description,
+    'serviceType': service.category || 'Waste Management',
+    'areaServed': ['Nairobi', 'Nakuru', 'Narok', 'Laikipia'],
+    'provider': {
+      '@type': 'Organization',
+      'name': 'Sylvie Garbage Collection',
+      'url': 'https://sylviegarbagecollection.co.ke'
+    }
+  }))
+});
+
 async function getServices(params: SearchParams = {}): Promise<{
   services: Service[];
   totalCount: number;
@@ -147,8 +194,62 @@ export default async function ServicesPage({
 
   const paginationRange = getPaginationRange();
 
+  // Generate structured data
+  const structuredData = generateStructuredData(services);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50">
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      
+      {/* Hidden SEO content for search engines */}
+      <div className="sr-only" aria-hidden="true">
+        <h1>Waste Management Services - Sylvie Garbage Collection Kenya</h1>
+        <h2>Professional Garbage Collection & Environmental Services</h2>
+        <p>
+          Sylvie Garbage Collection offers comprehensive waste management services across Kenya including 
+          Nairobi, Nakuru, Narok, and Laikipia counties. Our professional services include residential garbage 
+          collection, commercial waste disposal, recycling programs, pest control, and cleaning services.
+        </p>
+        
+        <h3>Our Service Categories</h3>
+        <ul>
+          <li>Residential Garbage Collection - Regular waste pickup for homes and apartments</li>
+          <li>Commercial Waste Management - Business waste disposal solutions</li>
+          <li>Recycling Services - Eco-friendly waste sorting and processing</li>
+          <li>Pest Control Services - Effective pest elimination and prevention</li>
+          <li>Cleaning Services - Professional cleaning and sanitation</li>
+          <li>Industrial Waste Disposal - Specialized industrial waste management</li>
+        </ul>
+
+        <h4>Service Areas Covered</h4>
+        <p>
+          We provide waste management services throughout Kenya with focus on Nairobi County (Karen, Runda, 
+          Westlands, Kilimani, Lavington), Nakuru County (Milimani, Naivasha), Narok County, and Laikipia County. 
+          Our reliable garbage collection services ensure clean and healthy environments for residential and 
+          commercial properties.
+        </p>
+
+        <h5>Why Choose Our Waste Management Services?</h5>
+        <ul>
+          <li>Experienced and qualified waste management professionals</li>
+          <li>100% recycling commitment and eco-friendly practices</li>
+          <li>24/7 emergency services and customer support</li>
+          <li>Affordable pricing with flexible service plans</li>
+          <li>Modern equipment and sustainable disposal methods</li>
+          <li>Same-day service available in most areas</li>
+        </ul>
+
+        <p>
+          With over {totalCount} professional services available, Sylvie Garbage Collection is your trusted 
+          partner for all waste management needs in Kenya. Contact us today for free quotes and customized 
+          service solutions.
+        </p>
+      </div>
+
       <Header />
       
       {/* Compact Professional Hero Section */}
@@ -165,8 +266,13 @@ export default async function ServicesPage({
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* Compact Heading - Only Our Services */}
           <h1 className="text-2xl lg:text-4xl font-bold text-white mb-6 leading-tight">
-            Our <span className="text-orange-300">Services</span>
+            Professional <span className="text-orange-300">Waste Management</span> Services
           </h1>
+          
+          <p className="text-green-100 text-lg mb-8 max-w-3xl mx-auto">
+            Comprehensive garbage collection, recycling, and environmental services across Kenya. 
+            Serving residential, commercial, and industrial clients with 100% recycling commitment.
+          </p>
           
           {/* Compact CTA Buttons - Only two buttons */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
@@ -186,8 +292,24 @@ export default async function ServicesPage({
               <svg className="w-4 h-4 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>
-              Explore Services
+              Explore {totalCount}+ Services
             </Link>
+          </div>
+
+          {/* Service Coverage Badges */}
+          <div className="flex flex-wrap justify-center gap-3 mt-8">
+            <span className="bg-green-600/30 text-green-100 px-4 py-2 rounded-full text-sm border border-green-500/30">
+              🏙️ Nairobi County
+            </span>
+            <span className="bg-green-600/30 text-green-100 px-4 py-2 rounded-full text-sm border border-green-500/30">
+              🏔️ Nakuru County
+            </span>
+            <span className="bg-green-600/30 text-green-100 px-4 py-2 rounded-full text-sm border border-green-500/30">
+              🦁 Narok County
+            </span>
+            <span className="bg-green-600/30 text-green-100 px-4 py-2 rounded-full text-sm border border-green-500/30">
+              🏞️ Laikipia County
+            </span>
           </div>
         </div>
       </section>
@@ -196,11 +318,11 @@ export default async function ServicesPage({
       <section className="py-8 bg-white border-b border-gray-200/60">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">
-              Find Services
-            </h3>
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">
+              Find Waste Management Services
+            </h2>
             <p className="text-sm text-gray-600">
-              Search and filter our service catalog
+              Search and filter our comprehensive service catalog
             </p>
           </div>
           <ServicesSearch 
@@ -222,7 +344,7 @@ export default async function ServicesPage({
               </h2>
               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                 <span className="bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
-                  <span className="font-semibold text-green-600">{totalCount}</span> Services Available
+                  <span className="font-semibold text-green-600">{totalCount}</span> Professional Services Available
                 </span>
                 {params.search && (
                   <span className="bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
@@ -264,7 +386,7 @@ export default async function ServicesPage({
                   {/* Results Summary */}
                   <div className="text-sm text-gray-600">
                     Showing <span className="font-semibold text-gray-900">{((currentPage - 1) * 12) + 1}-{Math.min(currentPage * 12, totalCount)}</span> of{' '}
-                    <span className="font-semibold text-gray-900">{totalCount}</span> services
+                    <span className="font-semibold text-gray-900">{totalCount}</span> waste management services
                   </div>
 
                   {/* Pagination Controls */}
@@ -378,12 +500,12 @@ export default async function ServicesPage({
                 </svg>
               </div>
               <h3 className="text-3xl font-bold text-gray-900 mb-4">
-                No Services Found
+                No Waste Management Services Found
               </h3>
               <p className="text-gray-600 mb-10 max-w-md mx-auto text-lg">
                 {params.search 
-                  ? `We couldn't find any services matching "${params.search}". Try different keywords or browse our full catalog.`
-                  : 'Our service catalog is currently being updated. Please check back soon or contact us for immediate assistance.'
+                  ? `We couldn't find any waste management services matching "${params.search}". Try different keywords or browse our full catalog.`
+                  : 'Our professional waste management service catalog is currently being updated. Please check back soon or contact us for immediate assistance.'
                 }
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -403,7 +525,7 @@ export default async function ServicesPage({
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
-                  Contact Our Team
+                  Contact Our Waste Management Experts
                 </Link>
               </div>
             </div>
@@ -420,10 +542,11 @@ export default async function ServicesPage({
         
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-            Ready to Get Started?
+            Ready for Professional Waste Management?
           </h2>
           <p className="text-lg text-green-100 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Join thousands of satisfied customers who trust us with their waste management needs. 
+            Join thousands of satisfied residential and commercial clients across Kenya who trust 
+            Sylvie Garbage Collection for reliable, eco-friendly waste management solutions. 
             Get your personalized quote today.
           </p>
           <div className="flex flex-col sm:flex-row gap-5 justify-center">
@@ -443,11 +566,11 @@ export default async function ServicesPage({
               <svg className="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
-              Talk to Expert
+              Talk to Waste Management Expert
             </Link>
           </div>
           <p className="text-green-200/80 text-sm mt-8">
-            ✨ 100% Satisfaction Guarantee • No Hidden Fees • 24/7 Customer Support
+            ✨ 100% Recycling Commitment • 24/7 Emergency Services • Licensed & Insured • Eco-Friendly Solutions
           </p>
         </div>
       </section>
@@ -455,12 +578,4 @@ export default async function ServicesPage({
       <Footer />
     </div>
   );
-}
-
-export async function generateMetadata() {
-  return {
-    title: 'Professional Services | Sylvie Garbage Collection',
-    description: 'Premium waste management and environmental services. Residential, commercial, and eco-friendly solutions with modern technology and sustainable practices.',
-    keywords: 'professional waste management, garbage collection services, recycling solutions, Nairobi services, environmental services',
-  };
 }

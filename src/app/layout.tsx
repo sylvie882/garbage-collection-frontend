@@ -6,8 +6,12 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'Sylvie Garbage Collection - Professional Waste Management Services',
-  description:
-    "Kenya's first digital waste management company providing garbage collection, pest control, and cleaning services.",
+  description: "Kenya's first digital waste management company providing garbage collection, pest control, and cleaning services.",
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
@@ -18,6 +22,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Manual favicon link for maximum compatibility */}
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+        <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+        
         {/* Add Tailwind CSS via CDN (only if Tailwind isn't configured via PostCSS) */}
         <script src="https://cdn.tailwindcss.com"></script>
         <script

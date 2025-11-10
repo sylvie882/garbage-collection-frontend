@@ -16,8 +16,155 @@ export default function Footer() {
     { name: 'Cookie Policy', href: '/cookie-policy' },
   ];
 
+  // Structured Data for Local Business
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    'name': 'Sylvie Garbage Collection',
+    'alternateName': 'Sylvie Waste Management',
+    'description': 'Professional waste management and garbage collection services in Nairobi, Kenya',
+    'url': 'https://sylviegarbagecollection.co.ke',
+    'logo': 'https://sylviegarbagecollection.co.ke/logo.jpeg',
+    'foundingDate': '2020',
+    'founder': {
+      '@type': 'Person',
+      'name': 'Sylvie Garbage Collection Team'
+    },
+    'address': {
+      '@type': 'PostalAddress',
+      'streetAddress': 'Dale House, Fox Close Off Rhapta Road',
+      'addressLocality': 'Westlands',
+      'addressRegion': 'Nairobi',
+      'addressCountry': 'KE',
+      'postalCode': '00100'
+    },
+    'contactPoint': {
+      '@type': 'ContactPoint',
+      'telephone': '+254-711-515752',
+      'email': 'sylviegarbagecollection@gmail.com',
+      'contactType': 'customer service',
+      'areaServed': ['KE'],
+      'availableLanguage': ['English', 'Swahili']
+    },
+    'sameAs': [
+      'https://www.facebook.com/sylviegarbagecollection',
+      'https://www.instagram.com/sylviegarbagecollection',
+      'https://twitter.com/sylviegarbage'
+    ],
+    'areaServed': [
+      'Nairobi County',
+      'Nakuru County', 
+      'Narok County',
+      'Laikipia County',
+      'Kenya'
+    ],
+    'serviceType': [
+      'Garbage Collection',
+      'Waste Disposal',
+      'Recycling Services',
+      'Pest Control',
+      'Cleaning Services',
+      'Commercial Waste Management',
+      'Residential Waste Collection'
+    ],
+    'openingHours': [
+      'Mo-Su 00:00-23:59'
+    ],
+    'priceRange': '$$',
+    'hasOfferCatalog': {
+      '@type': 'OfferCatalog',
+      'name': 'Waste Management Services',
+      'itemListElement': [
+        {
+          '@type': 'Offer',
+          'itemOffered': {
+            '@type': 'Service',
+            'name': 'Residential Garbage Collection',
+            'description': 'Regular waste pickup for homes and apartments'
+          }
+        },
+        {
+          '@type': 'Offer',
+          'itemOffered': {
+            '@type': 'Service',
+            'name': 'Commercial Waste Management',
+            'description': 'Business waste disposal solutions'
+          }
+        },
+        {
+          '@type': 'Offer',
+          'itemOffered': {
+            '@type': 'Service',
+            'name': 'Recycling Services',
+            'description': 'Eco-friendly waste sorting and processing'
+          }
+        }
+      ]
+    }
+  };
+
   return (
     <footer className="bg-gray-900 text-white">
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      
+      {/* Hidden SEO content for search engines */}
+      <div className="sr-only" aria-hidden="true">
+        <h1>Sylvie Garbage Collection - Professional Waste Management Services Kenya</h1>
+        <h2>Leading Garbage Collection Company in Nairobi & Beyond</h2>
+        <p>
+          Sylvie Garbage Collection is Kenya's premier digital waste management company providing 
+          comprehensive garbage collection, recycling, and environmental services across Nairobi County, 
+          Nakuru County, Narok County, and Laikipia County. We serve both residential and commercial 
+          clients with reliable, eco-friendly waste management solutions.
+        </p>
+        
+        <h3>Our Waste Management Services</h3>
+        <ul>
+          <li>Residential Garbage Collection - Regular waste pickup for homes and apartments</li>
+          <li>Commercial Waste Management - Business waste disposal solutions</li>
+          <li>Recycling Services - 100% recycling commitment and eco-friendly disposal</li>
+          <li>Pest Control Services - Effective pest elimination and prevention</li>
+          <li>Cleaning Services - Professional cleaning and sanitation solutions</li>
+          <li>Bulk Waste Removal - Large item and construction waste disposal</li>
+        </ul>
+
+        <h4>Service Areas Covered</h4>
+        <p>
+          We provide garbage collection services throughout Kenya with focus on Nairobi (Karen, Runda, 
+          Westlands, Kilimani, Lavington), Nakuru (Milimani, Naivasha), Narok, and Laikipia counties. 
+          Our reliable weekly and monthly collection schedules ensure clean environments for all our clients.
+        </p>
+
+        <h5>Contact Information</h5>
+        <p>
+          <strong>Address:</strong> Dale House, Fox Close Off Rhapta Road, Westlands, Nairobi, Kenya<br/>
+          <strong>Phone:</strong> +254 711 515 752 (24/7 Emergency Services)<br/>
+          <strong>Email:</strong> sylviegarbagecollection@gmail.com<br/>
+          <strong>Business Hours:</strong> Monday - Sunday, 24/7 Operations
+        </p>
+
+        <h6>Why Choose Sylvie Garbage Collection?</h6>
+        <ul>
+          <li>Experienced and qualified waste management professionals</li>
+          <li>100% recycling commitment and environmental sustainability</li>
+          <li>24/7 customer support and emergency services</li>
+          <li>Affordable pricing with flexible service plans</li>
+          <li>Modern equipment and eco-friendly disposal methods</li>
+          <li>Same-day service available in most areas</li>
+          <li>Serving residential, commercial, and industrial clients</li>
+        </ul>
+
+        <p>
+          Sylvie Garbage Collection is committed to creating cleaner, healthier environments across Kenya 
+          through professional waste management services. Contact us today for free quotes and customized 
+          waste solutions tailored to your specific needs.
+        </p>
+      </div>
+
       {/* Main Footer */}
       <div className="container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-3 gap-8">
@@ -27,95 +174,136 @@ export default function Footer() {
               <div className="w-12 h-12 relative">
                 <Image
                   src="/logo.jpeg"
-                  alt="Sylvie Garbage Collection"
+                  alt="Sylvie Garbage Collection - Professional Waste Management Services Kenya"
                   fill
                   className="object-contain rounded-lg"
+                  priority
                 />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Sylvie</h1>
-                <p className="text-xs text-gray-400 -mt-1">Waste & Garbage Collection</p>
+                <h1 className="text-xl font-bold text-white">Sylvie Garbage Collection</h1>
+                <p className="text-xs text-gray-400 -mt-1">Professional Waste Management Services</p>
               </div>
             </div>
             <p className="text-gray-300 mb-4 text-sm leading-relaxed">
-              Kenyan's first digital waste management company providing comprehensive 
-              waste collection and recycling services to homes and businesses across Kenya.
+              Kenya's leading digital waste management company providing comprehensive 
+              garbage collection and recycling services to homes and businesses across 
+              Nairobi, Nakuru, Narok, and Laikipia counties.
             </p>
-            {/* <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
-                </svg>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
-                </svg>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                </svg>
-              </a>
-            </div> */}
+            
+            {/* Service Coverage Badges */}
+            <div className="flex flex-wrap gap-2 mt-4">
+              <span className="bg-green-600/20 text-green-300 px-3 py-1 rounded-full text-xs border border-green-500/30">
+                🏙️ Nairobi County
+              </span>
+              <span className="bg-green-600/20 text-green-300 px-3 py-1 rounded-full text-xs border border-green-500/30">
+                🏔️ Nakuru County
+              </span>
+              <span className="bg-green-600/20 text-green-300 px-3 py-1 rounded-full text-xs border border-green-500/30">
+                🦁 Narok County
+              </span>
+              <span className="bg-green-600/20 text-green-300 px-3 py-1 rounded-full text-xs border border-green-500/30">
+                🏞️ Laikipia County
+              </span>
+            </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">Quick Links</h3>
+            <h3 className="text-lg font-semibold mb-4 text-white">Waste Management Services</h3>
             <div className="grid grid-cols-1 gap-3">
               {navigation.map((item, index) => (
                 <Link
                   key={index}
                   href={item.href}
                   className="text-gray-300 hover:text-white transition-colors text-sm block py-1 hover:translate-x-1 transform transition-transform"
+                  title={`Sylvie Garbage Collection ${item.name} - Waste Management Services`}
                 >
                   {item.name}
                 </Link>
               ))}
             </div>
+            
+            {/* Service Highlights */}
+            <div className="mt-6">
+              <h4 className="font-semibold mb-3 text-white text-sm">Our Expertise</h4>
+              <div className="space-y-2 text-xs text-gray-300">
+                <div className="flex items-center">
+                  <span className="text-green-400 mr-2">✓</span>
+                  Residential Garbage Collection
+                </div>
+                <div className="flex items-center">
+                  <span className="text-green-400 mr-2">✓</span>
+                  Commercial Waste Management
+                </div>
+                <div className="flex items-center">
+                  <span className="text-green-400 mr-2">✓</span>
+                  100% Recycling Commitment
+                </div>
+                <div className="flex items-center">
+                  <span className="text-green-400 mr-2">✓</span>
+                  Eco-Friendly Solutions
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Contact Info */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-white">Contact Us</h3>
+            <h3 className="text-lg font-semibold mb-4 text-white">Contact Our Team</h3>
             <div className="space-y-3">
               <div className="flex items-start space-x-3">
                 <svg className="w-5 h-5 mt-0.5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
                 </svg>
-                <span className="text-gray-300 text-sm">
-                  Dale House, Fox Cl Off Rhapta Rd, Westland-Nairobi
-                </span>
+                <div>
+                  <span className="text-gray-300 text-sm block">
+                    Dale House, Fox Cl Off Rhapta Rd
+                  </span>
+                  <span className="text-gray-400 text-xs block mt-1">
+                    Westlands, Nairobi, Kenya
+                  </span>
+                  <span className="text-green-300 text-xs block mt-1">
+                    Serving Nairobi, Nakuru, Narok & Laikipia
+                  </span>
+                </div>
               </div>
               <div className="flex items-center space-x-3">
                 <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
                 </svg>
-                <span className="text-gray-300 text-sm">sylviegarbagecollection@gmail.com</span>
+                <a 
+                  href="mailto:sylviegarbagecollection@gmail.com" 
+                  className="text-gray-300 text-sm hover:text-white transition-colors"
+                  title="Email Sylvie Garbage Collection for Waste Management Services"
+                >
+                  sylviegarbagecollection@gmail.com
+                </a>
               </div>
               <div className="flex items-center space-x-3">
                 <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
                 </svg>
-                <span className="text-gray-300 text-sm">+254 711 515 752</span>
+                <a 
+                  href="tel:+254711515752" 
+                  className="text-gray-300 text-sm hover:text-white transition-colors"
+                  title="Call Sylvie Garbage Collection for Emergency Waste Collection"
+                >
+                  +254 711 515 752
+                </a>
+                <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                  24/7
+                </span>
               </div>
             </div>
 
-            {/* Newsletter */}
-            {/* <div className="mt-6">
-              <h4 className="font-semibold mb-3 text-white">Newsletter</h4>
-              <div className="flex flex-col space-y-2">
-                <input
-                  type="email"
-                  placeholder="Your email address"
-                  className="px-3 py-2 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm w-full placeholder-gray-400"
-                />
-                <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
-                  Subscribe
-                </button>
-              </div>
-            </div> */}
+            {/* Emergency Services Notice */}
+            <div className="mt-6 p-3 bg-gray-800 rounded-lg border-l-4 border-orange-500">
+              <h4 className="font-semibold text-white text-sm mb-1">Emergency Services</h4>
+              <p className="text-gray-300 text-xs">
+                Need immediate waste collection? Call us anytime for emergency garbage disposal services across Kenya.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -125,14 +313,16 @@ export default function Footer() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
             <p className="text-gray-400 text-sm text-center md:text-left">
-              © {new Date().getFullYear()} Sylvie Garbage Collection Services. All rights reserved.
+              © {new Date().getFullYear()} Sylvie Garbage Collection Services. 
+              <span className="text-green-300 ml-1">Professional Waste Management Across Kenya.</span>
             </p>
             <div className="flex space-x-6 text-sm">
               {legalLinks.map((link, index) => (
                 <Link
                   key={index}
                   href={link.href}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="text-gray-400 hover:text-white transition-colors text-xs"
+                  title={`Sylvie Garbage Collection ${link.name}`}
                 >
                   {link.name}
                 </Link>
