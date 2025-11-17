@@ -42,24 +42,45 @@ export default function QuoteForm() {
   const onSubmit = async (data: QuoteFormData) => {
     setIsSubmitting(true);
     setSubmitMessage('');
+    setIsSuccess(false);
 
     try {
+      console.log('Submitting form data:', data);
+      
       const response = await quoteRequestApi.create(data);
-      setSubmitMessage(response.data.message);
+      
+      // Success message with emoji and better formatting
+      setSubmitMessage('🎉 Thank you! Your quote request has been submitted successfully. Our team will contact you within 24 hours.');
       setIsSuccess(true);
+      
+      // Reset form after successful submission
       reset();
+      
+      // Auto-hide success message after 10 seconds
+      setTimeout(() => {
+        setSubmitMessage('');
+      }, 10000);
+      
     } catch (error: unknown) {
-      // Proper TypeScript error handling
+      console.error('Form submission error:', error);
+      
+      // Enhanced error handling
       if (error instanceof Error) {
-        setSubmitMessage(error.message || 'Failed to submit quote request. Please try again.');
+        if (error.message.includes('Failed to fetch') || error.message.includes('Network error')) {
+          setSubmitMessage('🌐 Network error: Please check your internet connection and try again.');
+        } else if (error.message.includes('405')) {
+          setSubmitMessage('⚠️ Server error: Please contact us directly at +254 711515752');
+        } else {
+          setSubmitMessage(`❌ ${error.message}`);
+        }
       } else if (typeof error === 'object' && error !== null && 'response' in error) {
         const apiError = error as { response?: { data?: { message?: string } } };
         setSubmitMessage(
           apiError.response?.data?.message || 
-          'Failed to submit quote request. Please try again.'
+          '❌ Failed to submit quote request. Please try again or contact us directly.'
         );
       } else {
-        setSubmitMessage('Failed to submit quote request. Please try again.');
+        setSubmitMessage('❌ An unexpected error occurred. Please try again.');
       }
       setIsSuccess(false);
     } finally {
@@ -83,12 +104,30 @@ export default function QuoteForm() {
         {/* Form */}
         <div className="p-8">
           {submitMessage && (
-            <div className={`mb-6 p-4 rounded-lg ${
+            <div className={`mb-6 p-4 rounded-lg border-2 ${
               isSuccess 
-                ? 'bg-green-50 text-green-800 border border-green-200' 
-                : 'bg-red-50 text-red-800 border border-red-200'
+                ? 'bg-green-50 text-green-800 border-green-200 shadow-lg' 
+                : 'bg-red-50 text-red-800 border-red-200'
             }`}>
-              {submitMessage}
+              <div className="flex items-start space-x-3">
+                <div className={`text-xl ${isSuccess ? 'text-green-600' : 'text-red-600'} mt-1`}>
+                  {isSuccess ? '✅' : '❌'}
+                </div>
+                <div className="flex-1">
+                  <p className={`font-semibold ${isSuccess ? 'text-green-900' : 'text-red-900'}`}>
+                    {isSuccess ? 'Success!' : 'Error'}
+                  </p>
+                  <p className="mt-1">{submitMessage}</p>
+                  {isSuccess && (
+                    <div className="mt-3 flex items-center text-sm text-green-700">
+                      <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      We&apos;ve received your request and will contact you soon!
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -144,7 +183,13 @@ export default function QuoteForm() {
                 <input
                   type="tel"
                   id="phone"
-                  {...register('phone', { required: 'Phone number is required' })}
+                  {...register('phone', { 
+                    required: 'Phone number is required',
+                    pattern: {
+                      value: /^[+]?[\d\s-()]+$/,
+                      message: 'Please enter a valid phone number'
+                    }
+                  })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
                   placeholder="+254 XXX XXX XXX"
                 />
@@ -218,10 +263,10 @@ export default function QuoteForm() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-12 py-4 rounded-lg font-semibold text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
+                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-12 py-4 rounded-lg font-semibold text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg min-w-[200px]"
               >
                 {isSubmitting ? (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-center space-x-2">
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>Submitting...</span>
                   </div>
