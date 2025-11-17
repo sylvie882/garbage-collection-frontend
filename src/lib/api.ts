@@ -28,18 +28,7 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // COMPLETE error logging
-    console.error('🚨 [API] Full error details:', {
-      url: error.config?.url,
-      method: error.config?.method,
-      baseURL: error.config?.baseURL,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      message: error.message,
-      data: error.response?.data,
-      headers: error.response?.headers,
-      config: error.config
-    });
+
     return Promise.reject(error);
   }
 );
