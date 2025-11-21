@@ -1,8 +1,9 @@
-// src/lib/api.ts (FIXED - handles both response structures)
+// src/lib/api.ts (FIXED - CORS issue resolved)
 import axios from 'axios';
 import { Carousel, QuoteRequest, Service } from '../types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+// FIX: Hardcode the API URL to fix CORS issue
+const API_URL = 'https://api.sylviegarbagecollection.co.ke';
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -28,7 +29,7 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-
+    console.error('🚨 [API] Response error:', error.message);
     return Promise.reject(error);
   }
 );
