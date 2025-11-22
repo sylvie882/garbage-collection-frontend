@@ -266,6 +266,10 @@ export default function QuotePage() {
         </div>
       </div>
 
+
+
+      
+
       <Footer />
       <FloatingButtons />
     </div>
