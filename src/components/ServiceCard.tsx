@@ -209,7 +209,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
                 )}
               </p>
             ) : (
-              <p className="text-green-600 font-medium text-sm">Custom Quote</p>
+              <p className="text-green-600 font-medium text-sm"></p>
             )}
           </div>
 

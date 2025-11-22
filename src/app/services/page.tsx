@@ -265,10 +265,17 @@ export default async function ServicesPage({
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* Compact Heading - Only Our Services */}
-          <h1 className="text-2xl lg:text-4xl font-bold text-white mb-6 leading-tight">
-            Professional <span className="text-orange-300">Waste Management</span> Services
-          </h1>
+       
           
+          <p className="text-green-100 text-lg mb-8 max-w-3xl mx-auto">
+            {/* Comprehensive garbage collection, recycling, and environmental services across Kenya. 
+            Serving residential, commercial, and industrial clients with 100% recycling commitment. */}
+          </p>
+
+          <h1 className="text-2xl lg:text-4xl font-bold text-white mb-6 pt-20 leading-tight">
+            Professional <span className="text-orange-300">Waste & Garbage Collection </span> Services
+          </h1>
+
           <p className="text-green-100 text-lg mb-8 max-w-3xl mx-auto">
             Comprehensive garbage collection, recycling, and environmental services across Kenya. 
             Serving residential, commercial, and industrial clients with 100% recycling commitment.
@@ -297,7 +304,7 @@ export default async function ServicesPage({
           </div>
 
           {/* Service Coverage Badges */}
-          <div className="flex flex-wrap justify-center gap-3 mt-8">
+          {/* <div className="flex flex-wrap justify-center gap-3 mt-8">
             <span className="bg-green-600/30 text-green-100 px-4 py-2 rounded-full text-sm border border-green-500/30">
               🏙️ Nairobi County
             </span>
@@ -310,7 +317,7 @@ export default async function ServicesPage({
             <span className="bg-green-600/30 text-green-100 px-4 py-2 rounded-full text-sm border border-green-500/30">
               🏞️ Laikipia County
             </span>
-          </div>
+          </div> */}
         </div>
       </section>
 

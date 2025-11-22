@@ -102,7 +102,7 @@ export default function QuotePage() {
       
       {/* Success Card */}
       {showSuccess && (
-        <div className="fixed top-4 right-4 left-4 md:left-auto md:right-4 z-50 max-w-md animate-in slide-in-from-right duration-500">
+        <div className="fixed top-48 right-4 left-4 md:left-auto md:right-4 z-50 max-w-md animate-in slide-in-from-right duration-500">
           <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6 rounded-2xl shadow-2xl border-2 border-green-300">
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
@@ -158,7 +158,7 @@ export default function QuotePage() {
       <div className="py-16">
         <div className="container mx-auto px-4">
           {/* Enhanced Header */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 px-4">
             <div className="inline-flex items-center gap-4 text-green-600 font-semibold text-sm uppercase tracking-wider mb-6">
               <div className="w-12 h-1 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full"></div>
               Get Your Custom Quote
