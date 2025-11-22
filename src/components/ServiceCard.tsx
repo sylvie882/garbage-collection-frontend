@@ -213,6 +213,8 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             )}
           </div>
 
+
+
                 
         <Link   className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-5 py-2 rounded-lg flex items-center gap-2 transition"
          href={`/services/${service.slug}`}>
