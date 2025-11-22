@@ -12,7 +12,7 @@ export default function Carousel() {
   const [carousels, setCarousels] = useState<CarouselType[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [direction, setDirection] = useState(0); // 0: next, 1: prev
+  const [direction, setDirection] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch carousel slides
@@ -46,7 +46,7 @@ export default function Carousel() {
     if (carousels.length === 0) return;
     
     intervalRef.current = setInterval(() => {
-      setDirection(0); // next direction
+      setDirection(0);
       setCurrentIndex((prev) => (prev + 1) % carousels.length);
     }, 6000);
     
@@ -56,12 +56,12 @@ export default function Carousel() {
   }, [carousels]);
 
   const nextSlide = () => {
-    setDirection(0); // next direction
+    setDirection(0);
     setCurrentIndex((prev) => (prev + 1) % carousels.length);
   };
 
   const prevSlide = () => {
-    setDirection(1); // previous direction
+    setDirection(1);
     setCurrentIndex((prev) => (prev === 0 ? carousels.length - 1 : prev - 1));
   };
 
@@ -70,39 +70,21 @@ export default function Carousel() {
     setCurrentIndex(index);
   };
 
-  // Slide variants for smoother transitions
+  // Simplified slide variants without complex easing
   const slideVariants = {
     enter: (direction: number) => ({
       x: direction === 0 ? 1000 : -1000,
       opacity: 0
     }),
     center: {
-      zIndex: 1,
       x: 0,
       opacity: 1
     },
     exit: (direction: number) => ({
-      zIndex: 0,
       x: direction === 0 ? -1000 : 1000,
       opacity: 0
     })
   };
-
-  // Content animation variants - FIXED ease property
-  const contentVariants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        duration: 0.6,
-        ease: [0.25, 0.46, 0.45, 0.94] // Cubic bezier equivalent of "easeOut"
-      }
-    }
-  };
-
-  // Debug information
-  console.log('Current state:', { isLoading, carouselsCount: carousels.length, currentIndex });
 
   if (isLoading) {
     return (
@@ -149,7 +131,7 @@ export default function Carousel() {
           exit="exit"
           transition={{
             x: { type: "spring", stiffness: 300, damping: 30 },
-            opacity: { duration: 0.4 }
+            opacity: { duration: 0.5 }
           }}
           className="absolute inset-0 w-full h-full"
         >
@@ -164,28 +146,25 @@ export default function Carousel() {
             <div className="text-center text-white px-4 max-w-3xl">
               <motion.h2
                 className="text-3xl md:text-5xl font-extrabold mb-4"
-                variants={contentVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{ delay: 0.2 }}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
               >
                 {carousels[currentIndex].title}
               </motion.h2>
               <motion.p
                 className="text-lg md:text-2xl mb-6"
-                variants={contentVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{ delay: 0.4 }}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
               >
                 {carousels[currentIndex].description}
               </motion.p>
               {carousels[currentIndex].button_text && carousels[currentIndex].button_link && (
                 <motion.div
-                  variants={contentVariants}
-                  initial="hidden"
-                  animate="visible"
-                  transition={{ delay: 0.6 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7, duration: 0.6 }}
                 >
                   <Link
                     href={carousels[currentIndex].button_link}
