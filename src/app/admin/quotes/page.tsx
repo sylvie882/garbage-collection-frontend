@@ -38,20 +38,50 @@ export default function QuotesPage() {
   const fetchQuotes = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/quote-requests', {
+      console.log('🔄 Fetching quotes with token:', token ? 'Present' : 'Missing');
+      
+      // ✅ CORRECTED URL - Use your API domain directly
+      const response = await fetch('https://api.sylviegarbagecollection.co.ke/admin/quote-requests', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
+          'Content-Type': 'application/json',
         },
-        credentials: 'include',
       });
+
+      console.log('📨 Response status:', response.status);
+
+      if (response.status === 401) {
+        // Token expired or invalid
+        localStorage.removeItem('adminToken');
+        router.push('/admin/login');
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
-        setQuotes(Array.isArray(data) ? data : data.data || []);
+        console.log('✅ Quotes data received:', data);
+        
+        // Handle different response formats
+        if (Array.isArray(data)) {
+          setQuotes(data);
+        } else if (data.data && Array.isArray(data.data)) {
+          setQuotes(data.data);
+        } else {
+          setQuotes([]);
+        }
+      } else {
+        console.error('❌ Failed to fetch quotes:', response.status, response.statusText);
+        // Try to get error message
+        try {
+          const errorData = await response.json();
+          console.error('Error details:', errorData);
+        } catch (e) {
+          console.error('Could not parse error response');
+        }
       }
     } catch (error) {
-      console.error('Error fetching quotes:', error);
+      console.error('🚨 Error fetching quotes:', error);
     } finally {
       setLoading(false);
     }
@@ -60,16 +90,20 @@ export default function QuotesPage() {
   const updateStatus = async (id: number, status: string) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`https://sylviegarbagecollection.co.ke/api/public/api/admin/quote-requests/${id}`, {
+      console.log('🔄 Updating quote status:', { id, status });
+      
+      // ✅ CORRECTED URL
+      const response = await fetch(`https://api.sylviegarbagecollection.co.ke/admin/quote-requests/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        credentials: 'include',
         body: JSON.stringify({ status }),
       });
+
+      console.log('📨 Status update response:', response.status);
 
       if (response.ok) {
         // Update local state
@@ -79,9 +113,12 @@ export default function QuotesPage() {
         if (selectedQuote && selectedQuote.id === id) {
           setSelectedQuote({ ...selectedQuote, status: status as any });
         }
+        console.log('✅ Status updated successfully');
+      } else {
+        console.error('❌ Failed to update status:', response.status);
       }
     } catch (error) {
-      console.error('Error updating quote status:', error);
+      console.error('🚨 Error updating quote status:', error);
     }
   };
 
@@ -90,22 +127,30 @@ export default function QuotesPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`https://sylviegarbagecollection.co.ke/api/public/api/admin/quote-requests/${id}`, {
+      console.log('🗑️ Deleting quote:', id);
+      
+      // ✅ CORRECTED URL
+      const response = await fetch(`https://api.sylviegarbagecollection.co.ke/admin/quote-requests/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
         },
-        credentials: 'include',
       });
+
+      console.log('📨 Delete response:', response.status);
 
       if (response.ok) {
         setQuotes(quotes.filter(quote => quote.id !== id));
         if (selectedQuote && selectedQuote.id === id) {
           setSelectedQuote(null);
         }
+        console.log('✅ Quote deleted successfully');
+      } else {
+        console.error('❌ Failed to delete quote:', response.status);
       }
     } catch (error) {
-      console.error('Error deleting quote:', error);
+      console.error('🚨 Error deleting quote:', error);
     }
   };
 
@@ -131,6 +176,7 @@ export default function QuotesPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        <span className="ml-3 text-gray-600">Loading quotes...</span>
       </div>
     );
   }
@@ -145,15 +191,20 @@ export default function QuotesPage() {
               <h1 className="text-2xl font-bold text-gray-900">Quote Requests</h1>
               <p className="text-gray-600">Manage customer quote requests</p>
             </div>
-            <button
-              onClick={fetchQuotes}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              <span>Refresh</span>
-            </button>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-500">
+                API: api.sylviegarbagecollection.co.ke
+              </span>
+              <button
+                onClick={fetchQuotes}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Refresh</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
