@@ -67,7 +67,7 @@ export default async function Home() {
   const displayedServices = services.slice(0, 6);
 
   return (
-    <div className="min-h-screen pt-32 bg-gradient-to-br from-gray-50 to-green-50 w-full overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50 w-full overflow-x-hidden">
       {/* Hidden SEO content with all locations */}
       <div className="sr-only" aria-hidden="true">
         <h1>Sylvie Garbage Collection - Professional Waste Management Services Across Kenya</h1>
@@ -108,7 +108,7 @@ export default async function Home() {
 
       <Header />
 
-      {/* Hero Section */}
+      {/* Hero Section - Now properly at the top without extra spacing */}
       <section className="relative w-full">
         <Carousel />
       </section>
