@@ -1,17 +1,24 @@
-'use client';
-
 import Header from '@/./components/Header';
 import Footer from '@/./components/Footer';
 import QuoteForm from '../../components/QuoteForm';
 import FloatingButtons from '../../components/FloatingButtons';
 import { useState } from 'react';
 
+interface QuoteFormData {
+  name: string;
+  email: string;
+  phone: string;
+  company?: string;
+  service_type: string;
+  message: string;
+}
+
 export default function QuotePage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Direct fetch function for quote submission
-  const submitQuoteRequest = async (formData) => {
+  const submitQuoteRequest = async (formData: QuoteFormData) => {
     setIsSubmitting(true);
     
     try {
