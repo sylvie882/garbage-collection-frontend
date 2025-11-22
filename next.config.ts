@@ -35,6 +35,11 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
 
+  // ADD THIS: Force unique build ID to bust Vercel cache
+  generateBuildId: async () => {
+    return `build-${Date.now()}`
+  },
+
   // Add redirects for old WordPress URLs
   async redirects() {
     return [
