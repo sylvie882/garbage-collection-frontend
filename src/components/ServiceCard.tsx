@@ -1,250 +1,240 @@
+// src/components/ServiceCard.tsx
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
 import Link from 'next/link';
-import { Carousel as CarouselType } from '../types';
+import { Service } from '../types'; // Changed from '@/types' to '../types'
+import { useState, useRef, useEffect } from 'react';
 
-const API_URL = 'https://api.sylviegarbagecollection.co.ke';
+interface ServiceCardProps {
+  service: Service;
+}
 
-export default function Carousel() {
-  const [carousels, setCarousels] = useState<CarouselType[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [direction, setDirection] = useState(0); // 0: next, 1: prev
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+export default function ServiceCard({ service }: ServiceCardProps) {
+  const [videoStarted, setVideoStarted] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const videoRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Fetch carousel slides
-  useEffect(() => {
-    const fetchCarousels = async () => {
-      try {
-        console.log('Fetching carousels from:', `${API_URL}/carousels`);
-        const response = await axios.get<CarouselType[]>(`${API_URL}/carousels`);
-        console.log('API Response:', response.data);
-        
-        const activeSlides = response.data.filter((c) => c.is_active);
-        console.log('Active slides:', activeSlides);
-        
-        const normalizedSlides = activeSlides.map((slide) => ({
-          ...slide,
-          image_url: slide.image_url || slide.image_path || '/placeholder.jpg',
-        }));
-        
-        setCarousels(normalizedSlides);
-      } catch (error) {
-        console.error('Error fetching carousels:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchCarousels();
-  }, []);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.sylviegarbagecollection.co.ke';
 
-  // Auto slide every 6 seconds
-  useEffect(() => {
-    if (carousels.length === 0) return;
-    
-    intervalRef.current = setInterval(() => {
-      setDirection(0); // next direction
-      setCurrentIndex((prev) => (prev + 1) % carousels.length);
-    }, 6000);
-    
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [carousels]);
-
-  const nextSlide = () => {
-    setDirection(0); // next direction
-    setCurrentIndex((prev) => (prev + 1) % carousels.length);
+  // ✅ YouTube video ID extractor
+  const getYouTubeId = (url: string | null) => {
+    if (!url) return null;
+    const match = url.match(
+      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
+    );
+    return match ? match[1] : null;
   };
 
-  const prevSlide = () => {
-    setDirection(1); // previous direction
-    setCurrentIndex((prev) => (prev === 0 ? carousels.length - 1 : prev - 1));
+  const videoId = service.youtube_url ? getYouTubeId(service.youtube_url) : null;
+
+  // ✅ Consistent image URL resolution
+  const getImageUrl = () => {
+    // ✅ Prefer full URL from backend if available
+    if (service.image_url) return service.image_url;
+
+    if (service.image_path) {
+      return service.image_path.startsWith('http')
+        ? service.image_path
+        : `${API_URL}/storage/${service.image_path}`;
+    }
+
+    return '/placeholder.jpg';
   };
 
-  const goToSlide = (index: number) => {
-    setDirection(index > currentIndex ? 0 : 1);
-    setCurrentIndex(index);
+  const imageUrl = getImageUrl();
+
+  // ✅ YouTube embed
+  const getYouTubeEmbedUrl = (id: string, autoplay = false) => {
+    const params = new URLSearchParams({
+      rel: '0',
+      modestbranding: '1',
+      playsinline: '1',
+      controls: '1',
+      enablejsapi: '1',
+      loop: '1',
+      playlist: id,
+      mute: '0',
+    });
+    if (autoplay) params.append('autoplay', '1');
+    return `https://www.youtube.com/embed/${id}?${params.toString()}`;
   };
 
-  // Fixed slide variants with proper TypeScript types
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction === 0 ? 1000 : -1000,
-      opacity: 0
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction === 0 ? -1000 : 1000,
-      opacity: 0
-    })
-  };
-
-  // Fixed content variants with proper TypeScript types
-  const contentVariants = {
-    hidden: { 
-      opacity: 0, 
-      y: 50 
-    },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut" as const
-      }
+  const handleVideoEnd = () => {
+    if (iframeRef.current && videoId) {
+      iframeRef.current.src = getYouTubeEmbedUrl(videoId, true);
     }
   };
 
-  // Debug information
-  console.log('Current state:', { isLoading, carouselsCount: carousels.length, currentIndex });
+  // ✅ Auto-play when visible
+  useEffect(() => {
+    if (!videoId) return;
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-[500px] bg-gray-200 animate-pulse rounded-lg flex items-center justify-center">
-        <div className="text-gray-500">Loading carousel...</div>
-      </div>
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const visible = entry.isIntersecting;
+        setIsVisible(visible);
+        if (visible && !videoStarted) setVideoStarted(true);
+        else if (!visible && videoStarted) setVideoStarted(false);
+      },
+      { threshold: 0.5, rootMargin: '50px' }
     );
-  }
 
-  if (carousels.length === 0) {
-    return (
-      <div className="relative w-full h-[500px] bg-gradient-to-r from-green-800 to-green-600 rounded-lg flex items-center justify-center">
-        <div className="text-center text-white px-4">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">Professional Waste Management</h1>
-          <p className="text-xl md:text-2xl mb-8">Kenya&apos;s First Digital Waste Management Solution</p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link
-              href="/quote"
-              className="bg-orange-500 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-orange-600 transition"
-            >
-              Get Free Quote
-            </Link>
-            <Link
-              href="/services"
-              className="border-2 border-white text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-white hover:text-green-800 transition"
-            >
-              Our Services
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    if (videoRef.current) observer.observe(videoRef.current);
+    return () => observer.disconnect();
+  }, [videoId, videoStarted]);
+
+  // ✅ URL builder - FIXED
+  const getServiceUrl = () => {
+    if (service.slug && service.slug.trim() && service.slug !== 'd')
+      return `/services/${service.slug}`;
+    if (service.id) return `/services/${service.id}`;
+    const slugFromName = service.name
+      ?.toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
+    return `/services/${slugFromName || 'service'}`;
+  };
+
+  const serviceUrl = getServiceUrl();
 
   return (
-    <div className="relative w-full h-[500px] overflow-hidden rounded-2xl shadow-2xl">
-      <AnimatePresence mode="popLayout" custom={direction} initial={false}>
-        <motion.div
-          key={currentIndex}
-          custom={direction}
-          variants={slideVariants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{
-            x: { type: "spring", stiffness: 300, damping: 30 },
-            opacity: { duration: 0.4 }
-          }}
-          className="absolute inset-0 w-full h-full"
-        >
-          {/* Background Image */}
-          <div 
-            className="w-full h-full bg-cover bg-center"
-            style={{ backgroundImage: `url(${carousels[currentIndex].image_url})` }}
+    <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-green-200 group">
+      {/* Image or Video */}
+      <div ref={videoRef} className="h-48 relative overflow-hidden bg-gray-900">
+        {videoId && videoStarted ? (
+          <iframe
+            ref={iframeRef}
+            src={getYouTubeEmbedUrl(videoId, true)}
+            className="w-full h-full"
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+            title={service.name}
+            loading="lazy"
+            onEnded={handleVideoEnd}
           />
-          
-          {/* Overlay and Content */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 flex items-center justify-center">
-            <div className="text-center text-white px-4 max-w-3xl">
-              <motion.h2
-                className="text-3xl md:text-5xl font-extrabold mb-4"
-                variants={contentVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{ delay: 0.2 }}
-              >
-                {carousels[currentIndex].title}
-              </motion.h2>
-              <motion.p
-                className="text-lg md:text-2xl mb-6"
-                variants={contentVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{ delay: 0.4 }}
-              >
-                {carousels[currentIndex].description}
-              </motion.p>
-              {carousels[currentIndex].button_text && carousels[currentIndex].button_link && (
-                <motion.div
-                  variants={contentVariants}
-                  initial="hidden"
-                  animate="visible"
-                  transition={{ delay: 0.6 }}
-                >
-                  <Link
-                    href={carousels[currentIndex].button_link}
-                    className="bg-orange-500 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-orange-600 transition-colors inline-block"
-                  >
-                    {carousels[currentIndex].button_text}
-                  </Link>
-                </motion.div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+        ) : videoId ? (
+          <img
+            src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+            alt={service.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              const t = e.target as HTMLImageElement;
+              t.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            }}
+          />
+        ) : (
+          <img
+            src={imageUrl}
+            alt={service.name}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/placeholder.jpg';
+            }}
+          />
+        )}
 
-      {/* Navigation Dots */}
-      {carousels.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-3 z-10">
-          {carousels.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`w-3 h-3 rounded-full transition-all ${
-                index === currentIndex
-                  ? 'bg-white scale-125'
-                  : 'bg-white/50 hover:bg-white/75'
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
+        {/* Featured Badge */}
+        {service.featured && (
+          <span className="absolute top-3 left-3 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+            Featured
+          </span>
+        )}
+
+        {/* Category Badge */}
+        {service.category && (
+          <span className={`absolute top-3 ${service.featured ? 'left-24' : 'left-3'} bg-green-600 text-white px-3 py-1 rounded-full text-xs font-medium`}>
+            {service.category}
+          </span>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-6">
+        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-green-700 transition">
+          {service.name}
+        </h3>
+        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+          {service.description ||
+            'Professional service with expert team and quality guaranteed.'}
+        </p>
+
+        {/* Features */}
+        <ul className="space-y-1 mb-4">
+          {(service.features?.length
+            ? service.features.slice(0, 3)
+            : ['Expert Team', 'Quality Guaranteed']
+          ).map((f, i) => (
+            <li key={i} className="flex items-center text-sm text-gray-500">
+              <svg
+                className="w-4 h-4 text-green-500 mr-2"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              {f}
+            </li>
           ))}
+        </ul>
+
+        {/* Duration & Frequency */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {service.duration && (
+            <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+              ⏱️ {service.duration}
+            </span>
+          )}
+          {service.frequency && (
+            <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+              🔄 {service.frequency}
+            </span>
+          )}
         </div>
-      )}
 
-      {/* Navigation Arrows */}
-      {carousels.length > 1 && (
-        <>
-          <button
-            onClick={prevSlide}
-            className="absolute left-5 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full backdrop-blur-md transition z-10"
-            aria-label="Previous slide"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
+        {/* Price & CTA */}
+        <div className="flex items-center justify-between border-t pt-4">
+          <div>
+            {service.price ? (
+              <p className="text-green-600 text-lg font-semibold">
+                KSh {service.price}
+                {service.price_unit && (
+                  <span className="text-gray-500 text-sm ml-1">
+                    /{service.price_unit}
+                  </span>
+                )}
+              </p>
+            ) : (
+              <p className="text-green-600 font-medium text-sm">Contact for pricing</p>
+            )}
+          </div>
 
-          <button
-            onClick={nextSlide}
-            className="absolute right-5 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full backdrop-blur-md transition z-10"
-            aria-label="Next slide"
+          {/* FIXED Link component */}
+          <Link 
+            href={serviceUrl}
+            className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-5 py-2 rounded-lg flex items-center gap-2 transition"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            View Details
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
-          </button>
-        </>
-      )}
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
