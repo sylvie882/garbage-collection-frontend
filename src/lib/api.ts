@@ -14,7 +14,7 @@ export const api = axios.create({
 // CSRF Token Management
 let csrfInitialized = false;
 
-// Initialize CSRF token
+// Initialize CSRF token - REMOVED DUPLICATE EXPORT AT BOTTOM
 export const initializeCSRF = async (): Promise<void> => {
   if (csrfInitialized) return;
   
@@ -69,9 +69,18 @@ api.interceptors.response.use(
 
 export const carouselApi = {
   getAll: () => api.get<Carousel[]>('/carousels'),
-  create: (data: FormData) => api.post<Carousel>('/admin/carousels', data),
-  update: (id: number, data: FormData) => api.put<Carousel>(`/admin/carousels/${id}`, data),
-  delete: (id: number) => api.delete(`/admin/carousels/${id}`),
+  create: async (data: FormData) => {
+    await initializeCSRF();
+    return api.post<Carousel>('/admin/carousels', data);
+  },
+  update: async (id: number, data: FormData) => {
+    await initializeCSRF();
+    return api.put<Carousel>(`/admin/carousels/${id}`, data);
+  },
+  delete: async (id: number) => {
+    await initializeCSRF();
+    return api.delete(`/admin/carousels/${id}`);
+  },
 };
 
 export const quoteRequestApi = {
@@ -81,8 +90,14 @@ export const quoteRequestApi = {
     await initializeCSRF();
     return api.post<{message: string; quote: QuoteRequest}>('/quote-requests', data);
   },
-  update: (id: number, data: Partial<QuoteRequest>) => api.put<QuoteRequest>(`/admin/quote-requests/${id}`, data),
-  delete: (id: number) => api.delete(`/admin/quote-requests/${id}`),
+  update: async (id: number, data: Partial<QuoteRequest>) => {
+    await initializeCSRF();
+    return api.put<QuoteRequest>(`/admin/quote-requests/${id}`, data);
+  },
+  delete: async (id: number) => {
+    await initializeCSRF();
+    return api.delete(`/admin/quote-requests/${id}`);
+  },
 };
 
 export const serviceApi = {
@@ -154,5 +169,5 @@ export const serviceApi = {
   },
 };
 
-// Export CSRF initialization for app startup
-export { initializeCSRF };
+// REMOVED: Duplicate export at the bottom
+// export { initializeCSRF }; // DELETE THIS LINE
