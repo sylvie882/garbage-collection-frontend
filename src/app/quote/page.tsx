@@ -20,58 +20,50 @@ export default function QuotePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Direct fetch function for quote submission
-  const submitQuoteRequest = async (formData: QuoteFormData) => {
-    setIsSubmitting(true);
-    
-    try {
-      console.log('🔄 Starting quote submission...');
-      
-      // Step 1: Get CSRF cookie first
-      await fetch('https://api.sylviegarbagecollection.co.ke/sanctum/csrf-cookie', {
-        credentials: 'include',
-        method: 'GET'
-      });
-      
-      console.log('✅ CSRF cookie obtained');
+ const submitQuoteRequest = async (formData: QuoteFormData) => {
+  setIsSubmitting(true);
+  
+  try {
+    console.log('🔄 Starting quote submission...');
 
-      // Step 2: Submit the quote request
-      const response = await fetch('https://api.sylviegarbagecollection.co.ke/quote-requests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(formData)
-      });
+    // SIMPLE POST - No CSRF needed since backend allows it
+    const response = await fetch('https://api.sylviegarbagecollection.co.ke/quote-requests', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      // NO credentials - this is important!
+      body: JSON.stringify(formData)
+    });
 
-      console.log('📨 Quote submitted, response status:', response.status);
+    console.log('📨 Quote submitted, response status:', response.status);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ Quote submission successful:', result);
-      
-      // Show success card
-      setShowSuccess(true);
-      
-      // Auto-hide success card after 8 seconds
-      setTimeout(() => {
-        setShowSuccess(false);
-      }, 8000);
-      
-      return result;
-      
-    } catch (error) {
-      console.error('❌ Quote submission failed:', error);
-      throw error;
-    } finally {
-      setIsSubmitting(false);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
-  };
+
+    const result = await response.json();
+    console.log('✅ Quote submission successful:', result);
+    
+    // Show success card
+    setShowSuccess(true);
+    
+    // Auto-hide success card after 8 seconds
+    setTimeout(() => {
+      setShowSuccess(false);
+    }, 8000);
+    
+    return result;
+    
+  } catch (error) {
+    console.error('❌ Quote submission failed:', error);
+    throw error;
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100">
