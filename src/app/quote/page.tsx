@@ -1,3 +1,5 @@
+"use client";
+
 import Header from '@/./components/Header';
 import Footer from '@/./components/Footer';
 import QuoteForm from '../../components/QuoteForm';
@@ -88,7 +90,7 @@ export default function QuotePage() {
               <div className="flex-1">
                 <h4 className="font-bold text-lg mb-1">Quote Request Submitted!</h4>
                 <p className="text-green-100 text-sm">
-                  Thank you! We've received your quote request and will contact you within 24 hours.
+                  Thank you! We&apos;ve received your quote request and will contact you within 24 hours.
                 </p>
               </div>
               <button 
@@ -144,7 +146,7 @@ export default function QuotePage() {
             </h1>
             <p className="text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed bg-gradient-to-r from-green-100 to-emerald-100 p-6 rounded-2xl border border-green-200">
               Get a free, no-obligation quote for our professional waste management services. 
-              We'll get back to you within 24 hours with competitive pricing.
+              We&apos;ll get back to you within 24 hours with competitive pricing.
             </p>
           </div>
 
@@ -161,7 +163,7 @@ export default function QuotePage() {
                     Tell Us About Your Needs
                   </h2>
                   <p className="text-gray-600 text-lg">
-                    Fill out the form below and we'll provide you with a customized quote
+                    Fill out the form below and we&apos;ll provide you with a customized quote
                   </p>
                 </div>
                 {/* Pass the direct submit function to QuoteForm */}
