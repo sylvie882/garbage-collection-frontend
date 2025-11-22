@@ -88,7 +88,7 @@ export default function Carousel() {
     })
   };
 
-  // Content animation variants
+  // Content animation variants - FIXED ease property
   const contentVariants = {
     hidden: { opacity: 0, y: 50 },
     visible: { 
@@ -96,7 +96,7 @@ export default function Carousel() {
       y: 0,
       transition: {
         duration: 0.6,
-        ease: "easeOut"
+        ease: [0.25, 0.46, 0.45, 0.94] // Cubic bezier equivalent of "easeOut"
       }
     }
   };
