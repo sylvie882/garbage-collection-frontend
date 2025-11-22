@@ -1,32 +1,28 @@
 "use client";
 
-// NUCLEAR CACHE BUSTING - ADD THIS AT THE VERY TOP
+// NUCLEAR CACHE BUSTING - FIXED VERSION
 if (typeof window !== 'undefined') {
-  // Completely replace fetch to bypass any cached version
   const originalFetch = window.fetch;
   window.fetch = function(...args) {
     const [url, options] = args;
     
-    // Only modify quote requests
     if (typeof url === 'string' && url.includes('quote-requests')) {
       console.log('🚨 NUCLEAR: Using cache-busted fetch');
       
-      // Create new URL with cache busting
+      // Create new URL with cache busting (this works!)
       const newUrl = new URL(url);
       newUrl.searchParams.set('_cache_bust', Date.now().toString());
       newUrl.searchParams.set('_uid', Math.random().toString(36).substring(2, 15));
       newUrl.searchParams.set('_emergency', 'true');
       
-      // Create new options
+      // REMOVE the problematic headers that cause CORS issues
       const newOptions = {
         ...options,
+        // Only keep safe headers that don't trigger CORS preflight
         headers: {
           ...options?.headers,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'X-Emergency-Bypass': 'true',
+          // Remove Cache-Control, Pragma, X-Emergency-Bypass - they cause CORS issues
         },
-        cache: 'no-store' as RequestCache,
       };
       
       return originalFetch.call(this, newUrl.toString(), newOptions);
@@ -35,6 +31,7 @@ if (typeof window !== 'undefined') {
     return originalFetch.apply(this, args);
   };
 }
+
 
 import Header from '@/./components/Header';
 import Footer from '@/./components/Footer';
