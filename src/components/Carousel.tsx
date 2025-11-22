@@ -6,7 +6,7 @@ import axios from 'axios';
 import Link from 'next/link';
 import { Carousel as CarouselType } from '../types';
 
-const API_URL = 'https://api.sylviegarbagecollection.co.ke/api';
+const API_URL = 'https://api.sylviegarbagecollection.co.ke';
 
 export default function Carousel() {
   const [carousels, setCarousels] = useState<CarouselType[]>([]);
@@ -18,16 +18,18 @@ export default function Carousel() {
   useEffect(() => {
     const fetchCarousels = async () => {
       try {
+        console.log('Fetching carousels from:', `${API_URL}/carousels`);
         const response = await axios.get<CarouselType[]>(`${API_URL}/carousels`);
+        console.log('API Response:', response.data);
+        
         const activeSlides = response.data.filter((c) => c.is_active);
+        console.log('Active slides:', activeSlides);
+        
         const normalizedSlides = activeSlides.map((slide) => ({
           ...slide,
-          image_url: slide.image_url || slide.image_path
-            ? slide.image_path.startsWith('http')
-              ? slide.image_path
-              : `${API_URL.replace('/api', '')}/storage/${slide.image_path.replace('public/', '')}`
-            : '/placeholder.jpg',
+          image_url: slide.image_url || slide.image_path || '/placeholder.jpg',
         }));
+        
         setCarousels(normalizedSlides);
       } catch (error) {
         console.error('Error fetching carousels:', error);
@@ -41,9 +43,11 @@ export default function Carousel() {
   // Auto slide every 6 seconds
   useEffect(() => {
     if (carousels.length === 0) return;
+    
     intervalRef.current = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % carousels.length);
     }, 6000);
+    
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
@@ -57,8 +61,15 @@ export default function Carousel() {
     setCurrentIndex((prev) => (prev === 0 ? carousels.length - 1 : prev - 1));
   };
 
+  // Debug information
+  console.log('Current state:', { isLoading, carouselsCount: carousels.length, currentIndex });
+
   if (isLoading) {
-    return <div className="w-full h-[500px] bg-gray-200 animate-pulse rounded-lg" />;
+    return (
+      <div className="w-full h-[500px] bg-gray-200 animate-pulse rounded-lg flex items-center justify-center">
+        <div className="text-gray-500">Loading carousel...</div>
+      </div>
+    );
   }
 
   if (carousels.length === 0) {
@@ -88,7 +99,7 @@ export default function Carousel() {
 
   return (
     <div className="relative w-full h-[500px] overflow-hidden rounded-2xl shadow-2xl">
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {carousels.map((carousel, index) =>
           index === currentIndex ? (
             <motion.div
@@ -99,11 +110,13 @@ export default function Carousel() {
               exit={{ opacity: 0, x: -100 }}
               transition={{ duration: 0.8, ease: 'easeInOut' }}
             >
-              <img
-                src={carousel.image_url}
-                alt={carousel.title || 'Slide image'}
-                className="w-full h-full object-cover"
+              {/* Background Image */}
+              <div 
+                className="w-full h-full bg-cover bg-center"
+                style={{ backgroundImage: `url(${carousel.image_url})` }}
               />
+              
+              {/* Overlay and Content */}
               <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 flex items-center justify-center">
                 <div className="text-center text-white px-4 max-w-3xl">
                   <motion.h2
@@ -143,42 +156,48 @@ export default function Carousel() {
         )}
       </AnimatePresence>
 
-      {/* Dots */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-3">
-        {carousels.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentIndex(index)}
-            className={`w-3 h-3 rounded-full transition-all ${
-              index === currentIndex
-                ? 'bg-white scale-125'
-                : 'bg-white/50 hover:bg-white/75'
-            }`}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
-      </div>
+      {/* Navigation Dots */}
+      {carousels.length > 1 && (
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-3">
+          {carousels.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentIndex(index)}
+              className={`w-3 h-3 rounded-full transition-all ${
+                index === currentIndex
+                  ? 'bg-white scale-125'
+                  : 'bg-white/50 hover:bg-white/75'
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Navigation Arrows */}
-      <button
-        onClick={prevSlide}
-        className="absolute left-5 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full backdrop-blur-md transition"
-        aria-label="Previous slide"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
+      {carousels.length > 1 && (
+        <>
+          <button
+            onClick={prevSlide}
+            className="absolute left-5 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full backdrop-blur-md transition"
+            aria-label="Previous slide"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
 
-      <button
-        onClick={nextSlide}
-        className="absolute right-5 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full backdrop-blur-md transition"
-        aria-label="Next slide"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
+          <button
+            onClick={nextSlide}
+            className="absolute right-5 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full backdrop-blur-md transition"
+            aria-label="Next slide"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </>
+      )}
     </div>
   );
 }

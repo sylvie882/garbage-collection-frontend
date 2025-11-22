@@ -1,4 +1,4 @@
-// src/lib/api.ts (FIXED - CORS issue resolved)
+// src/lib/api.ts (FIXED - CSRF token handling added)
 import axios from 'axios';
 import { Carousel, QuoteRequest, Service } from '../types';
 
@@ -8,12 +8,37 @@ const API_URL = 'https://api.sylviegarbagecollection.co.ke';
 export const api = axios.create({
   baseURL: API_URL,
   timeout: 10000,
+  withCredentials: true, // ADD THIS: Essential for CSRF cookies
 });
 
-// Add request interceptor for debugging
+// CSRF Token Management
+let csrfInitialized = false;
+
+// Initialize CSRF token
+export const initializeCSRF = async (): Promise<void> => {
+  if (csrfInitialized) return;
+  
+  try {
+    console.log('🔄 [API] Initializing CSRF token...');
+    await api.get('/sanctum/csrf-cookie');
+    csrfInitialized = true;
+    console.log('✅ [API] CSRF token initialized');
+  } catch (error) {
+    console.error('🚨 [API] CSRF initialization failed:', error);
+    throw error;
+  }
+};
+
+// Add request interceptor for debugging and CSRF handling
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     console.log(`🚀 [API] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+    
+    // Ensure CSRF token is initialized for non-GET requests
+    if (config.method !== 'get' && config.method !== 'GET') {
+      await initializeCSRF();
+    }
+    
     return config;
   },
   (error) => {
@@ -30,6 +55,14 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('🚨 [API] Response error:', error.message);
+    
+    // Handle CSRF token errors specifically
+    if (error.response?.status === 419) {
+      console.error('🔄 [API] CSRF token expired, reinitializing...');
+      csrfInitialized = false;
+      // You might want to retry the request here
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -43,7 +76,11 @@ export const carouselApi = {
 
 export const quoteRequestApi = {
   getAll: () => api.get<QuoteRequest[]>('/admin/quote-requests'),
-  create: (data: Partial<QuoteRequest>) => api.post<{message: string; quote: QuoteRequest}>('/quote-requests', data),
+  create: async (data: Partial<QuoteRequest>) => {
+    // Ensure CSRF token is available before POST request
+    await initializeCSRF();
+    return api.post<{message: string; quote: QuoteRequest}>('/quote-requests', data);
+  },
   update: (id: number, data: Partial<QuoteRequest>) => api.put<QuoteRequest>(`/admin/quote-requests/${id}`, data),
   delete: (id: number) => api.delete(`/admin/quote-requests/${id}`),
 };
@@ -101,7 +138,21 @@ export const serviceApi = {
     }
   },
   
-  create: (data: FormData) => api.post<Service>('/admin/services', data),
-  update: (id: number, data: FormData) => api.put<Service>(`/admin/services/${id}`, data),
-  delete: (id: number) => api.delete(`/admin/services/${id}`),
+  create: async (data: FormData) => {
+    await initializeCSRF();
+    return api.post<Service>('/admin/services', data);
+  },
+  
+  update: async (id: number, data: FormData) => {
+    await initializeCSRF();
+    return api.put<Service>(`/admin/services/${id}`, data);
+  },
+  
+  delete: async (id: number) => {
+    await initializeCSRF();
+    return api.delete(`/admin/services/${id}`);
+  },
 };
+
+// Export CSRF initialization for app startup
+export { initializeCSRF };
