@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { quoteRequestApi } from '../lib/api';
 
 interface QuoteFormData {
   name: string;
@@ -27,8 +26,12 @@ const serviceOptions = [
   'Other'
 ];
 
-export default function QuoteForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+interface QuoteFormProps {
+  onSubmit: (data: QuoteFormData) => Promise<any>;
+  isSubmitting: boolean;
+}
+
+export default function QuoteForm({ onSubmit, isSubmitting }: QuoteFormProps) {
   const [submitMessage, setSubmitMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -39,15 +42,15 @@ export default function QuoteForm() {
     formState: { errors }
   } = useForm<QuoteFormData>();
 
-  const onSubmit = async (data: QuoteFormData) => {
-    setIsSubmitting(true);
+  const handleFormSubmit = async (data: QuoteFormData) => {
     setSubmitMessage('');
+    setIsSuccess(false);
 
     try {
-      const response = await quoteRequestApi.create(data);
-      setSubmitMessage(response.data.message);
+      const response = await onSubmit(data);
+      setSubmitMessage(response.message || 'Quote request submitted successfully! We will contact you soon.');
       setIsSuccess(true);
-      reset();
+      reset(); // Reset form after successful submission
     } catch (error: unknown) {
       // Proper TypeScript error handling
       if (error instanceof Error) {
@@ -62,8 +65,6 @@ export default function QuoteForm() {
         setSubmitMessage('Failed to submit quote request. Please try again.');
       }
       setIsSuccess(false);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -92,7 +93,7 @@ export default function QuoteForm() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               {/* Name */}
               <div>

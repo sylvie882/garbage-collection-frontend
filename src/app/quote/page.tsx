@@ -1,12 +1,116 @@
+'use client';
+
 import Header from '@/./components/Header';
 import Footer from '@/./components/Footer';
 import QuoteForm from '../../components/QuoteForm';
 import FloatingButtons from '../../components/FloatingButtons';
+import { useState } from 'react';
 
 export default function QuotePage() {
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Direct fetch function for quote submission
+  const submitQuoteRequest = async (formData) => {
+    setIsSubmitting(true);
+    
+    try {
+      console.log('🔄 Starting quote submission...');
+      
+      // Step 1: Get CSRF cookie first
+      await fetch('https://api.sylviegarbagecollection.co.ke/sanctum/csrf-cookie', {
+        credentials: 'include',
+        method: 'GET'
+      });
+      
+      console.log('✅ CSRF cookie obtained');
+
+      // Step 2: Submit the quote request
+      const response = await fetch('https://api.sylviegarbagecollection.co.ke/quote-requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData)
+      });
+
+      console.log('📨 Quote submitted, response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ Quote submission successful:', result);
+      
+      // Show success card
+      setShowSuccess(true);
+      
+      // Auto-hide success card after 8 seconds
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 8000);
+      
+      return result;
+      
+    } catch (error) {
+      console.error('❌ Quote submission failed:', error);
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100">
       <Header />
+      
+      {/* Success Card */}
+      {showSuccess && (
+        <div className="fixed top-4 right-4 left-4 md:left-auto md:right-4 z-50 max-w-md animate-in slide-in-from-right duration-500">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6 rounded-2xl shadow-2xl border-2 border-green-300">
+            <div className="flex items-center gap-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-lg mb-1">Quote Request Submitted!</h4>
+                <p className="text-green-100 text-sm">
+                  Thank you! We've received your quote request and will contact you within 24 hours.
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowSuccess(false)}
+                className="flex-shrink-0 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Overlay */}
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-sm mx-4">
+            <div className="flex items-center gap-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+              <div>
+                <h4 className="font-bold text-gray-900">Submitting Quote...</h4>
+                <p className="text-gray-600 text-sm">Please wait while we process your request</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Enhanced Breadcrumb */}
       <section className="bg-gradient-to-r from-green-700 via-emerald-600 to-teal-700 py-6 shadow-lg">
@@ -53,7 +157,8 @@ export default function QuotePage() {
                     Fill out the form below and we'll provide you with a customized quote
                   </p>
                 </div>
-                <QuoteForm />
+                {/* Pass the direct submit function to QuoteForm */}
+                <QuoteForm onSubmit={submitQuoteRequest} isSubmitting={isSubmitting} />
               </div>
             </div>
 
