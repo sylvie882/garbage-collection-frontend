@@ -586,7 +586,7 @@ export default function ServicesPage() {
                 <div className="aspect-video bg-gray-200 relative">
                   {service.image_path ? (
                     <img 
-                      src={service.image_url}
+                      src={service.image_url || '/default-service-image.jpg'}
                       alt={service.name}
                       className="w-full h-full object-cover"
                     />
