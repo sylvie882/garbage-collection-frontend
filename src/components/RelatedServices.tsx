@@ -20,7 +20,7 @@ export default function RelatedServices({ services }: RelatedServicesProps) {
 
   const getYouTubeThumbnail = (service: Service) => {
     // Handle multiple YouTube URLs or single URL
-    const youtubeUrls = service.youtube_urls || (service.youtube_url ? [service.youtube_url] : []);
+    const youtubeUrls = service.youtube_url ? [service.youtube_url] : [];
     if (youtubeUrls.length === 0) return null;
 
     // Get the first YouTube URL
