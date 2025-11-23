@@ -22,8 +22,7 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
   const mainImageUrl = service.image_url || (service.image_path ? getImageUrl(service.image_path) : null);
 
   // Get gallery images
-  const galleryImages = service.gallery_images_urls || 
-    (service.gallery_images ? service.gallery_images.map(img => getImageUrl(img)) : []);
+  const galleryImages = service.gallery_images ? service.gallery_images.map(img => getImageUrl(img)) : [];
 
   // Get YouTube videos
   const getYouTubeId = (url: string) => {
@@ -34,9 +33,8 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
     return match ? match[1] : null;
   };
 
-  // Handle multiple YouTube URLs (if stored as array) or single URL
-  const youtubeUrls = service.youtube_urls || 
-    (service.youtube_url ? [service.youtube_url] : []);
+  // Handle single YouTube URL
+  const youtubeUrls = service.youtube_url ? [service.youtube_url] : [];
 
   const youtubeVideos = youtubeUrls
     .map(url => ({
