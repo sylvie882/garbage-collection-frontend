@@ -52,12 +52,12 @@ export default function AdminDashboard() {
       const token = localStorage.getItem('adminToken');
       
       const [servicesRes, quotesRes] = await Promise.all([
-        fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/services', {
+        fetch('https://api.sylviegarbagecollection.co.ke/api/admin/services', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
         }),
-        fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/quote-requests', {
+        fetch('https://api.sylviegarbagecollection.co.ke/api/admin/quote-requests', {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -173,6 +173,15 @@ export default function AdminDashboard() {
                   <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">📋</div>
                   <span className="font-medium">Quotes</span>
                 </Link>
+                         <Link
+                  href="/admin/faq"
+                  className="bg-purple-50 text-purple-700 p-4 rounded-lg text-center hover:bg-purple-100 transition-colors group"
+                >
+                  <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">❓</div>
+                  <span className="font-medium">FAQ</span>
+                </Link>
+
+                
                 <Link
                   href="/admin/settings"
                   className="bg-gray-50 text-gray-700 p-4 rounded-lg text-center hover:bg-gray-100 transition-colors group"

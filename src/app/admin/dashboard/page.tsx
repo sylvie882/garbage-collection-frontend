@@ -74,21 +74,21 @@ export default function AdminDashboard() {
       }
 
       const [servicesRes, quotesRes, carouselsRes] = await Promise.all([
-        fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/services', {
+        fetch('https://api.sylviegarbagecollection.co.ke/api/admin/services', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
           credentials: 'include',
         }),
-        fetch('http://localhost:8000/api/admin/quote-requests', {
+        fetch('https://api.sylviegarbagecollection.co.ke/api/admin/quote-requests', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
           },
           credentials: 'include',
         }),
-        fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/carousels', {
+        fetch('https://api.sylviegarbagecollection.co.ke/api/admin/carousels', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -132,7 +132,7 @@ export default function AdminDashboard() {
   const handleLogout = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      await fetch('https://sylviegarbagecollection.co.ke/api/public/api/admin/logout', {
+      await fetch('https://api.sylviegarbagecollection.co.ke/api/admin/logout', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -302,6 +302,16 @@ export default function AdminDashboard() {
                   <span className="font-medium">Quotes</span>
                   <p className="text-xs text-orange-600 mt-1">{stats.pendingQuotes} Pending</p>
                 </Link>
+
+                      <Link
+                  href="/admin/faq"
+                  className="bg-purple-50 text-purple-700 p-4 rounded-lg text-center hover:bg-purple-100 transition-colors group"
+                >
+                  <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">❓</div>
+                  <span className="font-medium">FAQ</span>
+                </Link>
+
+                
                 <Link
                   href="/admin/settings"
                   className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 text-gray-700 p-4 rounded-lg text-center hover:shadow-md transition-all group"

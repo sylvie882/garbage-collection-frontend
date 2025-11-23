@@ -11,7 +11,10 @@ interface Service {
   full_description: string | null;
   icon: string | null;
   image_path: string | null;
+  gallery_images: string[] | null;
   youtube_url: string | null;
+  youtube_video_path: string | null;
+  youtube_thumbnail: string | null;
   category: string | null;
   price: string | null;
   price_unit: string | null;
@@ -25,6 +28,15 @@ interface Service {
   created_at: string;
   updated_at: string;
   image_url?: string | null;
+  gallery_images_urls?: string[];
+  youtube_thumbnail_url?: string | null;
+}
+
+interface YouTubeVideo {
+  url: string;
+  embedUrl: string;
+  thumbnail: string;
+  title?: string;
 }
 
 export default function ServicesPage() {
@@ -38,7 +50,7 @@ export default function ServicesPage() {
     description: '',
     full_description: '',
     icon: '',
-    youtube_url: '',
+    youtube_urls: [] as string[],
     category: '',
     price: '',
     price_unit: '',
@@ -51,12 +63,18 @@ export default function ServicesPage() {
     is_active: true,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
   const [currentFeature, setCurrentFeature] = useState('');
   const [currentBenefit, setCurrentBenefit] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [removedGalleryImages, setRemovedGalleryImages] = useState<string[]>([]);
+  const [youtubeUrls, setYoutubeUrls] = useState<string[]>([]);
+  const [currentYoutubeUrl, setCurrentYoutubeUrl] = useState('');
+  const [youtubePreviews, setYoutubePreviews] = useState<YouTubeVideo[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -77,10 +95,9 @@ export default function ServicesPage() {
       const token = localStorage.getItem('adminToken');
       console.log('Fetching services...');
       
-      // Use public API endpoint for fetching services
-      const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/services', {
+      const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/services/all', {
         headers: { 
-          Accept: 'application/json' 
+          'Accept': 'application/json'
         },
       });
       
@@ -102,6 +119,59 @@ export default function ServicesPage() {
     }
   };
 
+  // Extract YouTube video ID from URL
+  const getYouTubeVideoId = (url: string): string | null => {
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[7].length === 11) ? match[7] : null;
+  };
+
+  // Generate YouTube embed URL
+  const getYouTubeEmbedUrl = (url: string): string => {
+    const videoId = getYouTubeVideoId(url);
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+  };
+
+  // Generate YouTube thumbnail URL
+  const getYouTubeThumbnail = (url: string): string => {
+    const videoId = getYouTubeVideoId(url);
+    return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '';
+  };
+
+  // Add a new YouTube URL
+  const addYouTubeUrl = () => {
+    if (currentYoutubeUrl.trim() && getYouTubeVideoId(currentYoutubeUrl)) {
+      const newUrl = currentYoutubeUrl.trim();
+      if (!youtubeUrls.includes(newUrl)) {
+        const embedUrl = getYouTubeEmbedUrl(newUrl);
+        const thumbnail = getYouTubeThumbnail(newUrl);
+        
+        setYoutubeUrls(prev => [...prev, newUrl]);
+        setYoutubePreviews(prev => [...prev, { url: newUrl, embedUrl, thumbnail }]);
+        setCurrentYoutubeUrl('');
+        setError('');
+      } else {
+        setError('This YouTube URL has already been added');
+      }
+    } else {
+      setError('Please enter a valid YouTube URL');
+    }
+  };
+
+  // Remove a YouTube URL
+  const removeYouTubeUrl = (index: number) => {
+    setYoutubeUrls(prev => prev.filter((_, i) => i !== index));
+    setYoutubePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Handle YouTube URL input key press
+  const handleYoutubeUrlKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addYouTubeUrl();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -115,12 +185,8 @@ export default function ServicesPage() {
     }
 
     console.log('Starting form submission...');
-    console.log('Form data:', formData);
-    console.log('Image file:', imageFile ? imageFile.name : 'No image file');
-    console.log('Editing service:', editingService);
 
     try {
-      // Prepare FormData for file upload
       const formToSend = new FormData();
       
       // Append basic fields
@@ -129,7 +195,10 @@ export default function ServicesPage() {
       formToSend.append('description', formData.description);
       formToSend.append('full_description', formData.full_description);
       formToSend.append('icon', formData.icon);
-      formToSend.append('youtube_url', formData.youtube_url);
+      
+      // Append YouTube URLs as JSON array
+      formToSend.append('youtube_urls', JSON.stringify(youtubeUrls));
+      
       formToSend.append('category', formData.category);
       formToSend.append('price', formData.price);
       formToSend.append('price_unit', formData.price_unit);
@@ -143,11 +212,23 @@ export default function ServicesPage() {
       formToSend.append('features', JSON.stringify(formData.features));
       formToSend.append('benefits', JSON.stringify(formData.benefits));
 
+      // Append main image
       if (imageFile) {
-        console.log('Appending image file to form data');
+        console.log('Appending main image file to form data');
         formToSend.append('image', imageFile);
-      } else if (editingService && !imageFile) {
-        console.log('No new image file for edit, keeping existing image');
+      }
+
+      // Append gallery images
+      galleryFiles.forEach((file) => {
+        console.log('Appending gallery image:', file.name);
+        formToSend.append('gallery_images[]', file);
+      });
+
+      // Append removed gallery images for updates
+      if (editingService && removedGalleryImages.length > 0) {
+        removedGalleryImages.forEach(imagePath => {
+          formToSend.append('remove_gallery_images[]', imagePath);
+        });
       }
 
       let url = 'https://api.sylviegarbagecollection.co.ke/api/admin/services';
@@ -156,30 +237,19 @@ export default function ServicesPage() {
       if (editingService) {
         url = `https://api.sylviegarbagecollection.co.ke/api/admin/services/${editingService.id}`;
         formToSend.append('_method', 'PUT');
-        method = 'POST'; // Using POST with _method=PUT for Laravel compatibility
-        console.log('Making PUT request to:', url);
-      } else {
-        console.log('Making POST request to:', url);
-      }
-
-      // Log FormData contents (for debugging)
-      console.log('FormData entries:');
-      for (const [key, value] of (formToSend as any).entries()) {
-        console.log(`${key}:`, value);
+        method = 'POST';
       }
 
       const response = await fetch(url, {
         method,
         headers: {
-          Authorization: `Bearer ${token}`,
-          // Don't set Content-Type for FormData - let browser set it with boundary
+          'Authorization': `Bearer ${token}`,
         },
         credentials: 'include',
         body: formToSend,
       });
 
       console.log('Submission response status:', response.status);
-      console.log('Submission response headers:', response.headers);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -190,7 +260,10 @@ export default function ServicesPage() {
         try {
           const errorData = JSON.parse(errorText);
           errorMessage = errorData.message || errorMessage;
-          console.error('Error details:', errorData);
+          if (errorData.errors) {
+            const firstError = Object.values(errorData.errors)[0];
+            errorMessage = Array.isArray(firstError) ? firstError[0] : String(firstError);
+          }
         } catch (e) {
           console.error('Could not parse error response as JSON');
         }
@@ -229,7 +302,7 @@ export default function ServicesPage() {
       description: '',
       full_description: '',
       icon: '',
-      youtube_url: '',
+      youtube_urls: [],
       category: '',
       price: '',
       price_unit: '',
@@ -242,9 +315,15 @@ export default function ServicesPage() {
       is_active: true,
     });
     setImageFile(null);
+    setGalleryFiles([]);
     setImagePreview('');
+    setGalleryPreviews([]);
     setCurrentFeature('');
     setCurrentBenefit('');
+    setRemovedGalleryImages([]);
+    setYoutubeUrls([]);
+    setCurrentYoutubeUrl('');
+    setYoutubePreviews([]);
     setError('');
   };
 
@@ -257,7 +336,7 @@ export default function ServicesPage() {
       description: service.description,
       full_description: service.full_description || '',
       icon: service.icon || '',
-      youtube_url: service.youtube_url || '',
+      youtube_urls: service.youtube_url ? [service.youtube_url] : [],
       category: service.category || '',
       price: service.price?.toString() || '',
       price_unit: service.price_unit || '',
@@ -269,7 +348,21 @@ export default function ServicesPage() {
       featured: service.featured,
       is_active: service.is_active,
     });
-    setImagePreview(service.image_path ? `https://api.sylviegarbagecollection.co.ke/storage/${service.image_path}` : '');
+    setImagePreview(service.image_url || '');
+    setGalleryPreviews(service.gallery_images_urls || []);
+    
+    // Set YouTube URLs and previews if URL exists
+    if (service.youtube_url) {
+      const urls = [service.youtube_url];
+      setYoutubeUrls(urls);
+      const previews = urls.map(url => ({
+        url,
+        embedUrl: getYouTubeEmbedUrl(url),
+        thumbnail: getYouTubeThumbnail(url)
+      }));
+      setYoutubePreviews(previews);
+    }
+    
     setShowForm(true);
     setError('');
   };
@@ -288,7 +381,10 @@ export default function ServicesPage() {
 
       const response = await fetch(`https://api.sylviegarbagecollection.co.ke/api/admin/services/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        },
         credentials: 'include',
       });
       
@@ -299,6 +395,9 @@ export default function ServicesPage() {
         setMessage('Service deleted successfully!');
         await fetchServices();
         setTimeout(() => setMessage(''), 3000);
+      } else if (response.status === 401) {
+        localStorage.removeItem('adminToken');
+        router.push('/admin/login');
       } else {
         console.error('Failed to delete service:', response.status);
         const errorText = await response.text();
@@ -314,14 +413,51 @@ export default function ServicesPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      console.log('Image file selected:', file.name, file.type, file.size);
+      console.log('Main image file selected:', file.name, file.type, file.size);
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
     } else {
-      console.log('No file selected');
+      console.log('No main image file selected');
       setImageFile(null);
       setImagePreview('');
     }
+  };
+
+  const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      console.log('Gallery images selected:', files.length);
+      setGalleryFiles(prev => [...prev, ...files]);
+      
+      const newPreviews = files.map(file => URL.createObjectURL(file));
+      setGalleryPreviews(prev => [...prev, ...newPreviews]);
+    }
+  };
+
+  const removeGalleryImage = (index: number) => {
+    if (editingService && index < (editingService.gallery_images_urls?.length || 0)) {
+      const imagePath = editingService.gallery_images?.[index];
+      if (imagePath) {
+        setRemovedGalleryImages(prev => [...prev, imagePath]);
+      }
+    }
+    
+    const updatedGalleryFiles = [...galleryFiles];
+    const updatedGalleryPreviews = [...galleryPreviews];
+    
+    if (index < updatedGalleryPreviews.length) {
+      URL.revokeObjectURL(updatedGalleryPreviews[index]);
+    }
+    
+    if (index < updatedGalleryFiles.length) {
+      updatedGalleryFiles.splice(index, 1);
+      updatedGalleryPreviews.splice(index, 1);
+    } else {
+      updatedGalleryPreviews.splice(index - (editingService?.gallery_images_urls?.length || 0), 1);
+    }
+    
+    setGalleryFiles(updatedGalleryFiles);
+    setGalleryPreviews(updatedGalleryPreviews);
   };
 
   const addFeature = () => {
@@ -450,7 +586,7 @@ export default function ServicesPage() {
                 <div className="aspect-video bg-gray-200 relative">
                   {service.image_path ? (
                     <img 
-                      src={`https://api.sylviegarbagecollection.co.ke/storage/${service.image_path}`}
+                      src={service.image_url}
                       alt={service.name}
                       className="w-full h-full object-cover"
                     />
@@ -471,6 +607,20 @@ export default function ServicesPage() {
                       {service.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
+                  {(service.gallery_images_urls && service.gallery_images_urls.length > 0) && (
+                    <div className="absolute bottom-2 left-2">
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                        {service.gallery_images_urls.length} gallery images
+                      </span>
+                    </div>
+                  )}
+                  {service.youtube_url && (
+                    <div className="absolute bottom-2 right-2">
+                      <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+                        YouTube
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 mb-2">{service.name}</h3>
@@ -509,12 +659,12 @@ export default function ServicesPage() {
         {/* Form Modal */}
         {showForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[95vh] overflow-y-auto">
               <div className="p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">
                   {editingService ? 'Edit Service' : 'Add New Service'}
                 </h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
@@ -632,15 +782,63 @@ export default function ServicesPage() {
                     </div>
                   </div>
 
+                  {/* Multiple YouTube URLs with Previews */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">YouTube URL</label>
-                    <input
-                      type="url"
-                      value={formData.youtube_url}
-                      onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder="https://youtube.com/..."
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      YouTube Videos ({youtubeUrls.length} added)
+                    </label>
+                    <div className="flex space-x-2 mb-3">
+                      <input
+                        type="url"
+                        value={currentYoutubeUrl}
+                        onChange={(e) => setCurrentYoutubeUrl(e.target.value)}
+                        onKeyPress={handleYoutubeUrlKeyPress}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        placeholder="https://youtube.com/watch?v=..."
+                      />
+                      <button
+                        type="button"
+                        onClick={addYouTubeUrl}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        Add Video
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-4">
+                      Paste YouTube video links and click "Add Video" to include multiple videos
+                    </p>
+                    
+                    {/* YouTube Previews */}
+                    {youtubePreviews.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-600 mb-2">YouTube Previews:</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {youtubePreviews.map((video, index) => (
+                            <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
+                              <div className="relative aspect-video bg-gray-200">
+                                <iframe
+                                  src={video.embedUrl}
+                                  className="w-full h-full"
+                                  title={`YouTube video ${index + 1}`}
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeYouTubeUrl(index)}
+                                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                              <div className="p-3 bg-gray-50">
+                                <p className="text-xs text-gray-600 truncate">{video.url}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Features */}
@@ -749,9 +947,10 @@ export default function ServicesPage() {
                     </div>
                   </div>
 
+                  {/* Main Image */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Image {!editingService && '*'}
+                      Main Image {!editingService && '*'}
                     </label>
                     <input
                       type="file"
@@ -762,15 +961,15 @@ export default function ServicesPage() {
                     />
                     {imagePreview && (
                       <div className="mt-2">
-                        <p className="text-sm text-gray-600 mb-2">Image Preview:</p>
+                        <p className="text-sm text-gray-600 mb-2">Main Image Preview:</p>
                         <img src={imagePreview} alt="Preview" className="w-32 h-32 object-cover rounded-lg border" />
                       </div>
                     )}
                     {editingService && !imagePreview && editingService.image_path && (
                       <div className="mt-2">
-                        <p className="text-sm text-gray-600 mb-2">Current Image:</p>
+                        <p className="text-sm text-gray-600 mb-2">Current Main Image:</p>
                         <img 
-                          src={`https://api.sylviegarbagecollection.co.ke/storage/${editingService.image_path}`} 
+                          src={editingService.image_url} 
                           alt="Current" 
                           className="w-32 h-32 object-cover rounded-lg border" 
                         />
@@ -778,7 +977,75 @@ export default function ServicesPage() {
                     )}
                   </div>
 
-                  <div className="flex justify-end space-x-3 pt-4">
+                  {/* Gallery Images */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Gallery Images
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleGalleryChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">You can select multiple images</p>
+                    
+                    {(galleryPreviews.length > 0 || (editingService && editingService.gallery_images_urls && editingService.gallery_images_urls.length > 0)) && (
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-600 mb-2">Gallery Images:</p>
+                        <div className="grid grid-cols-3 gap-4">
+                          {/* Existing gallery images */}
+                          {editingService && editingService.gallery_images_urls && editingService.gallery_images_urls.map((url, index) => {
+                            const isRemoved = removedGalleryImages.includes(editingService.gallery_images?.[index] || '');
+                            if (isRemoved) return null;
+                            
+                            return (
+                              <div key={`existing-${index}`} className="relative">
+                                <img 
+                                  src={url} 
+                                  alt={`Gallery ${index + 1}`} 
+                                  className="w-full h-24 object-cover rounded-lg border"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const imagePath = editingService.gallery_images?.[index];
+                                    if (imagePath) {
+                                      setRemovedGalleryImages(prev => [...prev, imagePath]);
+                                    }
+                                  }}
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            );
+                          })}
+                          
+                          {/* New gallery image previews */}
+                          {galleryPreviews.map((preview, index) => (
+                            <div key={`new-${index}`} className="relative">
+                              <img 
+                                src={preview} 
+                                alt={`New gallery ${index + 1}`} 
+                                className="w-full h-24 object-cover rounded-lg border"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeGalleryImage(index)}
+                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end space-x-3 pt-4 border-t">
                     <button
                       type="button"
                       onClick={() => {

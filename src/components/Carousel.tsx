@@ -142,7 +142,7 @@ export default function Carousel() {
           />
           
           {/* Overlay and Content */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 flex items-center justify-center">
+          <div className="absolute inset-0 bg-gradient-to-b pt-24 from-black/60 via-black/40 to-black/70 flex items-center justify-center">
             <div className="text-center text-white px-4 max-w-3xl">
               <motion.h2
                 className="text-3xl md:text-5xl font-extrabold mb-4"
