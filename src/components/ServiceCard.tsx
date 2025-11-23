@@ -27,7 +27,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
   };
 
   // Handle multiple YouTube URLs or single URL
-  const youtubeUrls = service.youtube_urls || (service.youtube_url ? [service.youtube_url] : []);
+  const youtubeUrls = service.youtube_url ? [service.youtube_url] : [];
   const firstVideoId = youtubeUrls.length > 0 ? getYouTubeId(youtubeUrls[0]) : null;
 
   // ✅ Consistent image URL resolution
