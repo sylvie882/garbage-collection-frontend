@@ -969,7 +969,7 @@ export default function ServicesPage() {
                       <div className="mt-2">
                         <p className="text-sm text-gray-600 mb-2">Current Main Image:</p>
                         <img 
-                          src={editingService.image_url} 
+                          src={editingService.image_url || '/default-service-image.jpg'}
                           alt="Current" 
                           className="w-32 h-32 object-cover rounded-lg border" 
                         />
