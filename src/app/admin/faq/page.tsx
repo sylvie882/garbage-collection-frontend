@@ -271,7 +271,7 @@ export default function AdminFaqPage() {
                 <textarea
                   value={formData.answer}
                   onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
-                  rows="4"
+                  rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   placeholder="Enter the answer..."
                   required
