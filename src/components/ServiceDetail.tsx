@@ -21,8 +21,9 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
   // Get main service image
   const mainImageUrl = service.image_url || (service.image_path ? getImageUrl(service.image_path) : null);
 
-  // Get gallery images
-  const galleryImages = service.gallery_images ? service.gallery_images.map(img => getImageUrl(img)) : [];
+  // Get gallery images - safely handle missing property
+  const galleryImages: string[] = (service as any).gallery_images ? 
+    (service as any).gallery_images.map((img: string) => getImageUrl(img)) : [];
 
   // Get YouTube videos
   const getYouTubeId = (url: string) => {
@@ -95,9 +96,12 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
               ✕ Close
             </button>
             <img
-              src={selectedImageIndex === -1 ? mainImageUrl : galleryImages[selectedImageIndex]}
+              src={selectedImageIndex === -1 ? mainImageUrl || '' : galleryImages[selectedImageIndex] || ''}
               alt={`${service.name} - Image ${selectedImageIndex + 1}`}
               className="max-w-full max-h-full object-contain"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
             />
             {galleryImages.length > 0 && (
               <div className="flex justify-center mt-4 space-x-2">
@@ -138,7 +142,7 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
             </button>
             <div className="aspect-video bg-black">
               <iframe
-                src={youtubeVideos[selectedVideoIndex].embedUrl}
+                src={youtubeVideos[selectedVideoIndex]?.embedUrl || ''}
                 className="w-full h-full"
                 allowFullScreen
                 title={`${service.name} Service Video ${selectedVideoIndex + 1}`}
@@ -149,18 +153,18 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
               <div className="flex justify-center mt-4 space-x-2">
                 <button
                   onClick={() => setSelectedVideoIndex(prev => 
-                    prev > 0 ? prev - 1 : youtubeVideos.length - 1
+                    prev && prev > 0 ? prev - 1 : youtubeVideos.length - 1
                   )}
                   className="bg-white bg-opacity-20 text-white px-4 py-2 rounded hover:bg-opacity-30"
                 >
                   ← Previous
                 </button>
                 <span className="text-white self-center">
-                  Video {selectedVideoIndex + 1} of {youtubeVideos.length}
+                  Video {(selectedVideoIndex || 0) + 1} of {youtubeVideos.length}
                 </span>
                 <button
                   onClick={() => setSelectedVideoIndex(prev => 
-                    prev < youtubeVideos.length - 1 ? prev + 1 : 0
+                    prev && prev < youtubeVideos.length - 1 ? prev + 1 : 0
                   )}
                   className="bg-white bg-opacity-20 text-white px-4 py-2 rounded hover:bg-opacity-30"
                 >
