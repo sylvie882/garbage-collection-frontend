@@ -83,7 +83,7 @@ async function getServices(params: SearchParams = {}): Promise<{
       services = [];
     }
 
-    // Apply search filter - FIXED: Added explicit Service type
+    // Apply search filter
     if (search) {
       services = services.filter((service: Service) =>
         service.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -91,16 +91,16 @@ async function getServices(params: SearchParams = {}): Promise<{
       );
     }
 
-    // Apply category filter - FIXED: Added explicit Service type
+    // Apply category filter
     if (category && category !== 'all') {
       services = services.filter((service: Service) =>
         service.category?.toLowerCase() === category.toLowerCase()
       );
     }
 
-    // Pagination - 12 services per page
+    // Pagination - 8 services per page
     const currentPage = parseInt(page);
-    const servicesPerPage = 12;
+    const servicesPerPage = 8;
     const totalCount = services.length;
     const totalPages = Math.ceil(totalCount / servicesPerPage);
     
@@ -141,7 +141,6 @@ async function getCategories(): Promise<string[]> {
       return ['all'];
     }
     
-    // FIXED: Added explicit Service type to map function
     const categories = services
       .map((service: Service) => service.category)
       .filter(Boolean)
@@ -163,36 +162,48 @@ export default async function ServicesPage({
   const { services, totalCount, currentPage, totalPages } = await getServices(params);
   const categories = await getCategories();
 
-  // Generate pagination range with ellipsis
-  const getPaginationRange = () => {
-    const delta = 2;
-    const range = [];
-    const rangeWithDots = [];
-
-    if (totalPages <= 1) return [1];
-
-    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
-      range.push(i);
-    }
-
-    if (currentPage - delta > 2) {
-      rangeWithDots.push(1, '...');
+  // Generate pagination numbers
+  const getPaginationNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total pages is less than or equal to max visible
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
     } else {
-      rangeWithDots.push(1);
+      // Show pages with ellipsis
+      if (currentPage <= 3) {
+        // Near the beginning
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        // Near the end
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // In the middle
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
     }
-
-    rangeWithDots.push(...range);
-
-    if (currentPage + delta < totalPages - 1) {
-      rangeWithDots.push('...', totalPages);
-    } else if (totalPages > 1) {
-      rangeWithDots.push(totalPages);
-    }
-
-    return rangeWithDots;
+    
+    return pages;
   };
 
-  const paginationRange = getPaginationRange();
+  const paginationNumbers = getPaginationNumbers();
 
   // Generate structured data
   const structuredData = generateStructuredData(services);
@@ -264,14 +275,6 @@ export default async function ServicesPage({
         <div className="absolute bottom-4 right-4 w-12 h-12 bg-orange-400/10 rounded-full "></div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          {/* Compact Heading - Only Our Services */}
-       
-          
-          <p className="text-green-100 text-lg mb-8 max-w-3xl mx-auto">
-            {/* Comprehensive garbage collection, recycling, and environmental services across Kenya. 
-            Serving residential, commercial, and industrial clients with 100% recycling commitment. */}
-          </p>
-
           <h1 className="text-2xl lg:text-4xl font-bold text-white mb-6 pt-20 leading-tight">
             Professional <span className="text-orange-300">Waste & Garbage Collection </span> Services
           </h1>
@@ -281,7 +284,7 @@ export default async function ServicesPage({
             Serving residential, commercial, and industrial clients with 100% recycling commitment.
           </p>
           
-          {/* Compact CTA Buttons - Only two buttons */}
+          {/* Compact CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <Link 
               href="/quote" 
@@ -302,22 +305,6 @@ export default async function ServicesPage({
               Explore {totalCount}+ Services
             </Link>
           </div>
-
-          {/* Service Coverage Badges */}
-          {/* <div className="flex flex-wrap justify-center gap-3 mt-8">
-            <span className="bg-green-600/30 text-green-100 px-4 py-2 rounded-full text-sm border border-green-500/30">
-              🏙️ Nairobi County
-            </span>
-            <span className="bg-green-600/30 text-green-100 px-4 py-2 rounded-full text-sm border border-green-500/30">
-              🏔️ Nakuru County
-            </span>
-            <span className="bg-green-600/30 text-green-100 px-4 py-2 rounded-full text-sm border border-green-500/30">
-              🦁 Narok County
-            </span>
-            <span className="bg-green-600/30 text-green-100 px-4 py-2 rounded-full text-sm border border-green-500/30">
-              🏞️ Laikipia County
-            </span>
-          </div> */}
         </div>
       </section>
 
@@ -378,123 +365,137 @@ export default async function ServicesPage({
             </div>
           </div>
 
-          {/* Services Grid */}
+          {/* Services Grid - 3 cards per row */}
           {services.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-16">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
                 {services.map((service) => (
                   <ServiceCard key={service.id} service={service} />
                 ))}
               </div>
 
-              {/* Enhanced Professional Pagination */}
+              {/* Simple Pagination with Solid Colors */}
               {totalPages > 1 && (
-                <div className="flex flex-col lg:flex-row items-center justify-between gap-8 pt-12 border-t border-gray-200/60">
+                <div className="flex flex-col items-center justify-center space-y-6 pt-12 border-t border-gray-200/60">
                   {/* Results Summary */}
-                  <div className="text-sm text-gray-600">
-                    Showing <span className="font-semibold text-gray-900">{((currentPage - 1) * 12) + 1}-{Math.min(currentPage * 12, totalCount)}</span> of{' '}
-                    <span className="font-semibold text-gray-900">{totalCount}</span> waste management services
+                  <div className="text-sm text-gray-600 text-center">
+                    Showing <span className="font-semibold text-gray-900">{((currentPage - 1) * 8) + 1}-{Math.min(currentPage * 8, totalCount)}</span> of{' '}
+                    <span className="font-semibold text-gray-900">{totalCount}</span> services
                   </div>
 
-                  {/* Pagination Controls */}
+                  {/* Pagination Numbers with Solid Colors */}
                   <div className="flex items-center space-x-3">
                     {/* Previous Button */}
-                    <Link
-                      href={{
-                        pathname: '/services',
-                        query: {
-                          ...params,
-                          page: currentPage - 1
-                        }
-                      }}
-                      className={`group flex items-center px-6 py-3 border rounded-2xl text-sm font-semibold transition-all duration-300 ${
-                        currentPage === 1
-                          ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
-                          : 'bg-white border-gray-300 text-gray-700 hover:border-green-300 hover:text-green-700 hover:shadow-lg hover:scale-105'
-                      }`}
-                      aria-disabled={currentPage === 1}
-                      tabIndex={currentPage === 1 ? -1 : undefined}
-                    >
-                      <svg className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                      Previous
-                    </Link>
+                    {currentPage > 1 && (
+                      <Link
+                        href={{
+                          pathname: '/services',
+                          query: {
+                            ...params,
+                            page: currentPage - 1
+                          }
+                        }}
+                        className="flex items-center justify-center w-12 h-12 text-sm font-semibold bg-blue-500 text-white rounded-xl hover:bg-blue-600 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 border-2 border-blue-400"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </Link>
+                    )}
 
-                    {/* Page Numbers */}
-                    <div className="flex items-center space-x-2">
-                      {paginationRange.map((page, index) => (
-                        page === '...' ? (
-                          <span key={`ellipsis-${index}`} className="px-4 py-2 text-gray-500 font-medium">
-                            ...
-                          </span>
-                        ) : (
+                    {/* Page Numbers with Solid Colors */}
+                    {paginationNumbers.map((page, index) => (
+                      page === '...' ? (
+                        <span key={`ellipsis-${index}`} className="px-4 py-2 text-gray-500 font-medium text-lg">
+                          ...
+                        </span>
+                      ) : (
+                        <Link
+                          key={page}
+                          href={{
+                            pathname: '/services',
+                            query: {
+                              ...params,
+                              page: page as number
+                            }
+                          }}
+                          className={`flex items-center justify-center w-12 h-12 text-lg font-bold rounded-xl transition-all duration-300 transform hover:scale-110 border-2 ${
+                            page === currentPage
+                              ? 'bg-green-500 text-white border-green-400 shadow-lg'
+                              : 'bg-orange-400 text-white border-orange-300 hover:bg-orange-500 shadow-md hover:shadow-lg'
+                          }`}
+                        >
+                          {page}
+                        </Link>
+                      )
+                    ))}
+
+                    {/* Next Button */}
+                    {currentPage < totalPages && (
+                      <Link
+                        href={{
+                          pathname: '/services',
+                          query: {
+                            ...params,
+                            page: currentPage + 1
+                          }
+                        }}
+                        className="flex items-center justify-center w-12 h-12 text-sm font-semibold bg-blue-500 text-white rounded-xl hover:bg-blue-600 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 border-2 border-blue-400"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Link>
+                    )}
+                  </div>
+
+                  {/* Quick Page Navigation with Solid Colors */}
+                  <div className="flex items-center space-x-3 text-sm text-gray-600">
+                    <span className="font-medium text-gray-700">Quick jump:</span>
+                    <div className="flex gap-2">
+                      {[1, 2, 3].map(page => (
+                        page <= totalPages && (
                           <Link
                             key={page}
                             href={{
                               pathname: '/services',
                               query: {
                                 ...params,
-                                page: page as number
+                                page: page
                               }
                             }}
-                            className={`flex items-center justify-center w-12 h-12 text-sm font-semibold rounded-xl transition-all duration-300 ${
+                            className={`flex items-center justify-center w-10 h-10 font-semibold rounded-lg transition-all duration-300 transform hover:scale-110 border-2 ${
                               page === currentPage
-                                ? 'bg-gradient-to-br from-green-600 to-green-700 text-white shadow-lg scale-105'
-                                : 'bg-white border border-gray-300 text-gray-700 hover:border-green-300 hover:text-green-700 hover:shadow-md'
+                                ? 'bg-purple-500 text-white border-purple-400 shadow-lg'
+                                : 'bg-teal-500 text-white border-teal-400 hover:bg-teal-600 shadow-md hover:shadow-lg'
                             }`}
                           >
                             {page}
                           </Link>
                         )
                       ))}
+                      {totalPages > 3 && (
+                        <>
+                          <span className="flex items-center px-2 text-gray-400 text-lg">···</span>
+                          <Link
+                            href={{
+                              pathname: '/services',
+                              query: {
+                                ...params,
+                                page: totalPages
+                              }
+                            }}
+                            className={`flex items-center justify-center w-10 h-10 font-semibold rounded-lg transition-all duration-300 transform hover:scale-110 border-2 ${
+                              totalPages === currentPage
+                                ? 'bg-purple-500 text-white border-purple-400 shadow-lg'
+                                : 'bg-teal-500 text-white border-teal-400 hover:bg-teal-600 shadow-md hover:shadow-lg'
+                            }`}
+                          >
+                            {totalPages}
+                          </Link>
+                        </>
+                      )}
                     </div>
-
-                    {/* Next Button */}
-                    <Link
-                      href={{
-                        pathname: '/services',
-                        query: {
-                          ...params,
-                          page: currentPage + 1
-                        }
-                      }}
-                      className={`group flex items-center px-6 py-3 border rounded-2xl text-sm font-semibold transition-all duration-300 ${
-                        currentPage === totalPages
-                          ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
-                          : 'bg-white border-gray-300 text-gray-700 hover:border-green-300 hover:text-green-700 hover:shadow-lg hover:scale-105'
-                      }`}
-                      aria-disabled={currentPage === totalPages}
-                      tabIndex={currentPage === totalPages ? -1 : undefined}
-                    >
-                      Next
-                      <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-                  </div>
-
-                  {/* Quick Page Jump */}
-                  <div className="flex items-center space-x-3 text-sm text-gray-600">
-                    <span>Go to page:</span>
-                    <select 
-                      className="bg-white border border-gray-300 rounded-xl px-4 py-2 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          window.location.href = `/services?${new URLSearchParams({
-                            ...params,
-                            page: e.target.value
-                          })}`;
-                        }
-                      }}
-                      value={currentPage}
-                    >
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                        <option key={page} value={page}>
-                          {page}
-                        </option>
-                      ))}
-                    </select>
                   </div>
                 </div>
               )}

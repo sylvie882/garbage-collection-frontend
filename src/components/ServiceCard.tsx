@@ -12,18 +12,37 @@ interface ServiceCardProps {
 export default function ServiceCard({ service }: ServiceCardProps) {
   const [videoStarted, setVideoStarted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [clickedToPlay, setClickedToPlay] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.sylviegarbagecollection.co.ke';
 
-  // ✅ YouTube video ID extractor
+  // ✅ IMPROVED YouTube video ID extractor - handles all formats
   const getYouTubeId = (url: string | null) => {
     if (!url) return null;
-    const match = url.match(
-      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
-    );
-    return match ? match[1] : null;
+    
+    // Handle various YouTube URL formats
+    const patterns = [
+      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/, // Standard URLs
+      /youtube\.com\/shorts\/([^"&?\/\s]{11})/, // Shorts URLs
+      /youtube\.com\/watch\?v=([^"&?\/\s]{11})/, // Watch URLs
+    ];
+
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+
+    // Handle channel URLs separately - they can't be embedded as videos
+    if (url.includes('youtube.com/@')) {
+      return null;
+    }
+
+    return null;
   };
 
   // Handle multiple YouTube URLs or single URL
@@ -32,6 +51,9 @@ export default function ServiceCard({ service }: ServiceCardProps) {
 
   // ✅ Consistent image URL resolution
   const getImageUrl = () => {
+    // ✅ Only return image URL if there's no YouTube video
+    if (firstVideoId) return null;
+
     // ✅ Prefer full URL from backend if available
     if (service.image_url) return service.image_url;
 
@@ -46,29 +68,35 @@ export default function ServiceCard({ service }: ServiceCardProps) {
 
   const imageUrl = getImageUrl();
 
-  // ✅ YouTube embed
-  const getYouTubeEmbedUrl = (id: string, autoplay = false) => {
+  // ✅ FIXED YouTube embed - Auto-play muted, no loop
+  const getYouTubeEmbedUrl = (id: string, autoplay = false, muted = true) => {
     const params = new URLSearchParams({
       rel: '0',
       modestbranding: '1',
       playsinline: '1',
       controls: '1',
-      enablejsapi: '1',
-      loop: '1',
-      playlist: id,
-      mute: '0',
+      enablejsapi: '0',
+      mute: muted ? '1' : '0',
     });
-    if (autoplay) params.append('autoplay', '1');
+    
+    if (autoplay) {
+      params.append('autoplay', '1');
+    }
+    
     return `https://www.youtube.com/embed/${id}?${params.toString()}`;
   };
 
-  const handleVideoEnd = () => {
-    if (iframeRef.current && firstVideoId) {
-      iframeRef.current.src = getYouTubeEmbedUrl(firstVideoId, true);
-    }
+  const handlePlayClick = () => {
+    setClickedToPlay(true);
+    setVideoStarted(true);
+    setIsMuted(false); // Unmute when user clicks to play
   };
 
-  // ✅ Auto-play when visible
+  const handleUnmuteClick = () => {
+    setIsMuted(false);
+  };
+
+  // ✅ Auto-play when visible - muted by default
   useEffect(() => {
     if (!firstVideoId) return;
 
@@ -76,17 +104,46 @@ export default function ServiceCard({ service }: ServiceCardProps) {
       ([entry]) => {
         const visible = entry.isIntersecting;
         setIsVisible(visible);
-        if (visible && !videoStarted) setVideoStarted(true);
-        else if (!visible && videoStarted) setVideoStarted(false);
+        
+        // Auto-play when visible (muted by default)
+        if (visible && !videoStarted && document.hasFocus()) {
+          setVideoStarted(true);
+        } else if (!visible && videoStarted) {
+          setVideoStarted(false);
+        }
       },
-      { threshold: 0.5, rootMargin: '50px' }
+      { threshold: 0.7, rootMargin: '100px' }
     );
 
     if (videoRef.current) observer.observe(videoRef.current);
     return () => observer.disconnect();
   }, [firstVideoId, videoStarted]);
 
-  // ✅ URL builder - FIXED
+  // ✅ Handle iframe load and error events
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const handleLoad = () => {
+      console.log('YouTube iframe loaded successfully');
+    };
+
+    const handleError = () => {
+      console.error('YouTube iframe failed to load');
+      setVideoStarted(false);
+      setClickedToPlay(false);
+    };
+
+    iframe.addEventListener('load', handleLoad);
+    iframe.addEventListener('error', handleError);
+
+    return () => {
+      iframe.removeEventListener('load', handleLoad);
+      iframe.removeEventListener('error', handleError);
+    };
+  }, [videoStarted]);
+
+  // ✅ URL builder
   const getServiceUrl = () => {
     if (service.slug && service.slug.trim() && service.slug !== 'd')
       return `/services/${service.slug}`;
@@ -110,23 +167,36 @@ export default function ServiceCard({ service }: ServiceCardProps) {
   const thumbnailType = getThumbnailType();
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-green-200 group">
-      {/* Image or Video */}
-      <div ref={videoRef} className="h-48 relative overflow-hidden bg-gray-900">
-        {/* YouTube Video - FIRST PRIORITY */}
+    <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 group">
+      {/* Image or Video Container */}
+      <div ref={videoRef} className="h-48 relative overflow-hidden bg-gray-900 rounded-t-2xl">
+        {/* YouTube Video - Auto-play muted when visible */}
         {thumbnailType === 'youtube' && firstVideoId && videoStarted ? (
-          <iframe
-            ref={iframeRef}
-            src={getYouTubeEmbedUrl(firstVideoId, true)}
-            className="w-full h-full"
-            allow="autoplay; encrypted-media"
-            allowFullScreen
-            title={service.name}
-            loading="lazy"
-            onEnded={handleVideoEnd}
-          />
-        ) : thumbnailType === 'youtube' && firstVideoId ? (
           <div className="relative w-full h-full">
+            <iframe
+              ref={iframeRef}
+              src={getYouTubeEmbedUrl(firstVideoId, true, isMuted)}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              title={`${service.name} - YouTube Video`}
+              loading="lazy"
+            />
+            {/* Mute/Unmute overlay button */}
+            {isMuted && (
+              <div 
+                className="absolute bottom-3 right-3 bg-black/80 text-white p-2 rounded-full cursor-pointer hover:bg-black transition-all duration-300"
+                onClick={handleUnmuteClick}
+                title="Click to unmute"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+              </div>
+            )}
+          </div>
+        ) : thumbnailType === 'youtube' && firstVideoId ? (
+          <div className="relative w-full h-full cursor-pointer" onClick={handlePlayClick}>
             <img
               src={`https://img.youtube.com/vi/${firstVideoId}/maxresdefault.jpg`}
               alt={service.name}
@@ -136,26 +206,19 @@ export default function ServiceCard({ service }: ServiceCardProps) {
                 t.src = `https://img.youtube.com/vi/${firstVideoId}/hqdefault.jpg`;
               }}
             />
-            {/* YouTube Play Button Overlay */}
-            <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center group-hover:bg-opacity-10 transition-all">
-              <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center transform group-hover:scale-110 transition-transform">
-                <svg className="w-5 h-5 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+            {/* YouTube Play Button Overlay - Click to play with sound */}
+            <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center transition-all duration-300">
+              <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center transform hover:scale-110 transition-transform duration-300 shadow-lg">
+                <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z"/>
                 </svg>
               </div>
-            </div>
-            {/* YouTube Badge */}
-            <div className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
-              </svg>
-              Video
             </div>
           </div>
         ) : null}
 
         {/* Image - SECOND PRIORITY (only if no YouTube) */}
-        {thumbnailType === 'image' && (
+        {thumbnailType === 'image' && imageUrl && (
           <img
             src={imageUrl}
             alt={service.name}
@@ -168,56 +231,68 @@ export default function ServiceCard({ service }: ServiceCardProps) {
 
         {/* Icon - THIRD PRIORITY (only if no YouTube or image) */}
         {thumbnailType === 'icon' && (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 group-hover:from-green-100 group-hover:to-emerald-200 transition-all">
-            <span className="text-4xl text-green-600 group-hover:scale-110 transition-transform">
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100">
+            <span className="text-4xl text-green-600">
               {service.icon || '🗑️'}
             </span>
           </div>
         )}
 
-        {/* Featured Badge */}
-        {service.featured && (
-          <span className="absolute top-3 left-3 bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-medium">
-            Featured
-          </span>
-        )}
-
-        {/* Category Badge */}
-        {service.category && (
-          <span className={`absolute top-3 ${
-            service.featured ? 'left-24' : 'left-3'
-          } bg-green-600 text-white px-3 py-1 rounded-full text-xs font-medium`}>
-            {service.category}
-          </span>
+        {/* YouTube Badge - Top Right */}
+        {thumbnailType === 'youtube' && firstVideoId && (
+          <div className="absolute top-3 right-3 bg-red-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
+            </svg>
+            Video
+          </div>
         )}
 
         {/* Video Count Badge (if multiple videos) */}
         {youtubeUrls.length > 1 && (
-          <span className="absolute bottom-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full">
+          <span className="absolute bottom-3 left-3 bg-red-600 text-white text-xs px-2 py-1 rounded-full">
             +{youtubeUrls.length - 1} more
           </span>
         )}
       </div>
 
       {/* Content */}
-      <div className="p-6">
-        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-green-700 transition">
+      <div className="p-5">
+        {/* Featured and Category badges */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {/* Featured Badge */}
+          {service.featured && (
+            <span className="bg-purple-600 text-white px-2 py-1 rounded text-xs font-medium whitespace-nowrap">
+              ⭐ Featured
+            </span>
+          )}
+
+          {/* Category Badge */}
+          {service.category && (
+            <span className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium whitespace-nowrap">
+              {service.category}
+            </span>
+          )}
+        </div>
+
+        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
           {service.name}
         </h3>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+        
+        <p className="text-gray-600 text-sm mb-3 line-clamp-3">
           {service.description ||
             'Professional service with expert team and quality guaranteed.'}
         </p>
 
         {/* Features */}
-        <ul className="space-y-1 mb-4">
+        <ul className="space-y-1.5 mb-3">
           {(service.features?.length
             ? service.features.slice(0, 3)
-            : ['Expert Team', 'Quality Guaranteed']
+            : ['Expert Team', 'Quality Guaranteed', 'Eco-Friendly']
           ).map((f, i) => (
-            <li key={i} className="flex items-center text-sm text-gray-500">
+            <li key={i} className="flex items-center text-sm text-gray-600">
               <svg
-                className="w-4 h-4 text-green-500 mr-2"
+                className="w-4 h-4 text-green-500 mr-2 flex-shrink-0"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -227,7 +302,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
                   clipRule="evenodd"
                 />
               </svg>
-              {f}
+              <span className="truncate">{f}</span>
             </li>
           ))}
         </ul>
@@ -235,42 +310,26 @@ export default function ServiceCard({ service }: ServiceCardProps) {
         {/* Duration & Frequency */}
         <div className="flex flex-wrap gap-2 mb-4">
           {service.duration && (
-            <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+            <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs whitespace-nowrap">
               ⏱️ {service.duration}
             </span>
           )}
           {service.frequency && (
-            <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">
+            <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs whitespace-nowrap">
               🔄 {service.frequency}
             </span>
           )}
         </div>
 
-        {/* Price & CTA */}
-        <div className="flex items-center justify-between border-t pt-4">
-          <div>
-            {service.price ? (
-              <p className="text-green-600 text-lg font-semibold">
-                KSh {service.price}
-                {service.price_unit && (
-                  <span className="text-gray-500 text-sm ml-1">
-                    /{service.price_unit}
-                  </span>
-                )}
-              </p>
-            ) : (
-              <p className="text-green-600 font-medium text-sm">Contact for pricing</p>
-            )}
-          </div>
-
-          {/* FIXED Link component */}
+        {/* Only View Details button */}
+        <div className="flex justify-end border-t border-gray-100 pt-3">
           <Link 
             href={serviceUrl}
-            className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-5 py-2 rounded-lg flex items-center gap-2 transition group/btn"
+            className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg flex items-center gap-2 transition-colors duration-200"
           >
             View Details
             <svg
-              className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform"
+              className="w-4 h-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
