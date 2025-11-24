@@ -32,9 +32,8 @@ if (typeof window !== 'undefined') {
   };
 }
 
-
-import Header from '@/./components/Header';
-import Footer from '@/./components/Footer';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import QuoteForm from '../../components/QuoteForm';
 import FloatingButtons from '../../components/FloatingButtons';
 import { useState } from 'react';
@@ -97,13 +96,13 @@ export default function QuotePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-100">
+    <div className="min-h-screen bg-white">
       <Header />
       
       {/* Success Card */}
       {showSuccess && (
-        <div className="fixed top-48 right-4 left-4 md:left-auto md:right-4 z-50 max-w-md animate-in slide-in-from-right duration-500">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-6 rounded-2xl shadow-2xl border-2 border-green-300">
+        <div className="fixed top-48 right-4 left-4 md:left-auto md:right-4 z-50 max-w-md slide-in-from-right duration-500">
+          <div className="bg-green-600 text-white p-6 rounded-2xl shadow-2xl border-2 border-green-300">
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,7 +144,7 @@ export default function QuotePage() {
       )}
       
       {/* Enhanced Breadcrumb */}
-      <section className="bg-gradient-to-r from-green-700 via-emerald-600 to-teal-700 py-6 shadow-lg">
+      <section className="bg-green-700 py-6 shadow-lg">
         <div className="container mx-auto px-4">
           <nav className="text-white text-sm font-medium">
             <a href="/" className="hover:text-green-200 transition-colors duration-300">Home</a>
@@ -160,14 +159,14 @@ export default function QuotePage() {
           {/* Enhanced Header */}
           <div className="text-center mb-16 px-4">
             <div className="inline-flex items-center gap-4 text-green-600 font-semibold text-sm uppercase tracking-wider mb-6">
-              <div className="w-12 h-1 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full"></div>
+              <div className="w-12 h-1 bg-green-400 rounded-full"></div>
               Get Your Custom Quote
-              <div className="w-12 h-1 bg-gradient-to-r from-emerald-400 to-green-400 rounded-full"></div>
+              <div className="w-12 h-1 bg-green-400 rounded-full"></div>
             </div>
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-              Request Your <span className="text-transparent bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text">Quote</span>
+              Request Your <span className="text-green-600">Quote</span>
             </h1>
-            <p className="text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed bg-gradient-to-r from-green-100 to-emerald-100 p-6 rounded-2xl border border-green-200">
+            <p className="text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed bg-green-50 p-6 rounded-2xl border border-green-200">
               Get a free, no-obligation quote for our professional waste management services. 
               We&apos;ll get back to you within 24 hours with competitive pricing.
             </p>
@@ -175,10 +174,10 @@ export default function QuotePage() {
 
           <div className="max-w-6xl mx-auto">
             {/* Enhanced Quote Form Container */}
-            <div className="bg-gradient-to-br from-white to-green-50 rounded-3xl shadow-2xl p-8 lg:p-12 mb-16 border-2 border-green-200 relative overflow-hidden">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12 mb-16 border-2 border-green-200 relative overflow-hidden">
               {/* Decorative elements */}
               <div className="absolute top-0 left-0 w-32 h-32 bg-green-100 rounded-full -translate-x-16 -translate-y-16 opacity-50"></div>
-              <div className="absolute bottom-0 right-0 w-48 h-48 bg-emerald-100 rounded-full translate-x-24 translate-y-24 opacity=50"></div>
+              <div className="absolute bottom-0 right-0 w-48 h-48 bg-green-100 rounded-full translate-x-24 translate-y-24 opacity-50"></div>
               
               <div className="relative z-10">
                 <div className="text-center mb-10">
@@ -202,21 +201,21 @@ export default function QuotePage() {
                   description: 'We typically respond to quote requests within 2-4 hours during business days.',
                   icon: '⚡',
                   gradient: 'from-yellow-400 to-amber-500',
-                  bg: 'bg-gradient-to-br from-amber-50 to-yellow-100'
+                  bg: 'bg-amber-50'
                 },
                 {
                   title: 'Transparent Pricing',
                   description: 'No hidden fees. We provide detailed, transparent pricing for all our services.',
                   icon: '💰',
                   gradient: 'from-green-500 to-emerald-600',
-                  bg: 'bg-gradient-to-br from-green-50 to-emerald-100'
+                  bg: 'bg-green-50'
                 },
                 {
                   title: 'Expert Consultation',
                   description: 'Get free expert advice on the best waste management solutions for your needs.',
                   icon: '👨‍💼',
                   gradient: 'from-blue-500 to-cyan-600',
-                  bg: 'bg-gradient-to-br from-blue-50 to-cyan-100'
+                  bg: 'bg-blue-50'
                 }
               ].map((item, index) => (
                 <div key={index} className={`${item.bg} rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-3 p-8 border-2 border-white relative overflow-hidden group`}>
@@ -224,7 +223,7 @@ export default function QuotePage() {
                   <div className="absolute top-0 right-0 w-20 h-20 bg-white/30 rounded-full -translate-y-8 translate-x-8 group-hover:scale-150 transition-transform duration-500"></div>
                   
                   <div className="relative z-10 text-center">
-                    <div className={`w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-r ${item.gradient} flex items-center justify-center text-3xl shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                    <div className={`w-20 h-20 mx-auto mb-6 rounded-2xl bg-orange-500 flex items-center justify-center text-3xl shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                       {item.icon}
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-4">{item.title}</h3>
@@ -235,7 +234,7 @@ export default function QuotePage() {
             </div>
 
             {/* Enhanced Contact Alternatives */}
-            <div className="bg-gradient-to-r from-green-600 to-emerald-700 rounded-3xl p-12 text-center relative overflow-hidden shadow-2xl">
+            <div className="bg-green-600 rounded-3xl p-12 text-center relative overflow-hidden shadow-2xl">
               {/* Background pattern */}
               <div className="absolute top-0 left-0 w-full h-full opacity-10">
                 <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full"></div>
@@ -251,7 +250,7 @@ export default function QuotePage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                   <a 
-                    href="tel:+254794416120"
+                    href="tel:+254711515752"
                     className="bg-white text-green-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 inline-flex items-center gap-3 shadow-lg hover:shadow-xl hover:scale-105 border-2 border-transparent hover:border-green-200"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,7 +285,7 @@ export default function QuotePage() {
                   { name: 'Residential', icon: '🏠', color: 'bg-blue-100 text-blue-700' },
                   { name: 'Commercial', icon: '🏢', color: 'bg-green-100 text-green-700' },
                   { name: 'Industrial', icon: '🏭', color: 'bg-orange-100 text-orange-700' },
-                  { name: 'Recycling', icon: '♻️', color: 'bg-emerald-100 text-emerald-700' }
+                  { name: 'Recycling', icon: '♻️', color: 'bg-green-100 text-green-700' }
                 ].map((service, index) => (
                   <div key={index} className={`${service.color} rounded-xl p-6 text-center font-semibold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105`}>
                     <div className="text-3xl mb-3">{service.icon}</div>

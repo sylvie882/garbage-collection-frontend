@@ -72,7 +72,7 @@ export default function QuoteForm({ onSubmit, isSubmitting }: QuoteFormProps) {
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-green-800 px-8 py-6">
+        <div className="bg-green-600 px-8 py-6">
           <h2 className="text-3xl font-bold text-white text-center">
             Request a Free Quote
           </h2>
@@ -219,7 +219,7 @@ export default function QuoteForm({ onSubmit, isSubmitting }: QuoteFormProps) {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-12 py-4 rounded-lg font-semibold text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
+                className="bg-orange-500 text-white px-12 py-4 rounded-lg font-semibold text-lg hover:bg-orange-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
               >
                 {isSubmitting ? (
                   <div className="flex items-center space-x-2">
