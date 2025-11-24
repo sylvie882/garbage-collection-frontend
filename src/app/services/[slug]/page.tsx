@@ -209,7 +209,7 @@ export default async function ServiceDetailPage({
             </Link>
             <Link 
               href="/contact" 
-              className="group border-2 border-white/80 text-white px-10 py-5 rounded-2xl text-lg font-semibold hover:bg-white/10 backdrop-blur-sm transition-all duration-300 inline-flex items-center gap-3 shadow-2xl hover:scale-105"
+              className="group border-2 border-white/80 text-white px-10 py-5 rounded-2xl text-lg font-semibold hover:bg-white/10  transition-all duration-300 inline-flex items-center gap-3 shadow-2xl hover:scale-105"
             >
               Talk to Expert
             </Link>

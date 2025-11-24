@@ -102,7 +102,7 @@ export default function AdminLayout({
         {/* Sidebar Backdrop */}
         {sidebarOpen && (
           <div 
-            className="fixed inset-0 bg-black bg-opacity-60 z-40 backdrop-blur-sm"
+            className="fixed inset-0 bg-black bg-opacity-60 z-40 "
             onClick={() => setSidebarOpen(false)}
           />
         )}

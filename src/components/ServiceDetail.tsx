@@ -241,7 +241,7 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             {/* Service Type/Category - Added more top margin */}
-            <div className="inline-flex items-center gap-2 bg-green-500/20 backdrop-blur-sm rounded-full px-4 py-2 mb-6 border border-green-400/30">
+            <div className="inline-flex items-center gap-2 bg-green-500/20  rounded-full px-4 py-2 mb-6 border border-green-400/30">
               <span className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></span>
               <span className="text-green-100 text-sm font-medium">
                 {service.category || 'Waste Management Service'}
@@ -281,7 +281,7 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
               </a>
               <a
                 href="/contact"
-                className="group border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-all duration-300 inline-flex items-center gap-3 backdrop-blur-sm hover:scale-105 w-full sm:w-auto justify-center"
+                className="group border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-all duration-300 inline-flex items-center gap-3  hover:scale-105 w-full sm:w-auto justify-center"
               >
                 <svg
                   className="w-5 h-5 group-hover:scale-110 transition-transform"

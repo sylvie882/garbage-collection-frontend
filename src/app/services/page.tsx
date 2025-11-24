@@ -260,8 +260,8 @@ export default async function ServicesPage({
         </div>
         
         {/* Subtle Floating Elements */}
-        <div className="absolute top-4 left-4 w-10 h-10 bg-green-500/20 rounded-full blur-md"></div>
-        <div className="absolute bottom-4 right-4 w-12 h-12 bg-orange-400/10 rounded-full blur-lg"></div>
+        <div className="absolute top-4 left-4 w-10 h-10 bg-green-500/20 rounded-full "></div>
+        <div className="absolute bottom-4 right-4 w-12 h-12 bg-orange-400/10 rounded-full "></div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* Compact Heading - Only Our Services */}
@@ -294,7 +294,7 @@ export default async function ServicesPage({
             </Link>
             <Link 
               href="#services-grid"
-              className="group border border-white/50 text-white px-6 py-3 rounded-lg text-sm font-semibold hover:bg-white/10 backdrop-blur-sm transition-all duration-300 inline-flex items-center gap-2 shadow-lg hover:scale-105 transform"
+              className="group border border-white/50 text-white px-6 py-3 rounded-lg text-sm font-semibold hover:bg-white/10  transition-all duration-300 inline-flex items-center gap-2 shadow-lg hover:scale-105 transform"
             >
               <svg className="w-4 h-4 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
@@ -568,7 +568,7 @@ export default async function ServicesPage({
             </Link>
             <Link 
               href="/contact" 
-              className="group border-2 border-white/80 text-white px-10 py-5 rounded-2xl text-lg font-semibold hover:bg-white/10 backdrop-blur-sm transition-all duration-300 inline-flex items-center gap-3 shadow-2xl hover:scale-105"
+              className="group border-2 border-white/80 text-white px-10 py-5 rounded-2xl text-lg font-semibold hover:bg-white/10  transition-all duration-300 inline-flex items-center gap-3 shadow-2xl hover:scale-105"
             >
               <svg className="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
