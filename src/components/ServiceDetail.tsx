@@ -111,14 +111,14 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
     
     return (
       <div 
-        className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-em:text-gray-700 prose-ul:text-gray-800 prose-ol:text-gray-800 prose-li:text-gray-800 prose-a:text-green-600 prose-a:no-underline hover:prose-a:underline"
+        className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-em:text-gray-700 prose-ul:text-gray-800 prose-ol:text-gray-800 prose-li:text-gray-800 prose-a:text-green-600 prose-a:no-underline hover:prose-a:underline prose-sm sm:prose-base"
         dangerouslySetInnerHTML={{ __html: htmlContent }}
       />
     );
   };
 
   // Function to create a short description from HTML content
-  const createShortDescription = (htmlContent: string, maxLength: number = 300) => {
+  const createShortDescription = (htmlContent: string, maxLength: number = 200) => {
     if (!htmlContent) return '';
     
     // Remove HTML tags and get plain text
@@ -131,7 +131,7 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
   };
 
   // Check if description is long enough to need truncation
-  const isLongDescription = service.full_description && service.full_description.replace(/<[^>]*>/g, '').length > 300;
+  const isLongDescription = service.full_description && service.full_description.replace(/<[^>]*>/g, '').length > 200;
 
   return (
     <>
@@ -141,13 +141,13 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceStructuredData) }}
       />
       
-      {/* Image Modal */}
+      {/* Image Modal - Mobile Optimized */}
       {selectedImageIndex !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-2 sm:p-4">
           <div className="relative max-w-4xl max-h-full w-full">
             <button
               onClick={() => setSelectedImageIndex(null)}
-              className="absolute -top-12 right-0 text-white text-xl hover:text-gray-300 z-10 bg-gray-800 px-3 py-1 rounded-lg"
+              className="absolute -top-10 sm:-top-12 right-0 text-white text-lg sm:text-xl hover:text-gray-300 z-10 bg-gray-800 px-3 py-1 rounded-lg"
             >
               ✕ Close
             </button>
@@ -160,19 +160,19 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
               }}
             />
             {(galleryImages.length > 0 || mainImageUrl) && (
-              <div className="flex justify-center mt-4 space-x-2">
+              <div className="flex justify-center mt-3 sm:mt-4 space-x-1 sm:space-x-2">
                 <button
                   onClick={() => navigateImage('prev')}
-                  className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                  className="bg-gray-800 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base"
                 >
-                  ← Previous
+                  ← Prev
                 </button>
-                <span className="text-white self-center px-4 py-2 bg-gray-800 rounded-lg">
-                  {selectedImageIndex === -1 ? 'Main Image' : `Image ${selectedImageIndex + 1} of ${galleryImages.length}`}
+                <span className="text-white self-center px-2 py-1 sm:px-4 sm:py-2 bg-gray-800 rounded-lg text-sm sm:text-base">
+                  {selectedImageIndex === -1 ? 'Main' : `${selectedImageIndex + 1}/${galleryImages.length}`}
                 </span>
                 <button
                   onClick={() => navigateImage('next')}
-                  className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                  className="bg-gray-800 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base"
                 >
                   Next →
                 </button>
@@ -182,13 +182,13 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
         </div>
       )}
 
-      {/* Video Modal */}
+      {/* Video Modal - Mobile Optimized */}
       {selectedVideoIndex !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
-          <div className="relative max-w-4xl w-full">
+        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-2 sm:p-4">
+          <div className="relative max-w-4xl w-full mx-2 sm:mx-0">
             <button
               onClick={() => setSelectedVideoIndex(null)}
-              className="absolute -top-12 right-0 text-white text-xl hover:text-gray-300 z-10 bg-gray-800 px-3 py-1 rounded-lg"
+              className="absolute -top-10 sm:-top-12 right-0 text-white text-lg sm:text-xl hover:text-gray-300 z-10 bg-gray-800 px-3 py-1 rounded-lg"
             >
               ✕ Close
             </button>
@@ -202,19 +202,19 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
               />
             </div>
             {youtubeVideos.length > 1 && (
-              <div className="flex justify-center mt-4 space-x-2">
+              <div className="flex justify-center mt-3 sm:mt-4 space-x-1 sm:space-x-2">
                 <button
                   onClick={() => navigateVideo('prev')}
-                  className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                  className="bg-gray-800 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base"
                 >
-                  ← Previous
+                  ← Prev
                 </button>
-                <span className="text-white self-center px-4 py-2 bg-gray-800 rounded-lg">
-                  Video {selectedVideoIndex + 1} of {youtubeVideos.length}
+                <span className="text-white self-center px-2 py-1 sm:px-4 sm:py-2 bg-gray-800 rounded-lg text-sm sm:text-base">
+                  Video {selectedVideoIndex + 1}/{youtubeVideos.length}
                 </span>
                 <button
                   onClick={() => navigateVideo('next')}
-                  className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                  className="bg-gray-800 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base"
                 >
                   Next →
                 </button>
@@ -284,36 +284,36 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
         </p>
       </div>
 
-      {/* CLEAN GREEN HERO SECTION */}
-      <section className="bg-green-600 pt-24 pb-16 lg:pt-28 lg:pb-20">
+      {/* CLEAN GREEN HERO SECTION - Mobile Optimized */}
+      <section className="bg-green-600 pt-20 pb-12 lg:pt-28 lg:pb-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             {/* Service Type/Category */}
-            <div className="inline-flex items-center gap-2 bg-green-500 rounded-full px-4 py-2 mb-6">
-              <span className="w-2 h-2 bg-green-300 rounded-full"></span>
-              <span className="text-green-100 text-sm font-medium">
+            <div className="inline-flex items-center gap-2 bg-green-500 rounded-full px-3 py-1 sm:px-4 sm:py-2 mb-4 sm:mb-6">
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-300 rounded-full"></span>
+              <span className="text-green-100 text-xs sm:text-sm font-medium">
                 {service.category || 'Waste Management Service'}
               </span>
             </div>
 
             {/* Service Name */}
-            <h1 className="text-3xl lg:text-4xl font-bold text-white mb-6">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 sm:mb-6">
               {service.name}
             </h1>
 
             {/* Service Description */}
-            <p className="text-green-100 text-lg mb-10 max-w-2xl mx-auto">
+            <p className="text-green-100 text-base sm:text-lg mb-6 sm:mb-10 max-w-2xl mx-auto px-2">
               {service.description}
             </p>
 
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            {/* CTA Buttons - Mobile Stacked */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
               <a
                 href="/quote"
-                className="bg-white text-green-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 inline-flex items-center gap-3 shadow-lg w-full sm:w-auto justify-center border-2 border-white rounded-lg"
+                className="bg-white text-green-600 px-6 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 inline-flex items-center gap-2 sm:gap-3 shadow-lg w-full sm:w-auto justify-center border-2 border-white rounded-lg text-sm sm:text-base"
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4 sm:w-5 sm:h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -329,10 +329,10 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
               </a>
               <a
                 href="/contact"
-                className="bg-transparent text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors duration-200 inline-flex items-center gap-3 w-full sm:w-auto justify-center border-2 border-white rounded-lg"
+                className="bg-transparent text-white px-6 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors duration-200 inline-flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center border-2 border-white rounded-lg text-sm sm:text-base"
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4 sm:w-5 sm:h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -351,14 +351,14 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
         </div>
       </section>
 
-      {/* MAIN CONTENT */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12">
-          {/* Media Section - Reduced height */}
-          <div className="space-y-6">
-            {/* Main Video or Image - Reduced height */}
+      {/* MAIN CONTENT - Mobile Optimized */}
+      <section className="py-12 sm:py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
+          {/* Media Section - Mobile First */}
+          <div className="space-y-4 sm:space-y-6 order-2 lg:order-1">
+            {/* Main Video or Image - Responsive Height */}
             {youtubeVideos.length > 0 ? (
-              <div className="h-64 sm:h-80 rounded-lg overflow-hidden shadow-lg border border-gray-300">
+              <div className="h-48 sm:h-64 lg:h-80 rounded-lg overflow-hidden shadow-lg border border-gray-300">
                 <iframe
                   src={`${youtubeVideos[0].embedUrl}?rel=0&modestbranding=1`}
                   className="w-full h-full"
@@ -368,7 +368,7 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                 />
               </div>
             ) : mainImageUrl ? (
-              <div className="h-64 sm:h-80 rounded-lg overflow-hidden shadow-lg border border-gray-300 cursor-pointer">
+              <div className="h-48 sm:h-64 lg:h-80 rounded-lg overflow-hidden shadow-lg border border-gray-300 cursor-pointer">
                 <img
                   src={mainImageUrl}
                   alt={`${service.name} Service - Professional Waste Management by Sylvie Garbage Collection`}
@@ -378,20 +378,20 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                 />
               </div>
             ) : (
-              <div className="h-64 sm:h-80 bg-green-100 rounded-lg flex items-center justify-center text-green-800 text-lg font-medium border-2 border-green-300">
+              <div className="h-48 sm:h-64 lg:h-80 bg-green-100 rounded-lg flex items-center justify-center text-green-800 text-base sm:text-lg font-medium border-2 border-green-300 px-4 text-center">
                 {service.name} Service Image
               </div>
             )}
 
-            {/* Additional Videos - Smaller */}
+            {/* Additional Videos - Mobile Grid */}
             {youtubeVideos.length > 1 && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">More Videos</h3>
-                <div className="grid grid-cols-2 gap-3">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">More Videos</h3>
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   {youtubeVideos.slice(1).map((video, index) => (
                     <div 
                       key={index}
-                      className="h-32 rounded-lg overflow-hidden cursor-pointer hover:brightness-95 transition-all border border-gray-300 relative"
+                      className="h-24 sm:h-32 rounded-lg overflow-hidden cursor-pointer hover:brightness-95 transition-all border border-gray-300 relative"
                       onClick={() => setSelectedVideoIndex(index + 1)}
                     >
                       <img
@@ -400,8 +400,8 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                        <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
-                          <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-600 rounded-full flex items-center justify-center">
+                          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M8 5v14l11-7z"/>
                           </svg>
                         </div>
@@ -412,11 +412,11 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
               </div>
             )}
 
-            {/* Gallery Thumbnails - Smaller */}
+            {/* Gallery Thumbnails - Mobile Optimized */}
             {galleryImages.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Gallery Images</h3>
-                <div className="grid grid-cols-3 gap-2">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Gallery Images</h3>
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                   {mainImageUrl && youtubeVideos.length === 0 && (
                     <div 
                       className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:brightness-95 transition-all border-2 border-green-500"
@@ -446,36 +446,36 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
               </div>
             )}
 
-            {/* Service Highlights - Compact */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-green-100 rounded-lg p-3 text-center border-2 border-green-300">
-                <div className="text-green-700 font-bold text-sm">✓ Certified</div>
+            {/* Service Highlights - Mobile Compact */}
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="bg-green-100 rounded-lg p-2 sm:p-3 text-center border-2 border-green-300">
+                <div className="text-green-700 font-bold text-xs sm:text-sm">✓ Certified</div>
                 <div className="text-green-800 text-xs">Professional Team</div>
               </div>
-              <div className="bg-green-100 rounded-lg p-3 text-center border-2 border-green-300">
-                <div className="text-green-700 font-bold text-sm">♻️ Eco-Friendly</div>
+              <div className="bg-green-100 rounded-lg p-2 sm:p-3 text-center border-2 border-green-300">
+                <div className="text-green-700 font-bold text-xs sm:text-sm">♻️ Eco</div>
                 <div className="text-green-800 text-xs">100% Recycling</div>
               </div>
-              <div className="bg-green-100 rounded-lg p-3 text-center border-2 border-green-300">
-                <div className="text-green-700 font-bold text-sm">⏰ 24/7</div>
-                <div className="text-green-800 text-xs">Emergency Service</div>
+              <div className="bg-green-100 rounded-lg p-2 sm:p-3 text-center border-2 border-green-300">
+                <div className="text-green-700 font-bold text-xs sm:text-sm">⏰ 24/7</div>
+                <div className="text-green-800 text-xs">Emergency</div>
               </div>
-              <div className="bg-green-100 rounded-lg p-3 text-center border-2 border-green-300">
-                <div className="text-green-700 font-bold text-sm">🏠</div>
-                <div className="text-green-800 text-xs">Residential & Commercial</div>
+              <div className="bg-green-100 rounded-lg p-2 sm:p-3 text-center border-2 border-green-300">
+                <div className="text-green-700 font-bold text-xs sm:text-sm">🏠</div>
+                <div className="text-green-800 text-xs">Res & Comm</div>
               </div>
             </div>
           </div>
 
-          {/* Tabs & Content */}
-          <div>
-            <div className="border-b-2 border-gray-300 mb-6">
-              <nav className="flex space-x-8 overflow-x-auto">
+          {/* Tabs & Content - Mobile Optimized */}
+          <div className="order-1 lg:order-2">
+            <div className="border-b-2 border-gray-300 mb-4 sm:mb-6">
+              <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto pb-1">
                 {['overview', 'features', 'benefits', 'gallery', 'videos'].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab as any)}
-                    className={`py-3 px-2 border-b-2 font-medium text-sm capitalize whitespace-nowrap transition-colors ${
+                    className={`py-2 px-1 sm:py-3 sm:px-2 border-b-2 font-medium text-xs sm:text-sm capitalize whitespace-nowrap transition-colors min-w-max ${
                       activeTab === tab
                         ? 'border-green-600 text-green-700'
                         : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-400'
@@ -491,23 +491,23 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
             <div className="text-gray-800">
               {activeTab === 'overview' && (
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Service Overview</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Service Overview</h2>
                   {service.full_description ? (
                     <div>
                       {/* Show short description by default, full description when expanded */}
                       {!showFullDescription && isLongDescription ? (
                         <div>
-                          <div className="prose prose-lg max-w-none mb-4">
-                            <p className="text-gray-800">
+                          <div className="prose prose-sm sm:prose-lg max-w-none mb-3 sm:mb-4">
+                            <p className="text-gray-800 text-sm sm:text-base">
                               {createShortDescription(service.full_description)}
                             </p>
                           </div>
                           <button
                             onClick={() => setShowFullDescription(true)}
-                            className="text-green-600 hover:text-green-800 font-medium flex items-center gap-2 transition-colors"
+                            className="text-green-600 hover:text-green-800 font-medium flex items-center gap-1 sm:gap-2 transition-colors text-sm sm:text-base"
                           >
                             Read More
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
                           </button>
@@ -518,10 +518,10 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                           {isLongDescription && (
                             <button
                               onClick={() => setShowFullDescription(false)}
-                              className="text-green-600 hover:text-green-800 font-medium flex items-center gap-2 mt-4 transition-colors"
+                              className="text-green-600 hover:text-green-800 font-medium flex items-center gap-1 sm:gap-2 mt-3 sm:mt-4 transition-colors text-sm sm:text-base"
                             >
                               Show Less
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                               </svg>
                             </button>
@@ -530,15 +530,14 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                       )}
                     </div>
                   ) : (
-                    <div className="prose prose-lg max-w-none">
-                      <p className="text-lg mb-4">
-                        Our {service.name} service provides comprehensive waste management solutions for both residential and commercial properties across Kenya. We are committed to delivering reliable, efficient, and eco-friendly services that meet your specific needs.
+                    <div className="prose prose-sm sm:prose-lg max-w-none">
+                      <p className="text-base sm:text-lg mb-3 sm:mb-4">
+                        Our {service.name} service provides comprehensive waste management solutions for both residential and commercial properties across Kenya.
                       </p>
                       
-                      <div className="bg-blue-100 border-l-4 border-blue-600 p-4 mb-6 rounded-lg">
-                        <p className="text-blue-800 text-sm">
-                          <strong>Service Coverage:</strong> Available in Nairobi, Nakuru, Narok, and Laikipia counties. 
-                          Contact us to confirm service availability in your specific area.
+                      <div className="bg-blue-100 border-l-4 border-blue-600 p-3 sm:p-4 mb-4 sm:mb-6 rounded-lg">
+                        <p className="text-blue-800 text-xs sm:text-sm">
+                          <strong>Service Coverage:</strong> Available in Nairobi, Nakuru, Narok, and Laikipia counties.
                         </p>
                       </div>
                     </div>
@@ -548,33 +547,23 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
 
               {activeTab === 'features' && (
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Service Features</h2>
-                  <ul className="space-y-3">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Service Features</h2>
+                  <ul className="space-y-2 sm:space-y-3">
                     {service.features?.length ? (
                       service.features.map((f, i) => (
                         <li key={i} className="flex items-start">
-                          <span className="text-green-600 mr-3 mt-1 flex-shrink-0">✓</span>
-                          <span>{f}</span>
+                          <span className="text-green-600 mr-2 sm:mr-3 mt-0.5 sm:mt-1 flex-shrink-0 text-sm sm:text-base">✓</span>
+                          <span className="text-sm sm:text-base">{f}</span>
                         </li>
                       ))
                     ) : (
-                      <div className="space-y-3">
-                        <li className="flex items-start">
-                          <span className="text-green-600 mr-3 mt-1 flex-shrink-0">✓</span>
-                          <span>Professional and trained waste management team</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 mr-3 mt-1 flex-shrink-0">✓</span>
-                          <span>Eco-friendly disposal and recycling methods</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 mr-3 mt-1 flex-shrink-0">✓</span>
-                          <span>Flexible scheduling to suit your needs</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 mr-3 mt-1 flex-shrink-0">✓</span>
-                          <span>Competitive pricing with no hidden costs</span>
-                        </li>
+                      <div className="space-y-2 sm:space-y-3">
+                        {['Professional and trained waste management team', 'Eco-friendly disposal and recycling methods', 'Flexible scheduling to suit your needs', 'Competitive pricing with no hidden costs'].map((feature, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="text-green-600 mr-2 sm:mr-3 mt-0.5 sm:mt-1 flex-shrink-0 text-sm sm:text-base">✓</span>
+                            <span className="text-sm sm:text-base">{feature}</span>
+                          </li>
+                        ))}
                       </div>
                     )}
                   </ul>
@@ -583,33 +572,23 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
 
               {activeTab === 'benefits' && (
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Service Benefits</h2>
-                  <ul className="space-y-3">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Service Benefits</h2>
+                  <ul className="space-y-2 sm:space-y-3">
                     {service.benefits?.length ? (
                       service.benefits.map((b, i) => (
                         <li key={i} className="flex items-start">
-                          <span className="text-green-600 mr-3 mt-1 flex-shrink-0">🌿</span>
-                          <span>{b}</span>
+                          <span className="text-green-600 mr-2 sm:mr-3 mt-0.5 sm:mt-1 flex-shrink-0 text-sm sm:text-base">🌿</span>
+                          <span className="text-sm sm:text-base">{b}</span>
                         </li>
                       ))
                     ) : (
-                      <div className="space-y-3">
-                        <li className="flex items-start">
-                          <span className="text-green-600 mr-3 mt-1 flex-shrink-0">🌿</span>
-                          <span>Cleaner and healthier environment for your property</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 mr-3 mt-1 flex-shrink-0">🌿</span>
-                          <span>Reduced risk of pests and contamination</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 mr-3 mt-1 flex-shrink-0">🌿</span>
-                          <span>Environmentally responsible waste disposal</span>
-                        </li>
-                        <li className="flex items-start">
-                          <span className="text-green-600 mr-3 mt-1 flex-shrink-0">🌿</span>
-                          <span>Time-saving and convenient service</span>
-                        </li>
+                      <div className="space-y-2 sm:space-y-3">
+                        {['Cleaner and healthier environment', 'Reduced risk of pests and contamination', 'Environmentally responsible waste disposal', 'Time-saving and convenient service'].map((benefit, index) => (
+                          <li key={index} className="flex items-start">
+                            <span className="text-green-600 mr-2 sm:mr-3 mt-0.5 sm:mt-1 flex-shrink-0 text-sm sm:text-base">🌿</span>
+                            <span className="text-sm sm:text-base">{benefit}</span>
+                          </li>
+                        ))}
                       </div>
                     )}
                   </ul>
@@ -618,9 +597,9 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
 
               {activeTab === 'gallery' && (
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Service Gallery</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Service Gallery</h2>
                   {galleryImages.length > 0 || mainImageUrl ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                       {mainImageUrl && youtubeVideos.length === 0 && (
                         <div 
                           className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:brightness-95 transition-all border-2 border-green-500"
@@ -631,7 +610,7 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                             alt={`${service.name} - Main Image`}
                             className="w-full h-full object-cover"
                           />
-                          <div className="bg-green-500 text-white text-xs p-1 text-center">Main Image</div>
+                          <div className="bg-green-500 text-white text-xs p-1 text-center">Main</div>
                         </div>
                       )}
                       {galleryImages.map((image, index) => (
@@ -649,16 +628,16 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-600 text-center py-8 bg-gray-100 rounded-lg">No gallery images available for this service.</p>
+                    <p className="text-gray-600 text-center py-6 sm:py-8 bg-gray-100 rounded-lg text-sm sm:text-base">No gallery images available.</p>
                   )}
                 </div>
               )}
 
               {activeTab === 'videos' && (
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Service Videos</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Service Videos</h2>
                   {youtubeVideos.length > 0 ? (
-                    <div className="space-y-6">
+                    <div className="space-y-4 sm:space-y-6">
                       {youtubeVideos.map((video, index) => (
                         <div key={index} className="border-2 border-gray-300 rounded-lg overflow-hidden">
                           <div className="aspect-video bg-black">
@@ -670,35 +649,35 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                               loading="lazy"
                             />
                           </div>
-                          <div className="p-4 bg-gray-100">
-                            <p className="text-sm text-gray-700">Video {index + 1} of {youtubeVideos.length}</p>
+                          <div className="p-2 sm:p-4 bg-gray-100">
+                            <p className="text-xs sm:text-sm text-gray-700">Video {index + 1} of {youtubeVideos.length}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-600 text-center py-8 bg-gray-100 rounded-lg">No videos available for this service.</p>
+                    <p className="text-gray-600 text-center py-6 sm:py-8 bg-gray-100 rounded-lg text-sm sm:text-base">No videos available.</p>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Additional CTA */}
-            <div className="mt-8 p-6 bg-white rounded-lg border-4 border-green-600 shadow-lg">
-              <h3 className="text-2xl font-black text-black mb-4">Ready to Get Started?</h3>
-              <p className="text-black mb-5 font-medium">
+            {/* Additional CTA - Mobile Optimized */}
+            <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-white rounded-lg border-4 border-green-600 shadow-lg">
+              <h3 className="text-xl sm:text-2xl font-black text-black mb-3 sm:mb-4">Ready to Get Started?</h3>
+              <p className="text-black mb-4 sm:mb-5 font-medium text-sm sm:text-base">
                 Contact us today for a free consultation and quote for our {service.name} service.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <a
                   href="tel:+254711515752"
-                  className="bg-green-600 text-white px-8 py-4 rounded-lg font-black hover:bg-green-800 transition-colors text-center border-4 border-green-600 no-underline"
+                  className="bg-green-600 text-white px-4 py-3 sm:px-8 sm:py-4 rounded-lg font-black hover:bg-green-800 transition-colors text-center border-4 border-green-600 no-underline text-sm sm:text-base"
                 >
-                  📞 Call Now: +254 711 515 752
+                  📞 Call: +254 711 515 752
                 </a>
                 <a
                   href="/contact"
-                  className="bg-white text-green-600 px-8 py-4 rounded-lg font-black hover:bg-green-600 hover:text-white transition-colors text-center border-4 border-green-600 no-underline"
+                  className="bg-white text-green-600 px-4 py-3 sm:px-8 sm:py-4 rounded-lg font-black hover:bg-green-600 hover:text-white transition-colors text-center border-4 border-green-600 no-underline text-sm sm:text-base"
                 >
                   📧 Send Message
                 </a>
