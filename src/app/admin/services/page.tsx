@@ -75,9 +75,11 @@ export default function ServicesPage() {
   const [youtubeUrls, setYoutubeUrls] = useState<string[]>([]);
   const [currentYoutubeUrl, setCurrentYoutubeUrl] = useState('');
   const [youtubePreviews, setYoutubePreviews] = useState<YouTubeVideo[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
+    setIsMounted(true);
     checkAuth();
     fetchServices();
   }, []);
@@ -703,13 +705,24 @@ export default function ServicesPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Description</label>
-                    <textarea
-                      value={formData.full_description}
-                      onChange={(e) => setFormData({ ...formData, full_description: e.target.value })}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                      placeholder="Detailed description"
-                    />
+                    <div className="border border-gray-300 rounded-lg overflow-hidden">
+                      <textarea
+                        value={formData.full_description}
+                        onChange={(e) => setFormData({ ...formData, full_description: e.target.value })}
+                        rows={8}
+                        className="w-full px-3 py-2 border-0 focus:outline-none focus:ring-0 resize-none"
+                        placeholder="Detailed description of the service..."
+                      />
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="text-xs text-gray-500">
+                        <p><strong>Formatting tips:</strong></p>
+                        <p>• Use <code>&lt;strong&gt;text&lt;/strong&gt;</code> for <strong>bold</strong></p>
+                        <p>• Use <code>&lt;em&gt;text&lt;/em&gt;</code> for <em>italic</em></p>
+                        <p>• Use <code>&lt;ul&gt;&lt;li&gt;item&lt;/li&gt;&lt;/ul&gt;</code> for lists</p>
+                        <p>• Use <code>&lt;h3&gt;heading&lt;/h3&gt;</code> for subheadings</p>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

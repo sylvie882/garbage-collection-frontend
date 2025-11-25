@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import CopyProtection from '../components/CopyProtection';
+// import CopyProtection from '../components/CopyProtection';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -62,7 +62,7 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        <CopyProtection />
+        {/* <CopyProtection /> */}
         {children}
       </body>
     </html>

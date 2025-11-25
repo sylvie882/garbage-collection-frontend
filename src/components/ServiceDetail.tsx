@@ -11,6 +11,7 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'features' | 'benefits' | 'gallery' | 'videos'>('overview');
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null);
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
   const getImageUrl = (imagePath: string) => {
     if (imagePath.startsWith('http')) return imagePath;
@@ -103,6 +104,34 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
       setSelectedVideoIndex(selectedVideoIndex > 0 ? selectedVideoIndex - 1 : youtubeVideos.length - 1);
     }
   };
+
+  // Function to safely render HTML content
+  const renderHTMLContent = (htmlContent: string) => {
+    if (!htmlContent) return null;
+    
+    return (
+      <div 
+        className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-em:text-gray-700 prose-ul:text-gray-800 prose-ol:text-gray-800 prose-li:text-gray-800 prose-a:text-green-600 prose-a:no-underline hover:prose-a:underline"
+        dangerouslySetInnerHTML={{ __html: htmlContent }}
+      />
+    );
+  };
+
+  // Function to create a short description from HTML content
+  const createShortDescription = (htmlContent: string, maxLength: number = 300) => {
+    if (!htmlContent) return '';
+    
+    // Remove HTML tags and get plain text
+    const text = htmlContent.replace(/<[^>]*>/g, '');
+    
+    // Trim to max length and add ellipsis if needed
+    if (text.length <= maxLength) return text;
+    
+    return text.substring(0, maxLength).trim() + '...';
+  };
+
+  // Check if description is long enough to need truncation
+  const isLongDescription = service.full_description && service.full_description.replace(/<[^>]*>/g, '').length > 300;
 
   return (
     <>
@@ -463,14 +492,57 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
               {activeTab === 'overview' && (
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Service Overview</h2>
-                  <p className="text-lg mb-4">{service.full_description || `Our ${service.name} service provides comprehensive waste management solutions for both residential and commercial properties across Kenya. We are committed to delivering reliable, efficient, and eco-friendly services that meet your specific needs.`}</p>
-                  
-                  <div className="bg-blue-100 border-l-4 border-blue-600 p-4 mb-6 rounded-lg">
-                    <p className="text-blue-800 text-sm">
-                      <strong>Service Coverage:</strong> Available in Nairobi, Nakuru, Narok, and Laikipia counties. 
-                      Contact us to confirm service availability in your specific area.
-                    </p>
-                  </div>
+                  {service.full_description ? (
+                    <div>
+                      {/* Show short description by default, full description when expanded */}
+                      {!showFullDescription && isLongDescription ? (
+                        <div>
+                          <div className="prose prose-lg max-w-none mb-4">
+                            <p className="text-gray-800">
+                              {createShortDescription(service.full_description)}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => setShowFullDescription(true)}
+                            className="text-green-600 hover:text-green-800 font-medium flex items-center gap-2 transition-colors"
+                          >
+                            Read More
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          {renderHTMLContent(service.full_description)}
+                          {isLongDescription && (
+                            <button
+                              onClick={() => setShowFullDescription(false)}
+                              className="text-green-600 hover:text-green-800 font-medium flex items-center gap-2 mt-4 transition-colors"
+                            >
+                              Show Less
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="prose prose-lg max-w-none">
+                      <p className="text-lg mb-4">
+                        Our {service.name} service provides comprehensive waste management solutions for both residential and commercial properties across Kenya. We are committed to delivering reliable, efficient, and eco-friendly services that meet your specific needs.
+                      </p>
+                      
+                      <div className="bg-blue-100 border-l-4 border-blue-600 p-4 mb-6 rounded-lg">
+                        <p className="text-blue-800 text-sm">
+                          <strong>Service Coverage:</strong> Available in Nairobi, Nakuru, Narok, and Laikipia counties. 
+                          Contact us to confirm service availability in your specific area.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

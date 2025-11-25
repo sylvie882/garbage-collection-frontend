@@ -1,9 +1,9 @@
-// components/CopyProtection.tsx
-'use client';
+// // components/CopyProtection.tsx
+// 'use client';
 
-import { useCopyProtection } from '../hooks/useCopyProtection';
+// import { useCopyProtection } from '../hooks/useCopyProtection';
 
-export default function CopyProtection() {
-  useCopyProtection();
-  return null;
-}
+// export default function CopyProtection() {
+//   useCopyProtection();
+//   return null;
+// }

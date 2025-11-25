@@ -5,26 +5,26 @@
 
 
 /* Disable text selection */
-* {
+/* * {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-}
+} */
 
 /* Allow text selection for input fields and textareas */
-input, textarea, [contenteditable="true"] {
+/* input, textarea, [contenteditable="true"] {
   -webkit-user-select: text;
   -moz-user-select: text;
   -ms-user-select: text;
   user-select: text;
-}
+} */
 
 /* Disable image dragging */
-img {
+/* img {
   -webkit-user-drag: none;
   -moz-user-drag: none;
   -ms-user-drag: none;
   user-drag: none;
   pointer-events: none;
-}
+} */
