@@ -54,6 +54,8 @@ export default function ShopPage() {
   const [showFilters, setShowFilters] = useState(false);
   const { addToCart } = useCart();
 
+  const API_BASE_URL = 'https://api.sylviegarbagecollection.co.ke/api';
+
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -64,7 +66,7 @@ export default function ShopPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/categories');
+      const response = await fetch(`${API_BASE_URL}/categories`);
       if (response.ok) {
         const result: ApiResponse<Category> = await response.json();
         setCategories(result.data || []);
@@ -88,7 +90,7 @@ export default function ShopPage() {
       params.append('min_price', priceRange[0].toString());
       params.append('max_price', priceRange[1].toString());
 
-      const response = await fetch(`/api/products?${params}`);
+      const response = await fetch(`${API_BASE_URL}/products?${params}`);
       
       if (response.ok) {
         const result: ApiResponse<Product> = await response.json();
@@ -405,7 +407,7 @@ export default function ShopPage() {
                         <Link href={`/shop/${product.slug}`}>
                           <div className="aspect-w-16 aspect-h-12 bg-gray-100 overflow-hidden">
                             <img
-                              src={product.image_urls?.[0] || '/placeholder-product.jpg'}
+                              src={product.image_urls?.[0] || product.images?.[0] || '/placeholder-product.jpg'}
                               alt={product.name}
                               className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                             />
@@ -440,7 +442,7 @@ export default function ShopPage() {
                         {/* Category */}
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
-                            {product.category.name}
+                            {product.category?.name || 'Uncategorized'}
                           </span>
                           <span className={`text-xs px-2 py-1 rounded-full ${
                             product.stock_status === 'in_stock' 
