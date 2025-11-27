@@ -38,10 +38,34 @@ interface Carousel {
   order: number;
 }
 
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  is_active: boolean;
+  is_featured: boolean;
+  category: {
+    name: string;
+  };
+  image_urls: string[];
+}
+
+interface Order {
+  id: number;
+  order_number: string;
+  customer_name: string;
+  total: number;
+  status: string;
+  created_at: string;
+}
+
 export default function AdminDashboard() {
   const [services, setServices] = useState<Service[]>([]);
   const [quotes, setQuotes] = useState<QuoteRequest[]>([]);
   const [carousels, setCarousels] = useState<Carousel[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalQuotes: 0,
@@ -50,6 +74,11 @@ export default function AdminDashboard() {
     activeServices: 0,
     totalCarousels: 0,
     activeCarousels: 0,
+    totalProducts: 0,
+    activeProducts: 0,
+    totalOrders: 0,
+    pendingOrders: 0,
+    totalRevenue: 0,
   });
   const router = useRouter();
 
@@ -73,7 +102,7 @@ export default function AdminDashboard() {
         return;
       }
 
-      const [servicesRes, quotesRes, carouselsRes] = await Promise.all([
+      const [servicesRes, quotesRes, carouselsRes, productsRes, ordersRes] = await Promise.all([
         fetch('https://api.sylviegarbagecollection.co.ke/api/admin/services', {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -89,6 +118,20 @@ export default function AdminDashboard() {
           credentials: 'include',
         }),
         fetch('https://api.sylviegarbagecollection.co.ke/api/admin/carousels', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+          credentials: 'include',
+        }),
+        fetch('https://api.sylviegarbagecollection.co.ke/api/admin/products', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+          credentials: 'include',
+        }),
+        fetch('https://api.sylviegarbagecollection.co.ke/api/admin/orders', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
@@ -112,15 +155,15 @@ export default function AdminDashboard() {
         setCarousels(carouselsData.data || carouselsData);
       }
 
-      // Update stats
-      setStats({
-        totalQuotes: quotes.length,
-        pendingQuotes: quotes.filter(q => q.status === 'pending').length,
-        totalServices: services.length,
-        activeServices: services.filter(s => s.is_active).length,
-        totalCarousels: carousels.length,
-        activeCarousels: carousels.filter(c => c.is_active).length,
-      });
+      if (productsRes.ok) {
+        const productsData = await productsRes.json();
+        setProducts(productsData.data || productsData);
+      }
+
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json();
+        setOrders(ordersData.data || ordersData);
+      }
 
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -128,6 +171,26 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Update stats when data changes
+    const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+    const pendingOrders = orders.filter(order => order.status === 'pending').length;
+
+    setStats({
+      totalQuotes: quotes.length,
+      pendingQuotes: quotes.filter(q => q.status === 'pending').length,
+      totalServices: services.length,
+      activeServices: services.filter(s => s.is_active).length,
+      totalCarousels: carousels.length,
+      activeCarousels: carousels.filter(c => c.is_active).length,
+      totalProducts: products.length,
+      activeProducts: products.filter(p => p.is_active).length,
+      totalOrders: orders.length,
+      pendingOrders: pendingOrders,
+      totalRevenue: totalRevenue,
+    });
+  }, [services, quotes, carousels, products, orders]);
 
   const handleLogout = async () => {
     try {
@@ -161,6 +224,8 @@ export default function AdminDashboard() {
 
   const recentQuotes = quotes.slice(0, 5);
   const recentServices = services.slice(0, 3);
+  const recentOrders = orders.slice(0, 5);
+  const recentProducts = products.slice(0, 3);
 
   if (loading) {
     return (
@@ -246,12 +311,12 @@ export default function AdminDashboard() {
             <div className="flex items-center">
               <div className="p-3 bg-green-100 rounded-lg">
                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Services</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.activeServices}</p>
+                <p className="text-sm font-medium text-gray-600">Total Orders</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
               </div>
             </div>
           </div>
@@ -260,12 +325,12 @@ export default function AdminDashboard() {
             <div className="flex items-center">
               <div className="p-3 bg-purple-100 rounded-lg">
                 <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Carousels</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.activeCarousels}</p>
+                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                <p className="text-2xl font-bold text-gray-900">KES {stats.totalRevenue.toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -295,23 +360,43 @@ export default function AdminDashboard() {
                   <p className="text-xs text-blue-600 mt-1">{stats.activeServices} Active</p>
                 </Link>
                 <Link
-                  href="/admin/quotes"
+                  href="/admin/products"
                   className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 text-orange-700 p-4 rounded-lg text-center hover:shadow-md transition-all group"
                 >
-                  <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">📋</div>
-                  <span className="font-medium">Quotes</span>
-                  <p className="text-xs text-orange-600 mt-1">{stats.pendingQuotes} Pending</p>
+                  <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">📦</div>
+                  <span className="font-medium">Products</span>
+                  <p className="text-xs text-orange-600 mt-1">{stats.activeProducts} Active</p>
                 </Link>
-
-                      <Link
+                <Link
+                  href="/admin/orders"
+                  className="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 text-red-700 p-4 rounded-lg text-center hover:shadow-md transition-all group"
+                >
+                  <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">📋</div>
+                  <span className="font-medium">Orders</span>
+                  <p className="text-xs text-red-600 mt-1">{stats.pendingOrders} Pending</p>
+                </Link>
+                <Link
+                  href="/admin/quotes"
+                  className="bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 text-indigo-700 p-4 rounded-lg text-center hover:shadow-md transition-all group"
+                >
+                  <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">💬</div>
+                  <span className="font-medium">Quotes</span>
+                  <p className="text-xs text-indigo-600 mt-1">{stats.pendingQuotes} Pending</p>
+                </Link>
+                <Link
+                  href="/admin/categories"
+                  className="bg-gradient-to-br from-teal-50 to-teal-100 border border-teal-200 text-teal-700 p-4 rounded-lg text-center hover:shadow-md transition-all group"
+                >
+                  <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">📑</div>
+                  <span className="font-medium">Categories</span>
+                </Link>
+                <Link
                   href="/admin/faq"
-                  className="bg-purple-50 text-purple-700 p-4 rounded-lg text-center hover:bg-purple-100 transition-colors group"
+                  className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 text-purple-700 p-4 rounded-lg text-center hover:shadow-md transition-all group"
                 >
                   <div className="text-2xl mb-2 group-hover:scale-110 transition-transform">❓</div>
                   <span className="font-medium">FAQ</span>
                 </Link>
-
-                
                 <Link
                   href="/admin/settings"
                   className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 text-gray-700 p-4 rounded-lg text-center hover:shadow-md transition-all group"
@@ -320,6 +405,42 @@ export default function AdminDashboard() {
                   <span className="font-medium">Settings</span>
                   <p className="text-xs text-gray-600 mt-1">Profile & System</p>
                 </Link>
+              </div>
+            </div>
+
+            {/* Recent Orders */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Recent Orders</h2>
+                <Link href="/admin/orders" className="text-green-600 hover:text-green-700 font-medium text-sm flex items-center">
+                  View All
+                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+              <div className="space-y-3">
+                {recentOrders.length > 0 ? recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">{order.customer_name}</p>
+                      <p className="text-sm text-gray-600">{order.order_number}</p>
+                      <p className="text-xs text-gray-500">KES {order.total.toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">
+                        {new Date(order.created_at).toLocaleDateString()}
+                      </p>
+                      <span className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(order.status)}`}>
+                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No orders yet
+                  </div>
+                )}
               </div>
             </div>
 
@@ -362,6 +483,42 @@ export default function AdminDashboard() {
 
           {/* Sidebar */}
           <div className="space-y-8">
+            {/* Recent Products */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Products</h2>
+              <div className="space-y-4">
+                {recentProducts.length > 0 ? recentProducts.map((product) => (
+                  <div key={product.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
+                    <img
+                      src={product.image_urls?.[0] || '/placeholder-product.jpg'}
+                      alt={product.name}
+                      className="w-12 h-12 object-cover rounded-lg"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900 text-sm">{product.name}</p>
+                      <p className="text-sm text-gray-600">KES {product.price.toLocaleString()}</p>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          product.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {product.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                        {product.is_featured && (
+                          <span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-800">
+                            Featured
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-center py-4 text-gray-500">
+                    No products added yet
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Recent Services */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Services</h2>
@@ -370,7 +527,7 @@ export default function AdminDashboard() {
                   <div key={service.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
                     <div className={`w-3 h-3 rounded-full ${service.is_active ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900">{service.name}</p>
+                      <p className="font-medium text-gray-900 text-sm">{service.name}</p>
                       <p className="text-sm text-gray-600">KSh {service.price} {service.price_unit}</p>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full ${
@@ -395,7 +552,8 @@ export default function AdminDashboard() {
                   { label: 'API Server', status: 'Operational', color: 'bg-green-500' },
                   { label: 'Database', status: 'Connected', color: 'bg-green-500' },
                   { label: 'File Storage', status: 'Active', color: 'bg-green-500' },
-                  { label: 'Email Service', status: 'Ready', color: 'bg-green-500' }
+                  { label: 'Email Service', status: 'Ready', color: 'bg-green-500' },
+                  { label: 'Payment Gateway', status: 'Ready', color: 'bg-green-500' }
                 ].map((item, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <span className="text-gray-700">{item.label}</span>
