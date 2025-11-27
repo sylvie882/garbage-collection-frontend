@@ -108,7 +108,17 @@ export default function ServicesPage() {
       if (response.ok) {
         const data = await response.json();
         console.log('Fetched services data:', data);
-        setServices(Array.isArray(data) ? data : []);
+        
+        // Validate and normalize the services data
+        const validatedServices = Array.isArray(data) ? data.map(service => ({
+          ...service,
+          features: Array.isArray(service.features) ? service.features : [],
+          benefits: Array.isArray(service.benefits) ? service.benefits : [],
+          gallery_images: Array.isArray(service.gallery_images) ? service.gallery_images : [],
+          gallery_images_urls: Array.isArray(service.gallery_images_urls) ? service.gallery_images_urls : [],
+        })) : [];
+        
+        setServices(validatedServices);
       } else {
         console.error('Failed to fetch services:', response.status);
         setError('Failed to fetch services');
@@ -210,9 +220,12 @@ export default function ServicesPage() {
       formToSend.append('featured', formData.featured ? '1' : '0');
       formToSend.append('is_active', formData.is_active ? '1' : '0');
 
-      // Append features and benefits as JSON strings
-      formToSend.append('features', JSON.stringify(formData.features));
-      formToSend.append('benefits', JSON.stringify(formData.benefits));
+      // Ensure features and benefits are arrays before stringifying
+      const featuresArray = Array.isArray(formData.features) ? formData.features : [];
+      const benefitsArray = Array.isArray(formData.benefits) ? formData.benefits : [];
+      
+      formToSend.append('features', JSON.stringify(featuresArray));
+      formToSend.append('benefits', JSON.stringify(benefitsArray));
 
       // Append main image
       if (imageFile) {
@@ -344,8 +357,8 @@ export default function ServicesPage() {
       price_unit: service.price_unit || '',
       duration: service.duration || '',
       frequency: service.frequency || '',
-      features: service.features || [],
-      benefits: service.benefits || [],
+      features: Array.isArray(service.features) ? service.features : [],
+      benefits: Array.isArray(service.benefits) ? service.benefits : [],
       order: service.order,
       featured: service.featured,
       is_active: service.is_active,
@@ -627,6 +640,26 @@ export default function ServicesPage() {
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 mb-2">{service.name}</h3>
                   <p className="text-gray-600 text-sm mb-3 line-clamp-2">{service.description}</p>
+                  
+                  {/* Features list with proper array validation */}
+                  <ul className="space-y-1 mb-3">
+                    {(Array.isArray(service.features) && service.features.length > 0 
+                      ? service.features.slice(0, 3) 
+                      : ['Expert Team', 'Quality Guaranteed', 'Eco-Friendly']
+                    ).map((feature, index) => (
+                      <li key={index} className="flex items-center text-sm text-gray-600">
+                        <svg
+                          className="w-4 h-4 text-green-500 mr-2 flex-shrink-0"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-green-600 font-semibold">
                       {service.price ? `KSh ${service.price} ${service.price_unit}` : 'Price on request'}

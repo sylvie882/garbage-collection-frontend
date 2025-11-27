@@ -166,6 +166,18 @@ export default function ServiceCard({ service }: ServiceCardProps) {
 
   const thumbnailType = getThumbnailType();
 
+  // ✅ FIXED: Ensure features is always an array before mapping
+  const getFeaturesToDisplay = () => {
+    // Check if features exists and is an array with items
+    if (Array.isArray(service.features) && service.features.length > 0) {
+      return service.features.slice(0, 3);
+    }
+    // Fallback to default features
+    return ['Expert Team', 'Quality Guaranteed', 'Eco-Friendly'];
+  };
+
+  const featuresToDisplay = getFeaturesToDisplay();
+
   return (
     <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 group">
       {/* Image or Video Container */}
@@ -284,13 +296,10 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             'Professional service with expert team and quality guaranteed.'}
         </p>
 
-        {/* Features */}
+        {/* ✅ FIXED: Features with proper array validation */}
         <ul className="space-y-1.5 mb-3">
-          {(service.features?.length
-            ? service.features.slice(0, 3)
-            : ['Expert Team', 'Quality Guaranteed', 'Eco-Friendly']
-          ).map((f, i) => (
-            <li key={i} className="flex items-center text-sm text-gray-600">
+          {featuresToDisplay.map((feature, index) => (
+            <li key={index} className="flex items-center text-sm text-gray-600">
               <svg
                 className="w-4 h-4 text-green-500 mr-2 flex-shrink-0"
                 fill="currentColor"
@@ -302,7 +311,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
                   clipRule="evenodd"
                 />
               </svg>
-              <span className="truncate">{f}</span>
+              <span className="truncate">{feature}</span>
             </li>
           ))}
         </ul>
