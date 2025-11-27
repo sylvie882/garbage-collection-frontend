@@ -15,7 +15,6 @@ interface Product {
   price: number;
   compare_price: number;
   images: string[];
-  image_urls: string[];
   category: {
     id: number;
     name: string;
@@ -24,9 +23,9 @@ interface Product {
   brand: string;
   sku: string;
   is_featured: boolean;
-  stock_status: string;
-  discount_percentage: number;
   is_active: boolean;
+  quantity: number;
+  track_quantity: boolean;
 }
 
 interface Category {
@@ -34,13 +33,7 @@ interface Category {
   name: string;
   slug: string;
   products_count: number;
-  image_url: string;
-}
-
-interface ApiResponse<T> {
-  data: T[];
-  success: boolean;
-  message?: string;
+  is_active: boolean;
 }
 
 export default function ShopPage() {
@@ -68,8 +61,9 @@ export default function ShopPage() {
     try {
       const response = await fetch(`${API_BASE_URL}/categories`);
       if (response.ok) {
-        const result: ApiResponse<Category> = await response.json();
-        setCategories(result.data || []);
+        const categoriesData = await response.json();
+        // Handle both array response and paginated response
+        setCategories(Array.isArray(categoriesData) ? categoriesData : categoriesData.data || []);
       } else {
         console.error('Failed to fetch categories');
         setCategories([]);
@@ -90,13 +84,19 @@ export default function ShopPage() {
       params.append('min_price', priceRange[0].toString());
       params.append('max_price', priceRange[1].toString());
 
+      console.log('Fetching products with params:', params.toString());
+
       const response = await fetch(`${API_BASE_URL}/products?${params}`);
       
       if (response.ok) {
-        const result: ApiResponse<Product> = await response.json();
-        setProducts(result.data || []);
+        const productsData = await response.json();
+        console.log('Products API response:', productsData);
+        
+        // Handle both array response and paginated response
+        const productsArray = Array.isArray(productsData) ? productsData : productsData.data || [];
+        setProducts(productsArray);
       } else {
-        console.error('Failed to fetch products');
+        console.error('Failed to fetch products, status:', response.status);
         setProducts([]);
       }
     } catch (error) {
@@ -119,13 +119,33 @@ export default function ShopPage() {
     }
   };
 
+  // Helper function to get product image URL
+  const getProductImage = (product: Product) => {
+    if (product.images && product.images.length > 0) {
+      const imagePath = product.images[0];
+      // Check if it's already a full URL or a storage path
+      if (imagePath.startsWith('http')) {
+        return imagePath;
+      } else {
+        return `https://api.sylviegarbagecollection.co.ke/storage/${imagePath}`;
+      }
+    }
+    return '/placeholder-product.jpg';
+  };
+
+  // Helper function to get stock status
+  const getStockStatus = (product: Product) => {
+    if (!product.track_quantity) return 'in_stock';
+    return product.quantity > 0 ? 'in_stock' : 'out_of_stock';
+  };
+
   const featuredProducts = products.filter(product => product.is_featured).slice(0, 3);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      {/* Hero Section - Solid green background, no blur */}
+      {/* Hero Section */}
       <div className="bg-green-600 text-white py-20 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
@@ -163,7 +183,7 @@ export default function ShopPage() {
                     <span className="text-xl">🛒</span>
                   </div>
                   <h3 className="font-semibold text-gray-900 text-sm mb-1">{category.name}</h3>
-                  <p className="text-xs text-gray-500">{category.products_count} products</p>
+                  <p className="text-xs text-gray-500">{category.products_count || 0} products</p>
                 </button>
               ))}
             </div>
@@ -242,10 +262,9 @@ export default function ShopPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
                     <option value="created_at">Newest First</option>
-                    <option value="featured">Featured</option>
                     <option value="price">Price: Low to High</option>
-                    <option value="price_desc">Price: High to Low</option>
                     <option value="name">Name: A to Z</option>
+                    <option value="featured">Featured</option>
                   </select>
                 </div>
 
@@ -273,7 +292,7 @@ export default function ShopPage() {
                             : 'text-gray-600 hover:bg-gray-100'
                         }`}
                       >
-                        {category.name} ({category.products_count})
+                        {category.name} ({category.products_count || 0})
                       </button>
                     ))}
                   </div>
@@ -293,13 +312,6 @@ export default function ShopPage() {
                 </button>
               </div>
             </div>
-
-            {/* Special Offers Banner */}
-            <div className="mt-6 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg p-6 text-center">
-              <h3 className="font-bold text-lg mb-2">🚀 Special Offer!</h3>
-              <p className="text-sm mb-3">Free delivery on orders over KES 5,000</p>
-              <div className="text-xs opacity-90">Use code: SYLVIE10</div>
-            </div>
           </div>
 
           {/* Products Grid */}
@@ -309,7 +321,7 @@ export default function ShopPage() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
                   {selectedCategory !== 'all' 
-                    ? categories.find(c => c.slug === selectedCategory)?.name 
+                    ? categories.find(c => c.slug === selectedCategory)?.name || 'Category'
                     : 'All Products'
                   }
                 </h2>
@@ -375,30 +387,6 @@ export default function ShopPage() {
             ) : (
               // Products Grid
               <>
-                {/* Featured Products Banner - Solid background */}
-                {featuredProducts.length > 0 && selectedCategory === 'all' && (
-                  <div className="mb-8 bg-blue-600 text-white rounded-lg p-6">
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                      <span>⭐</span> Featured Products
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {featuredProducts.map((product) => (
-                        <div key={product.id} className="bg-blue-700 rounded-lg p-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-blue-800 rounded-lg flex items-center justify-center">
-                              <span className="text-lg">🛒</span>
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-sm line-clamp-1">{product.name}</h4>
-                              <p className="text-blue-100 text-sm">KES {product.price.toLocaleString()}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* Products Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {products.map((product) => (
@@ -407,34 +395,23 @@ export default function ShopPage() {
                         <Link href={`/shop/${product.slug}`}>
                           <div className="aspect-w-16 aspect-h-12 bg-gray-100 overflow-hidden">
                             <img
-                              src={product.image_urls?.[0] || product.images?.[0] || '/placeholder-product.jpg'}
+                              src={getProductImage(product)}
                               alt={product.name}
                               className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                              onError={(e) => {
+                                e.currentTarget.src = '/placeholder-product.jpg';
+                              }}
                             />
                           </div>
                         </Link>
                         
                         {/* Badges */}
                         <div className="absolute top-3 left-3 flex flex-col gap-2">
-                          {product.discount_percentage > 0 && (
-                            <span className="bg-red-500 text-white px-2 py-1 text-xs rounded-full font-bold shadow-lg">
-                              -{product.discount_percentage}% OFF
-                            </span>
-                          )}
                           {product.is_featured && (
                             <span className="bg-green-500 text-white px-2 py-1 text-xs rounded-full font-bold shadow-lg">
                               ⭐ Featured
                             </span>
                           )}
-                        </div>
-
-                        {/* Quick Actions - Solid background */}
-                        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <button className="bg-white p-2 rounded-full shadow-lg hover:bg-gray-100 transition-colors">
-                            <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                            </svg>
-                          </button>
                         </div>
                       </div>
                       
@@ -445,11 +422,11 @@ export default function ShopPage() {
                             {product.category?.name || 'Uncategorized'}
                           </span>
                           <span className={`text-xs px-2 py-1 rounded-full ${
-                            product.stock_status === 'in_stock' 
+                            getStockStatus(product) === 'in_stock' 
                               ? 'bg-green-100 text-green-800' 
                               : 'bg-red-100 text-red-800'
                           }`}>
-                            {product.stock_status === 'in_stock' ? 'In Stock' : 'Out of Stock'}
+                            {getStockStatus(product) === 'in_stock' ? 'In Stock' : 'Out of Stock'}
                           </span>
                         </div>
 
@@ -487,14 +464,14 @@ export default function ShopPage() {
                         {/* Add to Cart Button */}
                         <button
                           onClick={() => handleAddToCart(product.id)}
-                          disabled={product.stock_status !== 'in_stock'}
+                          disabled={getStockStatus(product) !== 'in_stock'}
                           className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
-                            product.stock_status === 'in_stock'
+                            getStockStatus(product) === 'in_stock'
                               ? 'bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg'
                               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           }`}
                         >
-                          {product.stock_status === 'in_stock' ? (
+                          {getStockStatus(product) === 'in_stock' ? (
                             <>
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -516,32 +493,6 @@ export default function ShopPage() {
       </div>
 
       <Footer />
-
-      {/* Custom Styles */}
-      <style jsx>{`
-        .slider {
-          background: linear-gradient(to right, #10b981 0%, #10b981 ${(priceRange[1] / 10000) * 100}%, #e5e7eb ${(priceRange[1] / 10000) * 100}%, #e5e7eb 100%);
-        }
-        .slider::-webkit-slider-thumb {
-          appearance: none;
-          height: 20px;
-          width: 20px;
-          border-radius: 50%;
-          background: #10b981;
-          cursor: pointer;
-          border: 2px solid #ffffff;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-        }
-        .slider::-moz-range-thumb {
-          height: 20px;
-          width: 20px;
-          border-radius: 50%;
-          background: #10b981;
-          cursor: pointer;
-          border: 2px solid #ffffff;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-        }
-      `}</style>
     </div>
   );
 }
