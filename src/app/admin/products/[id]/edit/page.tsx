@@ -26,15 +26,21 @@ interface Product {
   category_id: number;
   brand: string;
   images: string[];
-  image_urls: string[];
   features: string[];
-  specifications: Record<string, string>;
+  specifications: string[];
   weight: number;
   dimensions: string;
   is_digital: boolean;
   meta_title: string;
   meta_description: string;
+  category?: {
+    id: number;
+    name: string;
+    slug: string;
+  };
 }
+
+const API_BASE_URL = 'https://api.sylviegarbagecollection.co.ke';
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -69,93 +75,158 @@ export default function EditProductPage() {
   const [images, setImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [features, setFeatures] = useState<string[]>(['']);
-  const [specifications, setSpecifications] = useState<{ key: string; value: string }[]>([{ key: '', value: '' }]);
+  const [specifications, setSpecifications] = useState<string[]>(['']);
 
   useEffect(() => {
     checkAuth();
     fetchCategories();
-    fetchProduct();
+    if (productId) {
+      fetchProduct();
+    }
   }, [productId]);
 
-  const checkAuth = () => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      router.push('/admin/login');
+  const checkAuth = async () => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        router.push('/admin/login');
+        return false;
+      }
+      
+      // Verify token is still valid
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/admin/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          localStorage.removeItem('adminToken');
+          router.push('/admin/login');
+          return false;
+        }
+      } catch (error) {
+        localStorage.removeItem('adminToken');
+        router.push('/admin/login');
+        return false;
+      }
+      
+      return true;
     }
+    return false;
   };
 
   const fetchCategories = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/admin/categories', {
+      if (!token) {
+        router.push('/admin/login');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/admin/categories`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
-        credentials: 'include',
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data);
+      if (response.status === 401) {
+        localStorage.removeItem('adminToken');
+        router.push('/admin/login');
+        return;
       }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setCategories(Array.isArray(data) ? data : data.data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+      alert('Failed to fetch categories');
     }
   };
 
   const fetchProduct = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`https://api.sylviegarbagecollection.co.ke/api/admin/products/${productId}`, {
+      if (!token) {
+        router.push('/admin/login');
+        return;
+      }
+
+      console.log('Fetching product with ID:', productId);
+
+      const response = await fetch(`${API_BASE_URL}/api/admin/products/${productId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
-        credentials: 'include',
       });
 
-      if (response.ok) {
-        const productData = await response.json();
-        setProduct(productData);
-        
-        // Populate form data
-        setFormData({
-          name: productData.name || '',
-          description: productData.description || '',
-          short_description: productData.short_description || '',
-          price: productData.price?.toString() || '',
-          compare_price: productData.compare_price?.toString() || '',
-          cost_price: productData.cost_price?.toString() || '',
-          sku: productData.sku || '',
-          barcode: productData.barcode || '',
-          quantity: productData.quantity?.toString() || '0',
-          track_quantity: productData.track_quantity ?? true,
-          is_active: productData.is_active ?? true,
-          is_featured: productData.is_featured ?? false,
-          category_id: productData.category_id?.toString() || '',
-          brand: productData.brand || '',
-          weight: productData.weight?.toString() || '',
-          dimensions: productData.dimensions || '',
-          is_digital: productData.is_digital ?? false,
-          meta_title: productData.meta_title || '',
-          meta_description: productData.meta_description || '',
-        });
+      console.log('Product response status:', response.status);
 
-        setExistingImages(productData.image_urls || []);
-        setFeatures(productData.features?.length > 0 ? productData.features : ['']);
-        
-        // Convert specifications object to array
-        if (productData.specifications) {
-          const specsArray = Object.entries(productData.specifications).map(([key, value]) => ({
-            key,
-            value: value as string
-          }));
-          setSpecifications(specsArray.length > 0 ? specsArray : [{ key: '', value: '' }]);
-        }
+      if (response.status === 401) {
+        localStorage.removeItem('adminToken');
+        router.push('/admin/login');
+        return;
       }
+
+      if (!response.ok) {
+        console.error('Failed to fetch product, status:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        setProduct(null);
+        setLoading(false);
+        return;
+      }
+
+      const productData = await response.json();
+      console.log('Product data received:', productData);
+      
+      setProduct(productData);
+      
+      // Populate form data
+      setFormData({
+        name: productData.name || '',
+        description: productData.description || '',
+        short_description: productData.short_description || '',
+        price: productData.price?.toString() || '',
+        compare_price: productData.compare_price?.toString() || '',
+        cost_price: productData.cost_price?.toString() || '',
+        sku: productData.sku || '',
+        barcode: productData.barcode || '',
+        quantity: productData.quantity?.toString() || '0',
+        track_quantity: productData.track_quantity ?? true,
+        is_active: productData.is_active ?? true,
+        is_featured: productData.is_featured ?? false,
+        category_id: productData.category_id?.toString() || '',
+        brand: productData.brand || '',
+        weight: productData.weight?.toString() || '',
+        dimensions: productData.dimensions || '',
+        is_digital: productData.is_digital ?? false,
+        meta_title: productData.meta_title || '',
+        meta_description: productData.meta_description || '',
+      });
+
+      // Handle images
+      setExistingImages(productData.images || []);
+      
+      // Handle features
+      const productFeatures = productData.features || [];
+      setFeatures(Array.isArray(productFeatures) && productFeatures.length > 0 ? productFeatures : ['']);
+      
+      // Handle specifications
+      const productSpecs = productData.specifications || [];
+      setSpecifications(Array.isArray(productSpecs) && productSpecs.length > 0 ? productSpecs : ['']);
+
     } catch (error) {
       console.error('Error fetching product:', error);
+      setProduct(null);
     } finally {
       setLoading(false);
     }
@@ -197,13 +268,11 @@ export default function EditProductPage() {
   };
 
   const addSpecification = () => {
-    setSpecifications(prev => [...prev, { key: '', value: '' }]);
+    setSpecifications(prev => [...prev, '']);
   };
 
-  const updateSpecification = (index: number, field: 'key' | 'value', value: string) => {
-    setSpecifications(prev => prev.map((spec, i) => 
-      i === index ? { ...spec, [field]: value } : spec
-    ));
+  const updateSpecification = (index: number, value: string) => {
+    setSpecifications(prev => prev.map((spec, i) => i === index ? value : spec));
   };
 
   const removeSpecification = (index: number) => {
@@ -216,11 +285,31 @@ export default function EditProductPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
+      if (!token) {
+        alert('Please log in again');
+        router.push('/admin/login');
+        return;
+      }
+
+      // Validate required fields
+      if (!formData.name || !formData.description || !formData.price || !formData.quantity) {
+        alert('Please fill in all required fields');
+        setSaving(false);
+        return;
+      }
+
       const formDataToSend = new FormData();
 
       // Append basic fields
       Object.keys(formData).forEach(key => {
-        formDataToSend.append(key, formData[key as keyof typeof formData] as string);
+        const value = formData[key as keyof typeof formData];
+        if (value !== '' && value !== null && value !== undefined) {
+          if (typeof value === 'boolean') {
+            formDataToSend.append(key, value ? '1' : '0');
+          } else {
+            formDataToSend.append(key, value.toString());
+          }
+        }
       });
 
       // Append images
@@ -228,17 +317,17 @@ export default function EditProductPage() {
         formDataToSend.append('images[]', image);
       });
 
-      // Append features
-      features.filter(f => f.trim() !== '').forEach(feature => {
-        formDataToSend.append('features[]', feature);
-      });
+      // Append features as JSON string
+      const validFeatures = features.filter(f => f.trim() !== '');
+      if (validFeatures.length > 0) {
+        formDataToSend.append('features', JSON.stringify(validFeatures));
+      }
 
-      // Append specifications
-      const specsObj: Record<string, string> = {};
-      specifications.filter(s => s.key.trim() !== '' && s.value.trim() !== '').forEach(spec => {
-        specsObj[spec.key] = spec.value;
-      });
-      formDataToSend.append('specifications', JSON.stringify(specsObj));
+      // Append specifications as JSON string
+      const validSpecifications = specifications.filter(s => s.trim() !== '');
+      if (validSpecifications.length > 0) {
+        formDataToSend.append('specifications', JSON.stringify(validSpecifications));
+      }
 
       // Append removed images
       if (product?.images) {
@@ -248,34 +337,91 @@ export default function EditProductPage() {
         });
       }
 
-      const response = await fetch(`https://api.sylviegarbagecollection.co.ke/api/admin/products/${productId}`, {
+      console.log('Updating product with ID:', productId);
+
+      const response = await fetch(`${API_BASE_URL}/api/admin/products/${productId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include',
         body: formDataToSend,
       });
 
-      if (response.ok) {
-        alert('Product updated successfully!');
-        router.push('/admin/products');
-      } else {
-        const error = await response.json();
-        alert(error.message || 'Failed to update product');
+      if (response.status === 401) {
+        localStorage.removeItem('adminToken');
+        alert('Session expired. Please log in again.');
+        router.push('/admin/login');
+        return;
       }
+
+      if (response.status === 422) {
+        const errorData = await response.json();
+        console.error('Validation errors:', errorData);
+        const errorMessage = errorData.errors 
+          ? Object.values(errorData.errors).flat().join(', ')
+          : 'Validation failed';
+        alert(`Validation error: ${errorMessage}`);
+        return;
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Server response:', errorText);
+        let errorMessage = 'Failed to update product';
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+        
+        alert(errorMessage);
+        return;
+      }
+
+      const result = await response.json();
+      console.log('Product updated successfully:', result);
+      alert('Product updated successfully!');
+      router.push('/admin/products');
+      
     } catch (error) {
       console.error('Error updating product:', error);
-      alert('Failed to update product');
+      if (error instanceof TypeError) {
+        alert('Network error: Cannot connect to server. Please check your internet connection and try again.');
+      } else {
+        alert('Failed to update product. Please try again.');
+      }
     } finally {
       setSaving(false);
     }
   };
 
+  // Helper function to get full image URL
+  const getImageUrl = (imagePath: string) => {
+    if (!imagePath) return '/placeholder-product.jpg';
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    return `${API_BASE_URL}/storage/${imagePath}`;
+  };
+
   if (loading) {
     return (
       <div className="p-6">
-        <div className="text-center">Loading product...</div>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Edit Product</h1>
+          <button
+            onClick={() => router.back()}
+            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Back
+          </button>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading product...</p>
+        </div>
       </div>
     );
   }
@@ -283,7 +429,30 @@ export default function EditProductPage() {
   if (!product) {
     return (
       <div className="p-6">
-        <div className="text-center text-red-600">Product not found</div>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Edit Product</h1>
+          <button
+            onClick={() => router.back()}
+            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Back
+          </button>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+          <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Product Not Found</h3>
+          <p className="text-gray-600 mb-6">The product you're trying to edit doesn't exist or you don't have permission to access it.</p>
+          <button
+            onClick={() => router.push('/admin/products')}
+            className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+          >
+            Back to Products
+          </button>
+        </div>
       </div>
     );
   }
@@ -291,7 +460,7 @@ export default function EditProductPage() {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Edit Product</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Edit Product: {product.name}</h1>
         <button
           onClick={() => router.back()}
           className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
@@ -319,6 +488,7 @@ export default function EditProductPage() {
               value={formData.name}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Enter product name"
             />
           </div>
 
@@ -333,6 +503,7 @@ export default function EditProductPage() {
               value={formData.sku}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Product SKU"
             />
           </div>
 
@@ -347,6 +518,7 @@ export default function EditProductPage() {
               value={formData.barcode}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Product barcode"
             />
           </div>
 
@@ -381,6 +553,7 @@ export default function EditProductPage() {
               value={formData.brand}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Product brand"
             />
           </div>
 
@@ -399,9 +572,11 @@ export default function EditProductPage() {
               name="price"
               required
               step="0.01"
+              min="0"
               value={formData.price}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="0.00"
             />
           </div>
 
@@ -414,9 +589,11 @@ export default function EditProductPage() {
               id="compare_price"
               name="compare_price"
               step="0.01"
+              min="0"
               value={formData.compare_price}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="0.00"
             />
           </div>
 
@@ -429,9 +606,11 @@ export default function EditProductPage() {
               id="cost_price"
               name="cost_price"
               step="0.01"
+              min="0"
               value={formData.cost_price}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="0.00"
             />
           </div>
 
@@ -444,9 +623,11 @@ export default function EditProductPage() {
               id="quantity"
               name="quantity"
               required
+              min="0"
               value={formData.quantity}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="0"
             />
           </div>
 
@@ -462,6 +643,7 @@ export default function EditProductPage() {
               value={formData.short_description}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Brief description for product listings"
             />
           </div>
 
@@ -477,6 +659,7 @@ export default function EditProductPage() {
               value={formData.description}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Detailed product description"
             />
           </div>
 
@@ -492,14 +675,17 @@ export default function EditProductPage() {
                   {existingImages.map((image, index) => (
                     <div key={index} className="relative">
                       <img
-                        src={image}
+                        src={getImageUrl(image)}
                         alt={`Product ${index + 1}`}
                         className="w-full h-32 object-cover rounded-lg"
+                        onError={(e) => {
+                          e.currentTarget.src = '/placeholder-product.jpg';
+                        }}
                       />
                       <button
                         type="button"
                         onClick={() => removeExistingImage(image)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
                       >
                         ×
                       </button>
@@ -521,24 +707,26 @@ export default function EditProductPage() {
                 onChange={handleImageChange}
                 className="w-full"
               />
-              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                {images.map((image, index) => (
-                  <div key={index} className="relative">
-                    <img
-                      src={URL.createObjectURL(image)}
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
+              {images.length > 0 && (
+                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {images.map((image, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={URL.createObjectURL(image)}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -559,7 +747,7 @@ export default function EditProductPage() {
                     <button
                       type="button"
                       onClick={() => removeFeature(index)}
-                      className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                      className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
                     >
                       Remove
                     </button>
@@ -569,7 +757,7 @@ export default function EditProductPage() {
               <button
                 type="button"
                 onClick={addFeature}
-                className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
               >
                 Add Feature
               </button>
@@ -581,38 +769,29 @@ export default function EditProductPage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Specifications</h2>
             <div className="space-y-2">
               {specifications.map((spec, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div key={index} className="flex space-x-2">
                   <input
                     type="text"
-                    value={spec.key}
-                    onChange={(e) => updateSpecification(index, 'key', e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                    placeholder="Specification name"
+                    value={spec}
+                    onChange={(e) => updateSpecification(index, e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="Enter specification (e.g., Material: Steel)"
                   />
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      value={spec.value}
-                      onChange={(e) => updateSpecification(index, 'value', e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="Specification value"
-                    />
-                    {specifications.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeSpecification(index)}
-                        className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
+                  {specifications.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeSpecification(index)}
+                      className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
               ))}
               <button
                 type="button"
                 onClick={addSpecification}
-                className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
               >
                 Add Specification
               </button>
@@ -632,9 +811,11 @@ export default function EditProductPage() {
                   id="weight"
                   name="weight"
                   step="0.01"
+                  min="0"
                   value={formData.weight}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="0.00"
                 />
               </div>
               <div>
@@ -719,6 +900,7 @@ export default function EditProductPage() {
                   value={formData.meta_title}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Meta title for SEO"
                 />
               </div>
               <div>
@@ -732,6 +914,7 @@ export default function EditProductPage() {
                   value={formData.meta_description}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Meta description for SEO"
                 />
               </div>
             </div>
@@ -742,14 +925,14 @@ export default function EditProductPage() {
           <button
             type="button"
             onClick={() => router.back()}
-            className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400"
+            className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
             {saving ? 'Updating...' : 'Update Product'}
           </button>
