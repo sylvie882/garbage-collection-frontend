@@ -75,6 +75,28 @@ interface ApiResponse<T> {
   total: number;
 }
 
+// Create a normalized product type for wishlist/compare
+interface NormalizedProduct {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  short_description: string;
+  price: string;
+  compare_price: string | null;
+  images: string[];
+  image_urls: string[];
+  category: {
+    id: number;
+    name: string;
+    slug: string;
+  } | null;
+  is_featured: boolean;
+  is_active: boolean;
+  quantity: number;
+  track_quantity: boolean;
+}
+
 export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -159,6 +181,26 @@ export default function ShopPage() {
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Failed to add product to cart');
     }
+  };
+
+  // Normalize product for wishlist/compare (convert null images to empty array)
+  const normalizeProduct = (product: Product): NormalizedProduct => {
+    return {
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      description: product.description,
+      short_description: product.short_description,
+      price: product.price,
+      compare_price: product.compare_price,
+      images: product.images || [], // Convert null to empty array
+      image_urls: product.image_urls,
+      category: product.category,
+      is_featured: product.is_featured,
+      is_active: product.is_active,
+      quantity: product.quantity,
+      track_quantity: product.track_quantity
+    };
   };
 
   // Helper function to get product image URL
@@ -662,50 +704,34 @@ export default function ShopPage() {
                           </button>
 
                           {/* Quick Actions */}
-                          {/* <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
-                            <button className="text-gray-500 hover:text-green-600 transition-colors text-sm flex items-center gap-1">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
+                            <button 
+                              onClick={() => isInWishlist(product.id) ? removeFromWishlist(product.id) : addToWishlist(normalizeProduct(product))}
+                              className={`text-sm flex items-center gap-1 transition-colors ${
+                                isInWishlist(product.id) 
+                                  ? 'text-red-600 hover:text-red-700' 
+                                  : 'text-gray-500 hover:text-green-600'
+                              }`}
+                            >
+                              <svg className="w-4 h-4" fill={isInWishlist(product.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                               </svg>
-                              Wishlist
+                              {isInWishlist(product.id) ? 'Saved' : 'Wishlist'}
                             </button>
-                            <button className="text-gray-500 hover:text-green-600 transition-colors text-sm flex items-center gap-1">
+                            <button 
+                              onClick={() => isInCompare(product.id) ? removeFromCompare(product.id) : addToCompare(normalizeProduct(product))}
+                              className={`text-sm flex items-center gap-1 transition-colors ${
+                                isInCompare(product.id) 
+                                  ? 'text-blue-600 hover:text-blue-700' 
+                                  : 'text-gray-500 hover:text-green-600'
+                              }`}
+                            >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                               </svg>
-                              Compare
+                              {isInCompare(product.id) ? 'Compared' : 'Compare'}
                             </button>
-                          </div> */}
-
-                          {/* Quick Actions */}
-                        <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
-                          <button 
-                            onClick={() => isInWishlist(product.id) ? removeFromWishlist(product.id) : addToWishlist(product)}
-                            className={`text-sm flex items-center gap-1 transition-colors ${
-                              isInWishlist(product.id) 
-                                ? 'text-red-600 hover:text-red-700' 
-                                : 'text-gray-500 hover:text-green-600'
-                            }`}
-                          >
-                            <svg className="w-4 h-4" fill={isInWishlist(product.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                            </svg>
-                            {isInWishlist(product.id) ? 'Saved' : 'Wishlist'}
-                          </button>
-                          <button 
-                            onClick={() => isInCompare(product.id) ? removeFromCompare(product.id) : addToCompare(product)}
-                            className={`text-sm flex items-center gap-1 transition-colors ${
-                              isInCompare(product.id) 
-                                ? 'text-blue-600 hover:text-blue-700' 
-                                : 'text-gray-500 hover:text-green-600'
-                            }`}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                            {isInCompare(product.id) ? 'Compared' : 'Compare'}
-                          </button>
-                        </div>
+                          </div>
                         </div>
                       </div>
                     );
