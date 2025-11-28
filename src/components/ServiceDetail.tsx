@@ -676,7 +676,7 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
             </div>
 
             {/* Additional CTA - Mobile Optimized */}
-            <div className="mt-6 sm:mt-8 p-4 sm:p-6 bg-white rounded-lg border-4 border-green-600 shadow-lg">
+            <div className="mt-6 sm:mt-8 p-4 sm:p-6  rounded-lg border-6 border-green-600 shadow-lg">
               <h3 className="text-xl sm:text-2xl font-black text-black mb-3 sm:mb-4">Ready to Get Started?</h3>
               <p className="text-black mb-4 sm:mb-5 font-medium text-sm sm:text-base">
                 Contact us today for a free consultation and quote for our {service.name} service.

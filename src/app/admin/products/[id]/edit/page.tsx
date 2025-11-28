@@ -93,7 +93,6 @@ export default function EditProductPage() {
         return false;
       }
       
-      // Verify token is still valid
       try {
         const response = await fetch(`${API_BASE_URL}/api/admin/me`, {
           headers: {
@@ -214,7 +213,9 @@ export default function EditProductPage() {
       });
 
       // Handle images
-      setExistingImages(productData.images || []);
+      const productImages = productData.images || [];
+      console.log('Product images:', productImages);
+      setExistingImages(Array.isArray(productImages) ? productImages : []);
       
       // Handle features
       const productFeatures = productData.features || [];
@@ -321,26 +322,32 @@ export default function EditProductPage() {
       const validFeatures = features.filter(f => f.trim() !== '');
       if (validFeatures.length > 0) {
         formDataToSend.append('features', JSON.stringify(validFeatures));
+      } else {
+        formDataToSend.append('features', '[]');
       }
 
       // Append specifications as JSON string
       const validSpecifications = specifications.filter(s => s.trim() !== '');
       if (validSpecifications.length > 0) {
         formDataToSend.append('specifications', JSON.stringify(validSpecifications));
+      } else {
+        formDataToSend.append('specifications', '[]');
       }
 
       // Append removed images
-      if (product?.images) {
-        const removedImages = product.images.filter(img => !existingImages.includes(img));
+      if (existingImages.length < (product?.images?.length || 0)) {
+        const removedImages = product?.images?.filter(img => !existingImages.includes(img)) || [];
         removedImages.forEach(img => {
           formDataToSend.append('remove_images[]', img);
         });
       }
 
       console.log('Updating product with ID:', productId);
+      console.log('Existing images to keep:', existingImages);
+      console.log('New images to upload:', images.length);
 
       const response = await fetch(`${API_BASE_URL}/api/admin/products/${productId}`, {
-        method: 'PUT',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -403,7 +410,10 @@ export default function EditProductPage() {
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
-    return `${API_BASE_URL}/storage/${imagePath}`;
+    if (imagePath.startsWith('products/')) {
+      return `${API_BASE_URL}/storage/${imagePath}`;
+    }
+    return `${API_BASE_URL}/storage/products/${imagePath}`;
   };
 
   if (loading) {
@@ -921,6 +931,7 @@ export default function EditProductPage() {
           </div>
         </div>
 
+        {/* Form Submission Buttons - This is now properly placed outside the grid */}
         <div className="mt-8 flex justify-end space-x-4">
           <button
             type="button"

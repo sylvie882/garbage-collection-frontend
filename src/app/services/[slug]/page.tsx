@@ -191,7 +191,7 @@ export default async function ServiceDetailPage({
       )}
 
       {/* CTA Section */}
-      <section className="bg-gradient-to-r from-green-800 to-green-600 py-16">
+      <section className="relative bg-gradient-to-br from-green-800 via-green-700 to-emerald-800 py-20 overflow-hidden py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
             Ready to Get Started?

@@ -75,3 +75,43 @@ export interface ServiceFrontend {
   updatedAt: string;
   imageUrl: string | null;
 }
+
+
+interface Product {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  short_description: string;
+  price: string;
+  compare_price: string | null;
+  cost_price: string | null;
+  sku: string;
+  barcode: string | null;
+  quantity: number;
+  track_quantity: boolean;
+  is_active: boolean;
+  is_featured: boolean;
+  category_id: number | null;
+  brand: string | null;
+  images: string[]; // Changed from string[] | null to string[]
+  specifications: string[] | string | null;
+  features: string[] | string | null;
+  youtube_url: string | null;
+  weight: string | null;
+  dimensions: string | null;
+  is_digital: boolean;
+  download_files: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  related_services: any[] | null;
+  created_at: string;
+  updated_at: string;
+  image_urls: string[];
+  discount_percentage: number;
+  category: {
+    id: number;
+    name: string;
+    slug: string;
+  } | null;
+}
