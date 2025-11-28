@@ -161,12 +161,11 @@ export default function ShopPage() {
     }
   };
 
-  // Fix: Ensure the product passed to wishlist/compare has all required properties
-  const prepareProductForWishlist = (product: Product): Product => {
+  // Fix: Use type assertion to handle the images type mismatch
+  const prepareProductForWishlist = (product: Product): any => {
     return {
       ...product,
-      images: product.images || [], // Convert null to empty array
-      // Ensure all required properties are included
+      images: product.images || [],
       brand: product.brand || null,
       specifications: product.specifications || null,
       features: product.features || null,
