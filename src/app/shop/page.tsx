@@ -75,28 +75,6 @@ interface ApiResponse<T> {
   total: number;
 }
 
-// Create a normalized product type for wishlist/compare
-interface NormalizedProduct {
-  id: number;
-  name: string;
-  slug: string;
-  description: string;
-  short_description: string;
-  price: string;
-  compare_price: string | null;
-  images: string[];
-  image_urls: string[];
-  category: {
-    id: number;
-    name: string;
-    slug: string;
-  } | null;
-  is_featured: boolean;
-  is_active: boolean;
-  quantity: number;
-  track_quantity: boolean;
-}
-
 export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -183,23 +161,22 @@ export default function ShopPage() {
     }
   };
 
-  // Normalize product for wishlist/compare (convert null images to empty array)
-  const normalizeProduct = (product: Product): NormalizedProduct => {
+  // Fix: Ensure the product passed to wishlist/compare has all required properties
+  const prepareProductForWishlist = (product: Product): Product => {
     return {
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      description: product.description,
-      short_description: product.short_description,
-      price: product.price,
-      compare_price: product.compare_price,
+      ...product,
       images: product.images || [], // Convert null to empty array
-      image_urls: product.image_urls,
-      category: product.category,
-      is_featured: product.is_featured,
-      is_active: product.is_active,
-      quantity: product.quantity,
-      track_quantity: product.track_quantity
+      // Ensure all required properties are included
+      brand: product.brand || null,
+      specifications: product.specifications || null,
+      features: product.features || null,
+      youtube_url: product.youtube_url || null,
+      weight: product.weight || null,
+      dimensions: product.dimensions || null,
+      download_files: product.download_files || null,
+      meta_title: product.meta_title || null,
+      meta_description: product.meta_description || null,
+      related_services: product.related_services || null
     };
   };
 
@@ -706,7 +683,7 @@ export default function ShopPage() {
                           {/* Quick Actions */}
                           <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
                             <button 
-                              onClick={() => isInWishlist(product.id) ? removeFromWishlist(product.id) : addToWishlist(normalizeProduct(product))}
+                              onClick={() => isInWishlist(product.id) ? removeFromWishlist(product.id) : addToWishlist(prepareProductForWishlist(product))}
                               className={`text-sm flex items-center gap-1 transition-colors ${
                                 isInWishlist(product.id) 
                                   ? 'text-red-600 hover:text-red-700' 
@@ -719,7 +696,7 @@ export default function ShopPage() {
                               {isInWishlist(product.id) ? 'Saved' : 'Wishlist'}
                             </button>
                             <button 
-                              onClick={() => isInCompare(product.id) ? removeFromCompare(product.id) : addToCompare(normalizeProduct(product))}
+                              onClick={() => isInCompare(product.id) ? removeFromCompare(product.id) : addToCompare(prepareProductForWishlist(product))}
                               className={`text-sm flex items-center gap-1 transition-colors ${
                                 isInCompare(product.id) 
                                   ? 'text-blue-600 hover:text-blue-700' 
