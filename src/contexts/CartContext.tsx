@@ -37,19 +37,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Use your actual API base URL
+  const API_BASE_URL = 'https://api.sylviegarbagecollection.co.ke/api';
+
   useEffect(() => {
     fetchCart();
   }, []);
 
   const fetchCart = async () => {
     try {
-      const response = await fetch('/api/cart');
+      const response = await fetch(`${API_BASE_URL}/cart`);
       if (response.ok) {
         const cartData = await response.json();
         setCart(cartData);
+      } else {
+        console.error('Failed to fetch cart, status:', response.status);
+        setCart(null);
       }
     } catch (error) {
       console.error('Error fetching cart:', error);
+      setCart(null);
     } finally {
       setLoading(false);
     }
@@ -57,20 +64,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = async (productId: number, quantity: number = 1) => {
     try {
-      const response = await fetch('/api/cart/add', {
+      const response = await fetch(`${API_BASE_URL}/cart/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({ product_id: productId, quantity }),
+        credentials: 'include', // Important for session-based authentication
       });
+
+      console.log('Add to cart response status:', response.status);
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Add to cart success:', data);
         setCart(data.cart);
       } else {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to add to cart');
+        // Handle non-JSON responses (like HTML error pages)
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const error = await response.json();
+          throw new Error(error.error || `Failed to add to cart: ${response.status}`);
+        } else {
+          const text = await response.text();
+          console.error('Non-JSON response:', text.substring(0, 200));
+          throw new Error(`Server error: ${response.status}. Please try again.`);
+        }
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -80,17 +100,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateCart = async (items: { id: number; quantity: number }[]) => {
     try {
-      const response = await fetch('/api/cart/update', {
+      const response = await fetch(`${API_BASE_URL}/cart/update`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({ items }),
+        credentials: 'include',
       });
 
       if (response.ok) {
         const data = await response.json();
         setCart(data.cart);
+      } else {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to update cart');
+        } else {
+          throw new Error(`Server error: ${response.status}`);
+        }
       }
     } catch (error) {
       console.error('Error updating cart:', error);
@@ -100,13 +130,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const removeFromCart = async (itemId: number) => {
     try {
-      const response = await fetch(`/api/cart/remove/${itemId}`, {
+      const response = await fetch(`${API_BASE_URL}/cart/remove/${itemId}`, {
         method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
       });
 
       if (response.ok) {
         const data = await response.json();
         setCart(data.cart);
+      } else {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to remove from cart');
+        } else {
+          throw new Error(`Server error: ${response.status}`);
+        }
       }
     } catch (error) {
       console.error('Error removing from cart:', error);
@@ -116,13 +158,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = async () => {
     try {
-      const response = await fetch('/api/cart/clear', {
+      const response = await fetch(`${API_BASE_URL}/cart/clear`, {
         method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
       });
 
       if (response.ok) {
         const data = await response.json();
         setCart(data.cart);
+      } else {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to clear cart');
+        } else {
+          throw new Error(`Server error: ${response.status}`);
+        }
       }
     } catch (error) {
       console.error('Error clearing cart:', error);

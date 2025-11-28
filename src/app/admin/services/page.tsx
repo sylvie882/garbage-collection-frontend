@@ -50,7 +50,7 @@ export default function ServicesPage() {
     description: '',
     full_description: '',
     icon: '',
-    youtube_urls: [] as string[],
+    youtube_url: '', // Changed from youtube_urls array to single string
     category: '',
     price: '',
     price_unit: '',
@@ -72,9 +72,7 @@ export default function ServicesPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [removedGalleryImages, setRemovedGalleryImages] = useState<string[]>([]);
-  const [youtubeUrls, setYoutubeUrls] = useState<string[]>([]);
-  const [currentYoutubeUrl, setCurrentYoutubeUrl] = useState('');
-  const [youtubePreviews, setYoutubePreviews] = useState<YouTubeVideo[]>([]);
+  const [youtubePreview, setYoutubePreview] = useState<YouTubeVideo | null>(null); // Single preview now
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
 
@@ -150,38 +148,31 @@ export default function ServicesPage() {
     return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '';
   };
 
-  // Add a new YouTube URL
-  const addYouTubeUrl = () => {
-    if (currentYoutubeUrl.trim() && getYouTubeVideoId(currentYoutubeUrl)) {
-      const newUrl = currentYoutubeUrl.trim();
-      if (!youtubeUrls.includes(newUrl)) {
-        const embedUrl = getYouTubeEmbedUrl(newUrl);
-        const thumbnail = getYouTubeThumbnail(newUrl);
-        
-        setYoutubeUrls(prev => [...prev, newUrl]);
-        setYoutubePreviews(prev => [...prev, { url: newUrl, embedUrl, thumbnail }]);
-        setCurrentYoutubeUrl('');
+  // Update YouTube preview when URL changes
+  const updateYouTubePreview = (url: string) => {
+    if (url.trim()) {
+      const videoId = getYouTubeVideoId(url);
+      if (videoId) {
+        setYoutubePreview({
+          url: url.trim(),
+          embedUrl: getYouTubeEmbedUrl(url),
+          thumbnail: getYouTubeThumbnail(url)
+        });
         setError('');
       } else {
-        setError('This YouTube URL has already been added');
+        setYoutubePreview(null);
+        setError('Please enter a valid YouTube URL');
       }
     } else {
-      setError('Please enter a valid YouTube URL');
+      setYoutubePreview(null);
+      setError('');
     }
   };
 
-  // Remove a YouTube URL
-  const removeYouTubeUrl = (index: number) => {
-    setYoutubeUrls(prev => prev.filter((_, i) => i !== index));
-    setYoutubePreviews(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // Handle YouTube URL input key press
-  const handleYoutubeUrlKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addYouTubeUrl();
-    }
+  // Handle YouTube URL change
+  const handleYouTubeUrlChange = (url: string) => {
+    setFormData(prev => ({ ...prev, youtube_url: url }));
+    updateYouTubePreview(url);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -208,8 +199,10 @@ export default function ServicesPage() {
       formToSend.append('full_description', formData.full_description);
       formToSend.append('icon', formData.icon);
       
-      // Append YouTube URLs as JSON array
-      formToSend.append('youtube_urls', JSON.stringify(youtubeUrls));
+      // Append single YouTube URL (not array)
+      if (formData.youtube_url.trim()) {
+        formToSend.append('youtube_url', formData.youtube_url.trim());
+      }
       
       formToSend.append('category', formData.category);
       formToSend.append('price', formData.price);
@@ -317,7 +310,7 @@ export default function ServicesPage() {
       description: '',
       full_description: '',
       icon: '',
-      youtube_urls: [],
+      youtube_url: '', // Reset to empty string
       category: '',
       price: '',
       price_unit: '',
@@ -336,9 +329,7 @@ export default function ServicesPage() {
     setCurrentFeature('');
     setCurrentBenefit('');
     setRemovedGalleryImages([]);
-    setYoutubeUrls([]);
-    setCurrentYoutubeUrl('');
-    setYoutubePreviews([]);
+    setYoutubePreview(null); // Reset YouTube preview
     setError('');
   };
 
@@ -351,7 +342,7 @@ export default function ServicesPage() {
       description: service.description,
       full_description: service.full_description || '',
       icon: service.icon || '',
-      youtube_urls: service.youtube_url ? [service.youtube_url] : [],
+      youtube_url: service.youtube_url || '', // Single URL
       category: service.category || '',
       price: service.price?.toString() || '',
       price_unit: service.price_unit || '',
@@ -366,16 +357,11 @@ export default function ServicesPage() {
     setImagePreview(service.image_url || '');
     setGalleryPreviews(service.gallery_images_urls || []);
     
-    // Set YouTube URLs and previews if URL exists
+    // Set YouTube preview if URL exists
     if (service.youtube_url) {
-      const urls = [service.youtube_url];
-      setYoutubeUrls(urls);
-      const previews = urls.map(url => ({
-        url,
-        embedUrl: getYouTubeEmbedUrl(url),
-        thumbnail: getYouTubeThumbnail(url)
-      }));
-      setYoutubePreviews(previews);
+      updateYouTubePreview(service.youtube_url);
+    } else {
+      setYoutubePreview(null);
     }
     
     setShowForm(true);
@@ -828,60 +814,39 @@ export default function ServicesPage() {
                     </div>
                   </div>
 
-                  {/* Multiple YouTube URLs with Previews */}
+                  {/* Single YouTube URL with Preview */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      YouTube Videos ({youtubeUrls.length} added)
+                      YouTube Video URL
                     </label>
-                    <div className="flex space-x-2 mb-3">
-                      <input
-                        type="url"
-                        value={currentYoutubeUrl}
-                        onChange={(e) => setCurrentYoutubeUrl(e.target.value)}
-                        onKeyPress={handleYoutubeUrlKeyPress}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="https://youtube.com/watch?v=..."
-                      />
-                      <button
-                        type="button"
-                        onClick={addYouTubeUrl}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        Add Video
-                      </button>
-                    </div>
-                    <p className="text-xs text-gray-500 mb-4">
-                      Paste YouTube video links and click "Add Video" to include multiple videos
+                    <input
+                      type="url"
+                      value={formData.youtube_url}
+                      onChange={(e) => handleYouTubeUrlChange(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      placeholder="https://youtube.com/watch?v=..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Enter a valid YouTube URL to embed a video
                     </p>
                     
-                    {/* YouTube Previews */}
-                    {youtubePreviews.length > 0 && (
+                    {/* YouTube Preview */}
+                    {youtubePreview && (
                       <div className="mt-4">
-                        <p className="text-sm text-gray-600 mb-2">YouTube Previews:</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {youtubePreviews.map((video, index) => (
-                            <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
-                              <div className="relative aspect-video bg-gray-200">
-                                <iframe
-                                  src={video.embedUrl}
-                                  className="w-full h-full"
-                                  title={`YouTube video ${index + 1}`}
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                  allowFullScreen
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => removeYouTubeUrl(index)}
-                                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                              <div className="p-3 bg-gray-50">
-                                <p className="text-xs text-gray-600 truncate">{video.url}</p>
-                              </div>
-                            </div>
-                          ))}
+                        <p className="text-sm text-gray-600 mb-2">YouTube Preview:</p>
+                        <div className="border border-gray-200 rounded-lg overflow-hidden max-w-md">
+                          <div className="relative aspect-video bg-gray-200">
+                            <iframe
+                              src={youtubePreview.embedUrl}
+                              className="w-full h-full"
+                              title="YouTube video preview"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
+                          </div>
+                          <div className="p-3 bg-gray-50">
+                            <p className="text-xs text-gray-600 truncate">{youtubePreview.url}</p>
+                          </div>
                         </div>
                       </div>
                     )}

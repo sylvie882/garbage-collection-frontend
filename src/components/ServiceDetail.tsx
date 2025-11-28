@@ -13,6 +13,19 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
   const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
 
+  // Safe array handling
+  const features: string[] = Array.isArray(service.features) 
+    ? service.features 
+    : service.features 
+      ? [service.features]
+      : [];
+
+  const benefits: string[] = Array.isArray(service.benefits) 
+    ? service.benefits 
+    : service.benefits 
+      ? [service.benefits]
+      : [];
+
   const getImageUrl = (imagePath: string) => {
     if (imagePath.startsWith('http')) return imagePath;
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.sylviegarbagecollection.co.ke';
@@ -240,22 +253,22 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
           eco-friendly disposal methods.
         </p>
 
-        {service.features?.length > 0 && (
+        {features.length > 0 && (
           <>
             <h4>Key Features of Our {service.name} Service</h4>
             <ul>
-              {service.features.map((feature, index) => (
+              {features.map((feature, index) => (
                 <li key={index}>{feature}</li>
               ))}
             </ul>
           </>
         )}
 
-        {service.benefits?.length > 0 && (
+        {benefits.length > 0 && (
           <>
             <h4>Benefits of Choosing Our {service.name} Service</h4>
             <ul>
-              {service.benefits.map((benefit, index) => (
+              {benefits.map((benefit, index) => (
                 <li key={index}>{benefit}</li>
               ))}
             </ul>
@@ -549,8 +562,8 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                 <div>
                   <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Service Features</h2>
                   <ul className="space-y-2 sm:space-y-3">
-                    {service.features?.length ? (
-                      service.features.map((f, i) => (
+                    {features.length > 0 ? (
+                      features.map((f, i) => (
                         <li key={i} className="flex items-start">
                           <span className="text-green-600 mr-2 sm:mr-3 mt-0.5 sm:mt-1 flex-shrink-0 text-sm sm:text-base">✓</span>
                           <span className="text-sm sm:text-base">{f}</span>
@@ -574,8 +587,8 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                 <div>
                   <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Service Benefits</h2>
                   <ul className="space-y-2 sm:space-y-3">
-                    {service.benefits?.length ? (
-                      service.benefits.map((b, i) => (
+                    {benefits.length > 0 ? (
+                      benefits.map((b, i) => (
                         <li key={i} className="flex items-start">
                           <span className="text-green-600 mr-2 sm:mr-3 mt-0.5 sm:mt-1 flex-shrink-0 text-sm sm:text-base">🌿</span>
                           <span className="text-sm sm:text-base">{b}</span>

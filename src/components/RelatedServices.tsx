@@ -59,10 +59,22 @@ export default function RelatedServices({ services }: RelatedServicesProps) {
     };
   };
 
+  // Safe function to get features array
+  const getFeaturesArray = (service: Service): string[] => {
+    if (Array.isArray(service.features)) {
+      return service.features;
+    }
+    if (service.features) {
+      return [service.features];
+    }
+    return [];
+  };
+
   return (
     <div className="grid md:grid-cols-3 gap-6">
       {services.map((service) => {
         const thumbnail = getServiceThumbnail(service);
+        const features = getFeaturesArray(service);
         
         return (
           <div 
@@ -168,10 +180,10 @@ export default function RelatedServices({ services }: RelatedServicesProps) {
               </div>
 
               {/* Features Preview */}
-              {service.features && service.features.length > 0 && (
+              {features.length > 0 && (
                 <div className="mb-3">
                   <div className="flex flex-wrap gap-1">
-                    {service.features.slice(0, 2).map((feature, index) => (
+                    {features.slice(0, 2).map((feature, index) => (
                       <span 
                         key={index}
                         className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded"
@@ -179,9 +191,9 @@ export default function RelatedServices({ services }: RelatedServicesProps) {
                         {feature}
                       </span>
                     ))}
-                    {service.features.length > 2 && (
+                    {features.length > 2 && (
                       <span className="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded">
-                        +{service.features.length - 2} more
+                        +{features.length - 2} more
                       </span>
                     )}
                   </div>

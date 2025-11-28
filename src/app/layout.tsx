@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 // import CopyProtection from '../components/CopyProtection';
 import { CartProvider } from '../contexts/CartContext';
+import { WishlistProvider } from '@/contexts/WishlistContext';
+import { CompareProvider } from '@/contexts/CompareContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -66,7 +68,11 @@ export default function RootLayout({
       <body className={inter.className}>
         {/* <CopyProtection /> */}
         <CartProvider>
-          {children}
+          <WishlistProvider>
+            <CompareProvider>
+              {children}
+            </CompareProvider>
+          </WishlistProvider>
         </CartProvider>
       </body>
     </html>
