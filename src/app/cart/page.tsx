@@ -6,6 +6,23 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useState } from 'react';
 
+interface CartProduct {
+  id: number;
+  name: string;
+  price: number;
+  image_urls: string[];
+  slug?: string; // Make slug optional
+  sku?: string;
+  images?: string[];
+}
+
+interface CartItem {
+  id: number;
+  product: CartProduct;
+  quantity: number;
+  price: number;
+}
+
 export default function CartPage() {
   const { cart, updateCart, removeFromCart, clearCart, loading } = useCart();
   const [updating, setUpdating] = useState<number | null>(null);
@@ -48,7 +65,7 @@ export default function CartPage() {
     }
   };
 
-  const getProductImage = (item: any) => {
+  const getProductImage = (item: CartItem) => {
     const product = item.product;
     if (product.image_urls && product.image_urls.length > 0) {
       return product.image_urls[0];
@@ -62,6 +79,11 @@ export default function CartPage() {
       }
     }
     return '/placeholder-product.jpg';
+  };
+
+  const getProductLink = (product: CartProduct) => {
+    // Use slug if available, otherwise fall back to ID
+    return product.slug ? `/shop/${product.slug}` : `/shop/product/${product.id}`;
   };
 
   const formatPrice = (price: number | string): string => {
@@ -180,12 +202,12 @@ export default function CartPage() {
 
                 {/* Cart Items */}
                 <div className="divide-y divide-gray-200">
-                  {cart.items.map((item) => (
+                  {(cart.items as CartItem[]).map((item) => (
                     <div key={item.id} className="p-4">
                       <div className="flex flex-col md:grid md:grid-cols-12 md:gap-4 md:items-center">
                         {/* Product Info */}
                         <div className="col-span-5 flex items-center space-x-4 mb-4 md:mb-0">
-                          <Link href={`/shop/${item.product.slug}`} className="flex-shrink-0">
+                          <Link href={getProductLink(item.product)} className="flex-shrink-0">
                             <img
                               src={getProductImage(item)}
                               alt={item.product.name}
@@ -197,7 +219,7 @@ export default function CartPage() {
                           </Link>
                           <div className="flex-1 min-w-0">
                             <Link 
-                              href={`/shop/${item.product.slug}`}
+                              href={getProductLink(item.product)}
                               className="font-semibold text-gray-900 hover:text-green-600 transition-colors line-clamp-2"
                             >
                               {item.product.name}
