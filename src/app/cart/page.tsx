@@ -14,7 +14,6 @@ interface CartProduct {
   slug?: string;
   sku?: string;
   images?: string[];
-  is_service?: boolean;
 }
 
 interface CartItem {
@@ -55,11 +54,10 @@ function ContactModal({ isOpen, onClose, product, onSubmit, isLoading }: {
 
   useEffect(() => {
     if (product) {
-      const priceText = product.price > 0 ? ` (KES ${formatPrice(product.price)})` : '';
       setFormData(prev => ({
         ...prev,
         product_id: product.id,
-        message: `Hi, I'm interested in "${product.name}"${priceText} from my cart. Please provide more information about ${product.price > 0 ? 'pricing and ' : ''}availability.`
+        message: `Hi, I'm interested in your product "${product.name}". Please provide more information.`
       }));
     }
   }, [product]);
@@ -105,15 +103,9 @@ function ContactModal({ isOpen, onClose, product, onSubmit, isLoading }: {
                 />
                 <div>
                   <h4 className="font-medium text-gray-900">{product.name}</h4>
-                  {product.price > 0 ? (
-                    <p className="text-green-600 font-semibold">
-                      KES {formatPrice(product.price)}
-                    </p>
-                  ) : (
-                    <p className="text-gray-600 font-semibold">
-                      Price on request
-                    </p>
-                  )}
+                  <p className="text-green-600 font-semibold">
+                    KES {formatPrice(product.price)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -239,13 +231,6 @@ const formatPrice = (price: number | string): string => {
   return isNaN(numericPrice) ? '0' : numericPrice.toLocaleString();
 };
 
-const isServiceProduct = (productName: string): boolean => {
-  const serviceKeywords = ['service', 'collection', 'garbage', 'waste', 'cleaning', 'maintenance'];
-  return serviceKeywords.some(keyword => 
-    productName.toLowerCase().includes(keyword.toLowerCase())
-  );
-};
-
 export default function CartPage() {
   const { cart, updateCart, removeFromCart, clearCart, loading } = useCart();
   const [updating, setUpdating] = useState<number | null>(null);
@@ -321,8 +306,8 @@ export default function CartPage() {
       return;
     }
     
-    const priceText = product.price > 0 ? ` (KES ${formatPrice(product.price)})` : '';
-    const message = `Hello! I'm interested in "${product.name}"${priceText} from my cart. Please provide more information about ${product.price > 0 ? 'pricing and ' : ''}availability.`;
+    // Using the same message format as Shop page
+    const message = `Hello! I'm interested in your product: ${product.name} (KES ${formatPrice(product.price)}). Please provide more information.`;
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${sellerInfo.whatsapp_number}?text=${encodedMessage}`;
     
@@ -366,15 +351,12 @@ export default function CartPage() {
       return;
     }
 
-    const itemsList = (cart.items as CartItem[]).map(item => {
-      const priceText = item.price > 0 ? ` - KES ${formatPrice(item.price * item.quantity)}` : ' - Price on request';
-      return `- ${item.product.name} (Qty: ${item.quantity})${priceText}`;
-    }).join('%0A');
+    // Using the same format as Shop page but for multiple items
+    const itemsList = (cart.items as CartItem[]).map(item => 
+      `- ${item.product.name} (KES ${formatPrice(item.price)})`
+    ).join('%0A');
 
-    const hasPricedItems = (cart.items as CartItem[]).some(item => item.price > 0);
-    const totalText = hasPricedItems ? `%0ATotal: KES ${formatPrice(cart.subtotal)}` : '';
-
-    const message = `Hello! I'm interested in purchasing all items from my cart:%0A%0A${itemsList}${totalText}%0A%0APlease provide more information about ${hasPricedItems ? 'pricing and ' : ''}availability.`;
+    const message = `Hello! I'm interested in the following products from my cart:%0A%0A${itemsList}%0A%0APlease provide more information about these products.`;
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${sellerInfo.whatsapp_number}?text=${encodedMessage}`;
     
@@ -382,16 +364,12 @@ export default function CartPage() {
   };
 
   const handleEmailForAllItems = () => {
-    const itemsList = (cart.items as CartItem[]).map(item => {
-      const priceText = item.price > 0 ? ` - KES ${formatPrice(item.price * item.quantity)}` : ' - Price on request';
-      return `- ${item.product.name} (Quantity: ${item.quantity})${priceText}`;
-    }).join('\n');
-
-    const hasPricedItems = (cart.items as CartItem[]).some(item => item.price > 0);
-    const totalText = hasPricedItems ? `\nTotal: KES ${formatPrice(cart.subtotal)}` : '';
+    const itemsList = (cart.items as CartItem[]).map(item => 
+      `- ${item.product.name} (KES ${formatPrice(item.price)})`
+    ).join('\n');
 
     const subject = `Inquiry About Cart Items (${cart.total_items} items)`;
-    const body = `Hello!%0A%0AI'm interested in purchasing all items from my cart:%0A%0A${itemsList}${totalText}%0A%0APlease provide more information about ${hasPricedItems ? 'pricing and ' : ''}availability.%0A%0AThank you!`;
+    const body = `Hello!%0A%0AI'm interested in the following products from my cart:%0A%0A${itemsList}%0A%0APlease provide more information about these products.%0A%0AThank you!`;
     
     window.open(`mailto:${sellerInfo?.email || 'hello@sylviegarbagecollection.co.ke'}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
@@ -399,9 +377,6 @@ export default function CartPage() {
   const getProductLink = (product: CartProduct) => {
     return product.slug ? `/shop/${product.slug}` : `/shop/product/${product.id}`;
   };
-
-  // Check if cart has any priced items
-  const hasPricedItems = cart && (cart.items as CartItem[]).some(item => item.price > 0);
 
   if (loading) {
     return (
@@ -571,15 +546,9 @@ export default function CartPage() {
                         <div className="col-span-2 flex justify-between md:block mb-2 md:mb-0">
                           <span className="md:hidden font-semibold">Price:</span>
                           <div className="text-center">
-                            {item.price > 0 ? (
-                              <span className="text-lg font-semibold text-green-600">
-                                KES {formatPrice(item.price)}
-                              </span>
-                            ) : (
-                              <span className="text-sm font-semibold text-gray-600">
-                                Price on request
-                              </span>
-                            )}
+                            <span className="text-lg font-semibold text-green-600">
+                              KES {formatPrice(item.price)}
+                            </span>
                           </div>
                         </div>
 
@@ -621,15 +590,9 @@ export default function CartPage() {
                         <div className="col-span-2 flex justify-between items-center md:block">
                           <span className="md:hidden font-semibold">Total:</span>
                           <div className="flex items-center justify-center space-x-2">
-                            {item.price > 0 ? (
-                              <span className="text-lg font-bold text-gray-900">
-                                KES {formatPrice(item.price * item.quantity)}
-                              </span>
-                            ) : (
-                              <span className="text-sm font-bold text-gray-600">
-                                Price on request
-                              </span>
-                            )}
+                            <span className="text-lg font-bold text-gray-900">
+                              KES {formatPrice(item.price * item.quantity)}
+                            </span>
                             <button
                               onClick={() => handleRemoveItem(item.id)}
                               disabled={removing === item.id}
@@ -675,7 +638,7 @@ export default function CartPage() {
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <h3 className="text-sm font-semibold text-green-900 mb-2">Ready to Purchase?</h3>
                     <p className="text-sm text-green-700 mb-3">
-                      Contact us directly to complete your order. We'll provide availability{hasPricedItems ? ', pricing,' : ''} and delivery information.
+                      Contact us directly to complete your order. We'll provide availability, pricing, and delivery information.
                     </p>
                     
                     <div className="space-y-3">
@@ -708,18 +671,12 @@ export default function CartPage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Items ({cart.total_items})</span>
-                      {hasPricedItems ? (
-                        <span className="font-semibold">KES {formatPrice(cart.subtotal)}</span>
-                      ) : (
-                        <span className="font-semibold text-gray-600">Price on request</span>
-                      )}
+                      <span className="font-semibold">KES {formatPrice(cart.subtotal)}</span>
                     </div>
-                    {hasPricedItems && (
-                      <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
-                        <span>Total</span>
-                        <span className="text-green-600">KES {formatPrice(cart.subtotal)}</span>
-                      </div>
-                    )}
+                    <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
+                      <span>Total</span>
+                      <span className="text-green-600">KES {formatPrice(cart.subtotal)}</span>
+                    </div>
                   </div>
                 </div>
 
