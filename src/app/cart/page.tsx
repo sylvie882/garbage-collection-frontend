@@ -14,6 +14,7 @@ interface CartProduct {
   slug?: string;
   sku?: string;
   images?: string[];
+  is_service?: boolean;
 }
 
 interface CartItem {
@@ -54,10 +55,11 @@ function ContactModal({ isOpen, onClose, product, onSubmit, isLoading }: {
 
   useEffect(() => {
     if (product) {
+      const priceText = product.price > 0 ? ` (KES ${formatPrice(product.price)})` : '';
       setFormData(prev => ({
         ...prev,
         product_id: product.id,
-        message: `Hi, I have a question about "${product.name}" in my cart. Please provide more information.`
+        message: `Hi, I'm interested in "${product.name}"${priceText} from my cart. Please provide more information about ${product.price > 0 ? 'pricing and ' : ''}availability.`
       }));
     }
   }, [product]);
@@ -81,7 +83,7 @@ function ContactModal({ isOpen, onClose, product, onSubmit, isLoading }: {
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Contact About Product</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Contact Seller</h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -103,9 +105,15 @@ function ContactModal({ isOpen, onClose, product, onSubmit, isLoading }: {
                 />
                 <div>
                   <h4 className="font-medium text-gray-900">{product.name}</h4>
-                  <p className="text-green-600 font-semibold">
-                    KES {formatPrice(product.price)}
-                  </p>
+                  {product.price > 0 ? (
+                    <p className="text-green-600 font-semibold">
+                      KES {formatPrice(product.price)}
+                    </p>
+                  ) : (
+                    <p className="text-gray-600 font-semibold">
+                      Price on request
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -231,6 +239,13 @@ const formatPrice = (price: number | string): string => {
   return isNaN(numericPrice) ? '0' : numericPrice.toLocaleString();
 };
 
+const isServiceProduct = (productName: string): boolean => {
+  const serviceKeywords = ['service', 'collection', 'garbage', 'waste', 'cleaning', 'maintenance'];
+  return serviceKeywords.some(keyword => 
+    productName.toLowerCase().includes(keyword.toLowerCase())
+  );
+};
+
 export default function CartPage() {
   const { cart, updateCart, removeFromCart, clearCart, loading } = useCart();
   const [updating, setUpdating] = useState<number | null>(null);
@@ -306,7 +321,8 @@ export default function CartPage() {
       return;
     }
     
-    const message = `Hello! I have a question about "${product.name}" (KES ${formatPrice(product.price)}) in my cart. Please provide more information.`;
+    const priceText = product.price > 0 ? ` (KES ${formatPrice(product.price)})` : '';
+    const message = `Hello! I'm interested in "${product.name}"${priceText} from my cart. Please provide more information about ${product.price > 0 ? 'pricing and ' : ''}availability.`;
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${sellerInfo.whatsapp_number}?text=${encodedMessage}`;
     
@@ -344,9 +360,48 @@ export default function CartPage() {
     }
   };
 
+  const handleContactForAllItems = () => {
+    if (!sellerInfo) {
+      alert('Seller information not available. Please try the email contact form.');
+      return;
+    }
+
+    const itemsList = (cart.items as CartItem[]).map(item => {
+      const priceText = item.price > 0 ? ` - KES ${formatPrice(item.price * item.quantity)}` : ' - Price on request';
+      return `- ${item.product.name} (Qty: ${item.quantity})${priceText}`;
+    }).join('%0A');
+
+    const hasPricedItems = (cart.items as CartItem[]).some(item => item.price > 0);
+    const totalText = hasPricedItems ? `%0ATotal: KES ${formatPrice(cart.subtotal)}` : '';
+
+    const message = `Hello! I'm interested in purchasing all items from my cart:%0A%0A${itemsList}${totalText}%0A%0APlease provide more information about ${hasPricedItems ? 'pricing and ' : ''}availability.`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${sellerInfo.whatsapp_number}?text=${encodedMessage}`;
+    
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const handleEmailForAllItems = () => {
+    const itemsList = (cart.items as CartItem[]).map(item => {
+      const priceText = item.price > 0 ? ` - KES ${formatPrice(item.price * item.quantity)}` : ' - Price on request';
+      return `- ${item.product.name} (Quantity: ${item.quantity})${priceText}`;
+    }).join('\n');
+
+    const hasPricedItems = (cart.items as CartItem[]).some(item => item.price > 0);
+    const totalText = hasPricedItems ? `\nTotal: KES ${formatPrice(cart.subtotal)}` : '';
+
+    const subject = `Inquiry About Cart Items (${cart.total_items} items)`;
+    const body = `Hello!%0A%0AI'm interested in purchasing all items from my cart:%0A%0A${itemsList}${totalText}%0A%0APlease provide more information about ${hasPricedItems ? 'pricing and ' : ''}availability.%0A%0AThank you!`;
+    
+    window.open(`mailto:${sellerInfo?.email || 'hello@sylviegarbagecollection.co.ke'}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+  };
+
   const getProductLink = (product: CartProduct) => {
     return product.slug ? `/shop/${product.slug}` : `/shop/product/${product.id}`;
   };
+
+  // Check if cart has any priced items
+  const hasPricedItems = cart && (cart.items as CartItem[]).some(item => item.price > 0);
 
   if (loading) {
     return (
@@ -516,9 +571,15 @@ export default function CartPage() {
                         <div className="col-span-2 flex justify-between md:block mb-2 md:mb-0">
                           <span className="md:hidden font-semibold">Price:</span>
                           <div className="text-center">
-                            <span className="text-lg font-semibold text-green-600">
-                              KES {formatPrice(item.price)}
-                            </span>
+                            {item.price > 0 ? (
+                              <span className="text-lg font-semibold text-green-600">
+                                KES {formatPrice(item.price)}
+                              </span>
+                            ) : (
+                              <span className="text-sm font-semibold text-gray-600">
+                                Price on request
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -560,9 +621,15 @@ export default function CartPage() {
                         <div className="col-span-2 flex justify-between items-center md:block">
                           <span className="md:hidden font-semibold">Total:</span>
                           <div className="flex items-center justify-center space-x-2">
-                            <span className="text-lg font-bold text-gray-900">
-                              KES {formatPrice(item.price * item.quantity)}
-                            </span>
+                            {item.price > 0 ? (
+                              <span className="text-lg font-bold text-gray-900">
+                                KES {formatPrice(item.price * item.quantity)}
+                              </span>
+                            ) : (
+                              <span className="text-sm font-bold text-gray-600">
+                                Price on request
+                              </span>
+                            )}
                             <button
                               onClick={() => handleRemoveItem(item.id)}
                               disabled={removing === item.id}
@@ -599,100 +666,70 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* Order Summary */}
+            {/* Contact Seller Section */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-24">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Order Summary</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Contact Seller</h2>
                 
-                <div className="space-y-3 mb-6">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-semibold">KES {formatPrice(cart.subtotal)}</span>
-                  </div>
-                  
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Shipping</span>
-                    <span className="font-semibold">KES 500</span>
-                  </div>
-                  
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Tax (14%)</span>
-                    <span className="font-semibold">KES {formatPrice(cart.subtotal * 0.14)}</span>
-                  </div>
-                  
-                  <div className="border-t border-gray-200 pt-3">
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Total</span>
-                      <span className="text-green-600">
-                        KES {formatPrice(cart.subtotal + 500 + (cart.subtotal * 0.14))}
-                      </span>
+                <div className="space-y-4 mb-6">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h3 className="text-sm font-semibold text-green-900 mb-2">Ready to Purchase?</h3>
+                    <p className="text-sm text-green-700 mb-3">
+                      Contact us directly to complete your order. We'll provide availability{hasPricedItems ? ', pricing,' : ''} and delivery information.
+                    </p>
+                    
+                    <div className="space-y-3">
+                      <button
+                        onClick={handleContactForAllItems}
+                        className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893-.001-3.189-1.262-6.209-3.553-8.485"/>
+                        </svg>
+                        WhatsApp All Items
+                      </button>
+                      
+                      <button
+                        onClick={handleEmailForAllItems}
+                        className="w-full border border-green-600 text-green-600 py-3 px-4 rounded-lg font-semibold hover:bg-green-50 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        Email All Items
+                      </button>
                     </div>
                   </div>
                 </div>
 
-                {/* Checkout Button */}
-                <Link
-                  href="/checkout"
-                  className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors text-center block mb-4"
-                >
-                  Proceed to Checkout
-                </Link>
-
-                {/* Contact Support */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <h3 className="text-sm font-semibold text-blue-900 mb-2">Need Help with Your Order?</h3>
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => {
-                        const message = `Hello! I need help with my cart order (${cart.total_items} items, Total: KES ${formatPrice(cart.subtotal + 500 + (cart.subtotal * 0.14))}).`;
-                        const encodedMessage = encodeURIComponent(message);
-                        const whatsappUrl = `https://wa.me/${sellerInfo?.whatsapp_number || '+254711515752'}?text=${encodedMessage}`;
-                        window.open(whatsappUrl, '_blank');
-                      }}
-                      className="w-full bg-green-600 text-white py-2 px-3 rounded text-sm font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893-.001-3.189-1.262-6.209-3.553-8.485"/>
-                      </svg>
-                      WhatsApp Support
-                    </button>
-                    <a
-                      href={`mailto:${sellerInfo?.email || 'hello@sylviegarbagecollection.co.ke'}?subject=Help with Cart Order&body=I need assistance with my cart containing ${cart.total_items} items. Total: KES ${formatPrice(cart.subtotal + 500 + (cart.subtotal * 0.14))}`}
-                      className="w-full border border-blue-600 text-blue-600 py-2 px-3 rounded text-sm font-medium hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      Email Support
-                    </a>
+                {/* Cart Summary */}
+                <div className="border-t border-gray-200 pt-4">
+                  <h3 className="font-semibold text-gray-900 mb-3">Cart Summary</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Items ({cart.total_items})</span>
+                      {hasPricedItems ? (
+                        <span className="font-semibold">KES {formatPrice(cart.subtotal)}</span>
+                      ) : (
+                        <span className="font-semibold text-gray-600">Price on request</span>
+                      )}
+                    </div>
+                    {hasPricedItems && (
+                      <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
+                        <span>Total</span>
+                        <span className="text-green-600">KES {formatPrice(cart.subtotal)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Security Badges */}
-                <div className="text-center space-y-2">
-                  <div className="flex justify-center space-x-4 text-gray-500">
-                    <div className="flex items-center space-x-1 text-xs">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                      <span>Secure Payment</span>
-                    </div>
-                    <div className="flex items-center space-x-1 text-xs">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                      </svg>
-                      <span>SSL Encrypted</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Payment Methods */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <p className="text-xs text-gray-500 text-center mb-2">We Accept:</p>
-                  <div className="flex justify-center space-x-3">
-                    <div className="bg-gray-100 rounded px-2 py-1 text-xs font-semibold">M-Pesa</div>
-                    <div className="bg-gray-100 rounded px-2 py-1 text-xs font-semibold">Visa</div>
-                    <div className="bg-gray-100 rounded px-2 py-1 text-xs font-semibold">Mastercard</div>
+                {/* Business Info */}
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Our Business</h3>
+                  <div className="space-y-2 text-xs text-gray-600">
+                    <p>📍 <strong>Physical Store:</strong> Visit our shop for direct purchases</p>
+                    <p>🚚 <strong>Delivery Available:</strong> Within Nairobi and surrounding areas</p>
+                    <p>⏰ <strong>Business Hours:</strong> Mon-Sat, 8:00 AM - 6:00 PM</p>
                   </div>
                 </div>
               </div>

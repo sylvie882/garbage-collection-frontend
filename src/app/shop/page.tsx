@@ -75,6 +75,133 @@ interface ApiResponse<T> {
   total: number;
 }
 
+// Notification Component
+interface NotificationProps {
+  type: 'success' | 'error' | 'info' | 'warning';
+  message: string;
+  onClose: () => void;
+  isVisible: boolean;
+}
+
+function Notification({ type, message, onClose, isVisible }: NotificationProps) {
+  if (!isVisible) return null;
+
+  const styles = {
+    success: 'bg-green-50 border-green-200 text-green-800',
+    error: 'bg-red-50 border-red-200 text-red-800',
+    info: 'bg-blue-50 border-blue-200 text-blue-800',
+    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800'
+  };
+
+  const icons = {
+    success: (
+      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+      </svg>
+    ),
+    error: (
+      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+      </svg>
+    ),
+    info: (
+      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+      </svg>
+    ),
+    warning: (
+      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+      </svg>
+    )
+  };
+
+  return (
+    <div className={`fixed top-24 right-4 z-50 max-w-sm w-full bg-white border rounded-lg shadow-lg p-4 transform transition-all duration-300 ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
+      <div className={`flex items-start space-x-3 p-3 rounded-lg border ${styles[type]}`}>
+        <div className="flex-shrink-0">
+          {icons[type]}
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium">{message}</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="flex-shrink-0 ml-4 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Confirmation Modal Component
+interface ConfirmationModalProps {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  type?: 'danger' | 'warning' | 'info';
+}
+
+function ConfirmationModal({ 
+  isOpen, 
+  title, 
+  message, 
+  confirmText = "Confirm", 
+  cancelText = "Cancel", 
+  onConfirm, 
+  onCancel,
+  type = 'warning'
+}: ConfirmationModalProps) {
+  if (!isOpen) return null;
+
+  const styles = {
+    danger: 'bg-red-50 border-red-200 text-red-800',
+    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+    info: 'bg-blue-50 border-blue-200 text-blue-800'
+  };
+
+  const buttonStyles = {
+    danger: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
+    warning: 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500',
+    info: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full">
+        <div className={`p-6 border-b ${styles[type]}`}>
+          <h3 className="text-lg font-semibold">{title}</h3>
+        </div>
+        <div className="p-6">
+          <p className="text-gray-700 mb-6">{message}</p>
+          <div className="flex space-x-3 justify-end">
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              {cancelText}
+            </button>
+            <button
+              onClick={onConfirm}
+              className={`px-4 py-2 text-white rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${buttonStyles[type]}`}
+            >
+              {confirmText}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Contact Form Modal Component
 interface ContactModalProps {
   isOpen: boolean;
@@ -314,12 +441,80 @@ export default function ShopPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
   const [sellerInfo, setSellerInfo] = useState<SellerInfo | null>(null);
+  
+  // Notification state
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info' | 'warning';
+    message: string;
+    isVisible: boolean;
+  }>({
+    type: 'success',
+    message: '',
+    isVisible: false
+  });
+
+  // Confirmation modal state
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: (() => void) | null;
+    type?: 'danger' | 'warning' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    type: 'warning'
+  });
 
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { addToCompare, removeFromCompare, isInCompare } = useCompare();
 
   const API_BASE_URL = 'https://api.sylviegarbagecollection.co.ke/api';
+
+  // Show notification
+  const showNotification = (type: 'success' | 'error' | 'info' | 'warning', message: string) => {
+    setNotification({ type, message, isVisible: true });
+    setTimeout(() => {
+      setNotification(prev => ({ ...prev, isVisible: false }));
+    }, 5000);
+  };
+
+  // Show confirmation modal
+  const showConfirmation = (title: string, message: string, onConfirm: () => void, type?: 'danger' | 'warning' | 'info') => {
+    setConfirmationModal({
+      isOpen: true,
+      title,
+      message,
+      onConfirm,
+      type
+    });
+  };
+
+  // Handle confirmation
+  const handleConfirm = () => {
+    if (confirmationModal.onConfirm) {
+      confirmationModal.onConfirm();
+    }
+    setConfirmationModal({
+      isOpen: false,
+      title: '',
+      message: '',
+      onConfirm: null
+    });
+  };
+
+  // Handle cancel
+  const handleCancel = () => {
+    setConfirmationModal({
+      isOpen: false,
+      title: '',
+      message: '',
+      onConfirm: null
+    });
+  };
 
   useEffect(() => {
     fetchCategories();
@@ -396,10 +591,10 @@ export default function ShopPage() {
       await addToCart(productId, 1);
       const product = products.find(p => p.id === productId);
       if (product) {
-        alert(`✅ ${product.name} added to cart!`);
+        showNotification('success', `✅ ${product.name} added to cart!`);
       }
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to add product to cart');
+      showNotification('error', error instanceof Error ? error.message : 'Failed to add product to cart');
     }
   };
 
@@ -410,7 +605,7 @@ export default function ShopPage() {
 
   const handleWhatsAppContact = (product: Product) => {
     if (!sellerInfo) {
-      alert('Seller information not available. Please try the email contact form.');
+      showNotification('warning', 'Seller information not available. Please try the email contact form.');
       return;
     }
     
@@ -438,15 +633,15 @@ export default function ShopPage() {
       const result = await response.json();
 
       if (response.ok) {
-        alert('✅ Your inquiry has been sent successfully! We will contact you shortly.');
+        showNotification('success', '✅ Your inquiry has been sent successfully! We will contact you shortly.');
         setContactModalOpen(false);
         setSelectedProduct(null);
       } else {
-        alert(`❌ ${result.message || 'Failed to send inquiry. Please try again.'}`);
+        showNotification('error', `❌ ${result.message || 'Failed to send inquiry. Please try again.'}`);
       }
     } catch (error) {
       console.error('Error sending inquiry:', error);
-      alert('❌ Failed to send inquiry. Please check your connection and try again.');
+      showNotification('error', '❌ Failed to send inquiry. Please check your connection and try again.');
     } finally {
       setIsSubmittingInquiry(false);
     }
@@ -525,6 +720,24 @@ export default function ShopPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
+      
+      {/* Notification */}
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+        isVisible={notification.isVisible}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+        type={confirmationModal.type}
+      />
       
       {/* Hero Section */}
       <div className="bg-green-600 text-white py-20 mt-16">
@@ -903,7 +1116,7 @@ export default function ShopPage() {
                           )}
 
                           {/* Price */}
-                          <div className="flex items-center space-x-2 mb-4">
+                          {/* <div className="flex items-center space-x-2 mb-4">
                             <span className="text-lg font-bold text-green-600">
                               KES {formatPrice(product.price)}
                             </span>
@@ -912,7 +1125,7 @@ export default function ShopPage() {
                                 KES {formatPrice(product.compare_price)}
                               </span>
                             )}
-                          </div>
+                          </div> */}
 
                           {/* Add to Cart Button */}
                           <button
@@ -935,9 +1148,13 @@ export default function ShopPage() {
                               'Out of Stock'
                             )}
                           </button>
+                          <br />
 
+                            <p className='justify-center  items-center text-red-600 hover:text-red-700'>Contact Seller</p>
+                          
                           {/* Contact Seller & Quick Actions */}
                           <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
+                           
                             <button 
                               onClick={() => isInWishlist(product.id) ? removeFromWishlist(product.id) : addToWishlist(prepareProductForWishlist(product))}
                               className={`text-sm flex items-center gap-1 transition-colors ${
@@ -1038,9 +1255,9 @@ export default function ShopPage() {
                     <span className="text-2xl">⭐</span>
                   </div>
                   <h3 className="font-semibold text-gray-900 mb-2">{product.name}</h3>
-                  <p className="text-green-600 font-bold text-lg mb-3">
+                  {/* <p className="text-green-600 font-bold text-lg mb-3">
                     KES {formatPrice(product.price)}
-                  </p>
+                  </p> */}
                   <Link 
                     href={`/shop/${product.slug}`}
                     className="inline-block bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
