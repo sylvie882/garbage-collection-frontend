@@ -300,20 +300,6 @@ export default function CartPage() {
     setContactModalOpen(true);
   };
 
-  const handleWhatsAppContact = (product: CartProduct) => {
-    if (!sellerInfo) {
-      alert('Seller information not available. Please try the email contact form.');
-      return;
-    }
-    
-    // Using the same message format as Shop page
-    const message = `Hello! I'm interested in your product: ${product.name} (KES ${formatPrice(product.price)}). Please provide more information.`;
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${sellerInfo.whatsapp_number}?text=${encodedMessage}`;
-    
-    window.open(whatsappUrl, '_blank');
-  };
-
   const handleInquirySubmit = async (formData: ContactFormData) => {
     if (!selectedProduct) return;
     
@@ -346,32 +332,74 @@ export default function CartPage() {
   };
 
   const handleContactForAllItems = () => {
-    if (!sellerInfo) {
-      alert('Seller information not available. Please try the email contact form.');
+    if (!cart) {
+      alert('Your cart is empty. Please add some items first.');
       return;
     }
 
-    // Using the same format as Shop page but for multiple items
+    // Create a message with all cart items
     const itemsList = (cart.items as CartItem[]).map(item => 
-      `- ${item.product.name} (KES ${formatPrice(item.price)})`
-    ).join('%0A');
-
-    const message = `Hello! I'm interested in the following products from my cart:%0A%0A${itemsList}%0A%0APlease provide more information about these products.`;
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${sellerInfo.whatsapp_number}?text=${encodedMessage}`;
-    
-    window.open(whatsappUrl, '_blank');
-  };
-
-  const handleEmailForAllItems = () => {
-    const itemsList = (cart.items as CartItem[]).map(item => 
-      `- ${item.product.name} (KES ${formatPrice(item.price)})`
+      `- ${item.product.name} (Quantity: ${item.quantity}) - KES ${formatPrice(item.price * item.quantity)}`
     ).join('\n');
 
-    const subject = `Inquiry About Cart Items (${cart.total_items} items)`;
-    const body = `Hello!%0A%0AI'm interested in the following products from my cart:%0A%0A${itemsList}%0A%0APlease provide more information about these products.%0A%0AThank you!`;
+    const message = `Hello! I'm interested in purchasing all items from my cart:\n\n${itemsList}\n\nTotal: KES ${formatPrice(cart.subtotal)}\n\nPlease provide more information about pricing and availability.`;
     
-    window.open(`mailto:${sellerInfo?.email || 'hello@sylviegarbagecollection.co.ke'}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+    setFormDataForAllItems({
+      name: '',
+      email: '',
+      phone: '',
+      message: message,
+      product_id: 0
+    });
+    setContactModalForAllItemsOpen(true);
+  };
+
+  // New state for "Contact for All Items" modal
+  const [contactModalForAllItemsOpen, setContactModalForAllItemsOpen] = useState(false);
+  const [formDataForAllItems, setFormDataForAllItems] = useState<ContactFormData>({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+    product_id: 0
+  });
+
+  const handleInquirySubmitForAllItems = async (formData: ContactFormData) => {
+    setIsSubmittingInquiry(true);
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/product-inquiry`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          message: `Inquiry about entire cart:\n\n${formData.message}`
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('✅ Your inquiry has been sent successfully! We will contact you shortly.');
+        setContactModalForAllItemsOpen(false);
+        setFormDataForAllItems({
+          name: '',
+          email: '',
+          phone: '',
+          message: '',
+          product_id: 0
+        });
+      } else {
+        alert(`❌ ${result.message || 'Failed to send inquiry. Please try again.'}`);
+      }
+    } catch (error) {
+      console.error('Error sending inquiry:', error);
+      alert('❌ Failed to send inquiry. Please check your connection and try again.');
+    } finally {
+      setIsSubmittingInquiry(false);
+    }
   };
 
   const getProductLink = (product: CartProduct) => {
@@ -518,17 +546,6 @@ export default function CartPage() {
                             {/* Contact Seller Buttons */}
                             <div className="flex gap-2 mt-2">
                               <button
-                                onClick={() => handleWhatsAppContact(item.product)}
-                                className="text-xs flex items-center gap-1 text-green-600 hover:text-green-700 transition-colors"
-                                title="Contact via WhatsApp"
-                              >
-                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893-.001-3.189-1.262-6.209-3.553-8.485"/>
-                                </svg>
-                                WhatsApp
-                              </button>
-                              
-                              <button
                                 onClick={() => handleContactSeller(item.product)}
                                 className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 transition-colors"
                                 title="Send Message"
@@ -536,7 +553,7 @@ export default function CartPage() {
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
-                                Email
+                                Contact Seller
                               </button>
                             </div>
                           </div>
@@ -646,20 +663,10 @@ export default function CartPage() {
                         onClick={handleContactForAllItems}
                         className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
                       >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893-.001-3.189-1.262-6.209-3.553-8.485"/>
-                        </svg>
-                        WhatsApp All Items
-                      </button>
-                      
-                      <button
-                        onClick={handleEmailForAllItems}
-                        className="w-full border border-green-600 text-green-600 py-3 px-4 rounded-lg font-semibold hover:bg-green-50 transition-colors flex items-center justify-center gap-2"
-                      >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
-                        Email All Items
+                        Contact About All Items
                       </button>
                     </div>
                   </div>
@@ -695,7 +702,7 @@ export default function CartPage() {
         </div>
       </div>
 
-      {/* Contact Modal */}
+      {/* Contact Modal for Individual Product */}
       <ContactModal
         isOpen={contactModalOpen}
         onClose={() => {
@@ -706,6 +713,150 @@ export default function CartPage() {
         onSubmit={handleInquirySubmit}
         isLoading={isSubmittingInquiry}
       />
+
+      {/* Contact Modal for All Items */}
+      {contactModalForAllItemsOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Contact About Cart Items</h3>
+                <button
+                  onClick={() => {
+                    setContactModalForAllItemsOpen(false);
+                    setFormDataForAllItems({
+                      name: '',
+                      email: '',
+                      phone: '',
+                      message: '',
+                      product_id: 0
+                    });
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  disabled={isSubmittingInquiry}
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                <h4 className="font-medium text-gray-900 mb-2">Cart Summary</h4>
+                <p className="text-sm text-gray-600">
+                  {cart.total_items} item{cart.total_items !== 1 ? 's' : ''} - Total: KES {formatPrice(cart.subtotal)}
+                </p>
+              </div>
+
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                handleInquirySubmitForAllItems(formDataForAllItems);
+              }} className="space-y-4">
+                <div>
+                  <label htmlFor="name-all" className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="name-all"
+                    name="name"
+                    required
+                    value={formDataForAllItems.name}
+                    onChange={(e) => setFormDataForAllItems(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Your full name"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="email-all" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    id="email-all"
+                    name="email"
+                    required
+                    value={formDataForAllItems.email}
+                    onChange={(e) => setFormDataForAllItems(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="your.email@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="phone-all" className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone-all"
+                    name="phone"
+                    required
+                    value={formDataForAllItems.phone}
+                    onChange={(e) => setFormDataForAllItems(prev => ({ ...prev, phone: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="+254 XXX XXX XXX"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="message-all" className="block text-sm font-medium text-gray-700 mb-1">
+                    Message *
+                  </label>
+                  <textarea
+                    id="message-all"
+                    name="message"
+                    required
+                    rows={6}
+                    value={formDataForAllItems.message}
+                    onChange={(e) => setFormDataForAllItems(prev => ({ ...prev, message: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Tell us what you need..."
+                  />
+                </div>
+
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setContactModalForAllItemsOpen(false);
+                      setFormDataForAllItems({
+                        name: '',
+                        email: '',
+                        phone: '',
+                        message: '',
+                        product_id: 0
+                      });
+                    }}
+                    disabled={isSubmittingInquiry}
+                    className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingInquiry}
+                    className="flex-1 py-3 px-4 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                  >
+                    {isSubmittingInquiry ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Sending...
+                      </>
+                    ) : (
+                      'Send Message'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
