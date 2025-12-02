@@ -11,72 +11,112 @@ import Footer from '@/components/Footer';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+// Update the getService function in /services/[slug]/page.tsx
 async function getService(slug: string): Promise<Service | null> {
   try {
     console.log('🔍 [SERVER] Looking for service with slug:', slug);
-    
-    // First, try to fetch all services and find the matching one
-    const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/services', {
-      cache: 'no-store'
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch services: ${response.status}`);
+
+    // Try direct endpoint first - MOST IMPORTANT FIX
+    try {
+      const directResponse = await fetch(
+        `https://api.sylviegarbagecollection.co.ke/api/services/${slug}`,
+        {
+          cache: 'no-store',
+          headers: {
+            'Accept': 'application/json',
+          }
+        }
+      );
+
+      if (directResponse.ok) {
+        const service = await directResponse.json();
+        console.log('✅ [SERVER] Service found via direct endpoint:', service.name);
+        return service;
+      }
+    } catch (directError) {
+      console.log('⚠️ [SERVER] Direct endpoint failed, trying alternative...');
     }
-    
-    const services = await response.json();
-    
-    if (!Array.isArray(services)) {
-      console.error('🚨 [SERVER] Services is not an array:', typeof services);
+
+    // Fallback: fetch all services
+    const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/services', {
+      cache: 'no-store',
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      console.error('🚨 [SERVER] Failed to fetch services:', response.status, response.statusText);
       return null;
     }
+
+    const data = await response.json();
+
+    // Handle different response structures
+    let services: Service[] = [];
     
+    if (Array.isArray(data)) {
+      services = data;
+    } else if (data.data && Array.isArray(data.data)) {
+      services = data.data; // Handle Laravel API Resource format
+    } else if (data.services && Array.isArray(data.services)) {
+      services = data.services;
+    } else {
+      console.error('🚨 [SERVER] Unexpected response format:', data);
+      return null;
+    }
+
     console.log('📦 [SERVER] Total services available:', services.length);
-    
-    // Log all slugs for debugging
-    const availableSlugs = services.map((s: Service) => s.slug);
-    console.log('📝 [SERVER] Available slugs:', availableSlugs);
-    
+
+    // Log all service details for debugging
+    console.log('📝 [SERVER] Available services:', services.map(s => ({
+      id: s.id,
+      name: s.name,
+      slug: s.slug,
+      category: s.category
+    })));
+
     // Try to find service by slug (exact match)
     let foundService = services.find((service: Service) => 
-      service.slug === slug
+      service.slug && service.slug.trim().toLowerCase() === slug.trim().toLowerCase()
     );
-    
+
     if (foundService) {
-      console.log('✅ [SERVER] Service found by exact slug:', foundService.name);
+      console.log('✅ [SERVER] Service found by slug:', foundService.name);
       return foundService;
     }
-    
-    // Try case-insensitive match
-    foundService = services.find((service: Service) => 
-      service.slug?.toLowerCase() === slug.toLowerCase()
-    );
-    
-    if (foundService) {
-      console.log('✅ [SERVER] Service found by case-insensitive match:', foundService.name);
-      return foundService;
-    }
-    
+
     // Try to find service by ID if slug is numeric
     if (!isNaN(Number(slug))) {
       foundService = services.find((service: Service) => 
-        service.id.toString() === slug
+        service.id && service.id.toString() === slug
       );
-      
+
       if (foundService) {
         console.log('✅ [SERVER] Service found by ID:', foundService.name);
         return foundService;
       }
     }
-    
+
+    // Try partial slug match
+    foundService = services.find((service: Service) => 
+      service.slug && service.slug.toLowerCase().includes(slug.toLowerCase())
+    );
+
+    if (foundService) {
+      console.log('✅ [SERVER] Service found by partial slug match:', foundService.name);
+      return foundService;
+    }
+
     console.log('❌ [SERVER] No service found for slug after all attempts:', slug);
     return null;
-    
+
   } catch (error: unknown) {
     console.error('🚨 [SERVER] Error in getService:', error);
     return null;
   }
 }
+
 
 async function getRelatedServices(currentService: Service): Promise<Service[]> {
   try {
