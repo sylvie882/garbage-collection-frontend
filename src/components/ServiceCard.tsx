@@ -143,24 +143,23 @@ export default function ServiceCard({ service }: ServiceCardProps) {
     };
   }, [videoStarted]);
 
-  // ✅ FIXED: URL builder - Use only API-provided identifiers
-  // In ServiceCard.tsx, update the getServiceUrl function:
-const getServiceUrl = () => {
-  // ✅ Use the service ID from API for consistency
-  if (service.id) {
-    console.log(`🔗 [ServiceCard] Generating URL with ID: ${service.id}`);
-    return `/services/${service.id}`;
-  }
-  
-  // Fallback to slug if no ID
-  if (service.slug && service.slug.trim() && service.slug !== 'd') {
-    console.log(`🔗 [ServiceCard] Generating URL with slug: ${service.slug}`);
-    return `/services/${service.slug}`;
-  }
-  
-  console.error('❌ [ServiceCard] Service has no valid ID or slug');
-  return '/services';
-};
+  // ✅ FIXED: Always use slug if available, otherwise use ID
+  const getServiceUrl = () => {
+    // ✅ CRITICAL FIX: Use slug first (better for SEO and user experience)
+    if (service.slug && service.slug.trim() && service.slug !== 'd' && service.slug !== 'undefined') {
+      console.log(`🔗 [ServiceCard] Using slug for URL: /services/${service.slug}`);
+      return `/services/${service.slug}`;
+    }
+    
+    // Fallback to ID if slug is not available
+    if (service.id) {
+      console.log(`🔗 [ServiceCard] No slug, using ID: /services/${service.id}`);
+      return `/services/${service.id}`;
+    }
+    
+    console.error('❌ [ServiceCard] Service has no valid slug or ID:', service);
+    return '/services';
+  };
 
   const serviceUrl = getServiceUrl();
 
@@ -363,7 +362,7 @@ const getServiceUrl = () => {
         {/* Debug info - only in development */}
         {/* {process.env.NODE_ENV === 'development' && (
           <div className="mt-2 text-xs text-gray-400">
-            Debug: ID: {service.id} | Slug: {service.slug || 'none'}
+            Debug: ID: {service.id} | Slug: {service.slug || 'none'} | Name: {service.name}
           </div>
         )} */}
       </div>
