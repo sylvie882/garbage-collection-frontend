@@ -144,18 +144,33 @@ export default function ServiceCard({ service }: ServiceCardProps) {
   }, [videoStarted]);
 
   // ✅ URL builder
-  const getServiceUrl = () => {
-    if (service.slug && service.slug.trim() && service.slug !== 'd')
-      return `/services/${service.slug}`;
-    if (service.id) return `/services/${service.id}`;
-    const slugFromName = service.name
-      ?.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)+/g, '');
-    return `/services/${slugFromName || 'service'}`;
-  };
+  // ✅ FIXED: URL builder - Consistent with detail page logic
+const getServiceUrl = () => {
+  // First try the service's slug if it exists and is valid
+  if (service.slug && service.slug.trim() && service.slug !== 'd') {
+    console.log(`🔗 [CARD] Using service slug: ${service.slug}`);
+    return `/services/${service.slug}`;
+  }
+  
+  // Fallback to service ID if slug is invalid
+  if (service.id) {
+    console.log(`🔗 [CARD] Using service ID: ${service.id}`);
+    return `/services/${service.id}`;
+  }
+  
+  // Last resort: create slug from name
+  const slugFromName = service.name
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '');
+  
+  console.log(`🔗 [CARD] Generated slug from name: ${slugFromName}`);
+  return `/services/${slugFromName || 'service'}`;
+};
 
-  const serviceUrl = getServiceUrl();
+const serviceUrl = getServiceUrl();
+
+
 
   // Get thumbnail type (YouTube first, then image, then icon)
   const getThumbnailType = () => {
