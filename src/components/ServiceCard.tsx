@@ -143,34 +143,26 @@ export default function ServiceCard({ service }: ServiceCardProps) {
     };
   }, [videoStarted]);
 
-  // ✅ URL builder
-  // ✅ FIXED: URL builder - Consistent with detail page logic
-const getServiceUrl = () => {
-  // First try the service's slug if it exists and is valid
-  if (service.slug && service.slug.trim() && service.slug !== 'd') {
-    console.log(`🔗 [CARD] Using service slug: ${service.slug}`);
-    return `/services/${service.slug}`;
-  }
-  
-  // Fallback to service ID if slug is invalid
-  if (service.id) {
-    console.log(`🔗 [CARD] Using service ID: ${service.id}`);
-    return `/services/${service.id}`;
-  }
-  
-  // Last resort: create slug from name
-  const slugFromName = service.name
-    ?.toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '');
-  
-  console.log(`🔗 [CARD] Generated slug from name: ${slugFromName}`);
-  return `/services/${slugFromName || 'service'}`;
-};
+  // ✅ FIXED: URL builder - Use only API-provided identifiers
+  const getServiceUrl = () => {
+    // ALWAYS use the service ID from the API - most reliable
+    if (service.id) {
+      console.log(`🔗 [ServiceCard] Using service ID: ${service.id}`);
+      return `/services/${service.id}`;
+    }
+    
+    // Fallback to slug if ID is not available
+    if (service.slug && service.slug.trim() && service.slug !== 'd') {
+      console.log(`🔗 [ServiceCard] Using service slug: ${service.slug}`);
+      return `/services/${service.slug}`;
+    }
+    
+    // Last resort: show error or use a placeholder
+    console.error('❌ [ServiceCard] Service has no valid ID or slug:', service);
+    return '/services/not-found';
+  };
 
-const serviceUrl = getServiceUrl();
-
-
+  const serviceUrl = getServiceUrl();
 
   // Get thumbnail type (YouTube first, then image, then icon)
   const getThumbnailType = () => {
@@ -367,6 +359,13 @@ const serviceUrl = getServiceUrl();
             </svg>
           </Link>
         </div>
+
+        {/* Debug info - only in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-2 text-xs text-gray-400">
+            Debug: ID: {service.id} | Slug: {service.slug || 'none'}
+          </div>
+        )}
       </div>
     </div>
   );
