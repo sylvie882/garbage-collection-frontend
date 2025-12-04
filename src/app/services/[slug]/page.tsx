@@ -12,81 +12,124 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 // Update the getService function in /services/[slug]/page.tsx
+// Update the getService function in /services/[slug]/page.tsx
 async function getService(slug: string): Promise<Service | null> {
   try {
     console.log('🔍 [SERVER] Looking for service with identifier:', slug);
 
-    // Clean the slug - remove any trailing special characters
-    const cleanSlug = slug.trim().toLowerCase();
-
-    // Try multiple endpoints in sequence
-    const endpoints = [
-      // 1. Direct endpoint with cleaned slug
-      `https://api.sylviegarbagecollection.co.ke/api/services/${cleanSlug}`,
-      // 2. Alternative endpoint format
-      `https://api.sylviegarbagecollection.co.ke/api/services/slug/${cleanSlug}`,
-      // 3. Fallback to all services
-      'https://api.sylviegarbagecollection.co.ke/api/services',
-    ];
-
-    for (const endpoint of endpoints) {
+    // Clean the slug - remove whitespace but DON'T convert to lowercase yet
+    const cleanSlug = slug.trim();
+    
+    // Check if it's a numeric ID
+    const isNumericId = !isNaN(Number(cleanSlug)) && cleanSlug !== '';
+    
+    if (isNumericId) {
+      console.log(`🔢 [SERVER] Identifier appears to be numeric ID: ${cleanSlug}`);
+      
+      // ✅ FIX 1: Try direct ID endpoint first
       try {
-        const response = await fetch(endpoint, {
-          cache: 'no-store',
-          headers: { 'Accept': 'application/json' }
-        });
+        const response = await fetch(
+          `https://api.sylviegarbagecollection.co.ke/api/services/${cleanSlug}`,
+          {
+            cache: 'no-store',
+            headers: { 'Accept': 'application/json' }
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();
-          
-          // If we got a direct service response
           if (data.id && data.name) {
-            console.log('✅ [SERVER] Service found via direct endpoint:', data.name);
+            console.log('✅ [SERVER] Service found via direct ID endpoint:', data.name);
             return data;
-          }
-          
-          // If we got an array of services (fallback endpoint)
-          if (Array.isArray(data)) {
-            const services = data;
-            
-            // Try exact slug match
-            let foundService = services.find((service: Service) => 
-              service.slug && service.slug.trim().toLowerCase() === cleanSlug
-            );
-            
-            if (foundService) {
-              console.log('✅ [SERVER] Service found by slug in array:', foundService.name);
-              return foundService;
-            }
-            
-            // Try ID match
-            if (!isNaN(Number(cleanSlug))) {
-              foundService = services.find((service: Service) => 
-                service.id && service.id.toString() === cleanSlug
-              );
-              
-              if (foundService) {
-                console.log('✅ [SERVER] Service found by ID in array:', foundService.name);
-                return foundService;
-              }
-            }
-            
-            // Try slug from name match
-            const slugFromName = cleanSlug.replace(/-/g, ' ');
-            foundService = services.find((service: Service) => 
-              service.name && service.name.toLowerCase().includes(slugFromName)
-            );
-            
-            if (foundService) {
-              console.log('✅ [SERVER] Service found by name match:', foundService.name);
-              return foundService;
-            }
           }
         }
       } catch (error) {
-        console.log(`⚠️ [SERVER] Endpoint failed: ${endpoint}`, error);
-        continue;
+        console.log('⚠️ [SERVER] Direct ID endpoint failed:', error);
       }
+    }
+
+    // ✅ FIX 2: Try slug endpoint (preserve original case)
+    try {
+      const slugLower = cleanSlug.toLowerCase();
+      const response = await fetch(
+        `https://api.sylviegarbagecollection.co.ke/api/services/slug/${slugLower}`,
+        {
+          cache: 'no-store',
+          headers: { 'Accept': 'application/json' }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.id && data.name) {
+          console.log('✅ [SERVER] Service found via slug endpoint:', data.name);
+          return data;
+        }
+      }
+    } catch (error) {
+      console.log('⚠️ [SERVER] Slug endpoint failed:', error);
+    }
+
+    // ✅ FIX 3: Fallback - fetch all services and search
+    try {
+      const response = await fetch(
+        'https://api.sylviegarbagecollection.co.ke/api/services',
+        {
+          cache: 'no-store',
+          headers: { 'Accept': 'application/json' }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        let services: Service[] = [];
+        if (Array.isArray(data)) {
+          services = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          services = data.data;
+        } else if (data.services && Array.isArray(data.services)) {
+          services = data.services;
+        }
+
+        console.log('📦 [SERVER] Total services in array:', services.length);
+
+        // If numeric, search by ID (compare as strings)
+        if (isNumericId) {
+          console.log(`🔍 [SERVER] Searching by ID: ${cleanSlug}`);
+          const serviceById = services.find((s: Service) => 
+            s.id && s.id.toString() === cleanSlug
+          );
+          if (serviceById) {
+            console.log('✅ [SERVER] Service found by ID in array:', serviceById.name);
+            return serviceById;
+          }
+        }
+
+        // Search by slug (case-insensitive)
+        const slugLower = cleanSlug.toLowerCase();
+        console.log(`🔍 [SERVER] Searching by slug: ${slugLower}`);
+        const serviceBySlug = services.find((s: Service) => 
+          s.slug && s.slug.toLowerCase() === slugLower
+        );
+        if (serviceBySlug) {
+          console.log('✅ [SERVER] Service found by slug in array:', serviceBySlug.name);
+          return serviceBySlug;
+        }
+
+        // Search by name (partial match)
+        const nameSearch = cleanSlug.toLowerCase().replace(/-/g, ' ');
+        console.log(`🔍 [SERVER] Searching by name: ${nameSearch}`);
+        const serviceByName = services.find((s: Service) => 
+          s.name && s.name.toLowerCase().includes(nameSearch)
+        );
+        if (serviceByName) {
+          console.log('✅ [SERVER] Service found by name in array:', serviceByName.name);
+          return serviceByName;
+        }
+      }
+    } catch (error) {
+      console.error('🚨 [SERVER] Error fetching all services:', error);
     }
 
     console.log('❌ [SERVER] No service found after all attempts:', slug);
@@ -97,7 +140,6 @@ async function getService(slug: string): Promise<Service | null> {
     return null;
   }
 }
-
 
 async function getRelatedServices(currentService: Service): Promise<Service[]> {
   try {
