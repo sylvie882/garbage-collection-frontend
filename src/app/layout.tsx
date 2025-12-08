@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-// import CopyProtection from '../components/CopyProtection';
+import CopyProtection from '../components/CopyProtection';
 import { CartProvider } from '../contexts/CartContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 import { CompareProvider } from '@/contexts/CompareContext';
@@ -66,7 +66,7 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        {/* <CopyProtection /> */}
+        <CopyProtection />
         <CartProvider>
           <WishlistProvider>
             <CompareProvider>
