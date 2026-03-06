@@ -1,8 +1,7 @@
 // src/components/SanitaryBinQuoteForm.tsx
-
 'use client';
 
-import { useState, ChangeEvent, FormEvent } from 'react';
+import { useState, ChangeEvent, FormEvent, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 // Define types for form data
@@ -29,7 +28,8 @@ interface SubmitStatus {
   message: string;
 }
 
-export default function SanitaryBinQuoteForm() {
+// Create a separate component that uses useSearchParams
+function QuoteFormContent() {
   const searchParams = useSearchParams();
   const initialBinType = searchParams.get('bin') || '';
 
@@ -201,9 +201,6 @@ export default function SanitaryBinQuoteForm() {
     }
   };
 
-  // Uncomment the additional services section if needed
-  // ...
-
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-6 md:p-8">
       {submitStatus && (
@@ -318,7 +315,7 @@ export default function SanitaryBinQuoteForm() {
             value={formData.number_of_bins}
             onChange={handleChange}
             required
-            min="1"
+            min={1}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
           />
         </div>
@@ -412,5 +409,30 @@ export default function SanitaryBinQuoteForm() {
         By submitting this form, you agree to our privacy policy. We'll only use your details to provide you with a quote.
       </p>
     </form>
+  );
+}
+
+// Main component with Suspense boundary
+export default function SanitaryBinQuoteForm() {
+  return (
+    <Suspense fallback={
+      <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mx-auto mb-6"></div>
+          <div className="grid md:grid-cols-2 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="h-10 bg-gray-200 rounded"></div>
+            ))}
+            <div className="h-24 bg-gray-200 rounded md:col-span-2"></div>
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="h-10 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+          <div className="h-12 bg-gray-200 rounded mt-6"></div>
+        </div>
+      </div>
+    }>
+      <QuoteFormContent />
+    </Suspense>
   );
 }
