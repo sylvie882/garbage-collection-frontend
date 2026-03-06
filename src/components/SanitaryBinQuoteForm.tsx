@@ -363,7 +363,7 @@ export default function SanitaryBinQuoteForm() {
             name="message"
             value={formData.message}
             onChange={handleChange}
-            rows="4"
+            rows={4}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             placeholder="Tell us about any specific requirements or questions..."
           ></textarea>
