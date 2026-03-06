@@ -14,6 +14,12 @@ const nextConfig = {
         hostname: 'api.sylviegarbagecollection.co.ke',
         pathname: '/storage/**',
       },
+      // Add Unsplash to allowed domains
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
     ],
     unoptimized: false,
   },
@@ -35,7 +41,7 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
 
-  // ADD THIS: Force unique build ID to bust Vercel cache
+  // Force unique build ID to bust Vercel cache
   generateBuildId: async () => {
     return `build-${Date.now()}`
   },

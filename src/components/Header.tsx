@@ -18,6 +18,7 @@ export default function Header() {
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'About Us', href: '/about' },
+    { name: 'Sanitary Bins', href: '/services/sanitary-bins' },
     { name: 'Services', href: '/services' },
     { name: 'Shop', href: '/shop' },
     { name: 'Contact', href: '/contact' },

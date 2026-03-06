@@ -17,6 +17,7 @@ export async function GET() {
     { path: '/services/nakuru', priority: 0.7, changefreq: 'monthly' },
     { path: '/services/narok', priority: 0.7, changefreq: 'monthly' },
     { path: '/services/laikipia', priority: 0.7, changefreq: 'monthly' },
+    { path: '/services/sanitary-bins', priority: 0.7, changefreq: 'monthly' },
   ];
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
