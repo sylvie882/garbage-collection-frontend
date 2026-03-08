@@ -1,15 +1,36 @@
-// components/SanitaryBinQuoteForm.jsx
-
 'use client';
 
-import { useState } from 'react';
+import { useState, ChangeEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
+
+// Define types for form data
+interface FormData {
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  county: string;
+  town: string;
+  bin_type: string;
+  number_of_bins: string;
+  service_frequency: string;
+  contract_term: string;
+  additional_services: string[];
+  message: string;
+  preferred_contact: string;
+  contact_time: string;
+}
+
+interface SubmitStatus {
+  type: 'success' | 'error';
+  message: string;
+}
 
 export default function SanitaryBinQuoteForm() {
   const searchParams = useSearchParams();
   const initialBinType = searchParams.get('bin') || '';
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     phone: '',
@@ -26,11 +47,11 @@ export default function SanitaryBinQuoteForm() {
     contact_time: ''
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitStatus, setSubmitStatus] = useState<SubmitStatus | null>(null);
 
   // Counties list
-  const counties = [
+  const counties: string[] = [
     'Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Uasin Gishu', 'Kiambu', 'Machakos', 
     'Kajiado', 'Murang\'a', 'Nyeri', 'Meru', 'Embu', 'Kirinyaga', 'Laikipia', 
     'Nyandarua', 'Tharaka-Nithi', 'Kitui', 'Makueni', 'Garissa', 'Wajir', 'Mandera', 
@@ -41,7 +62,7 @@ export default function SanitaryBinQuoteForm() {
   ];
 
   // Additional services
-  const additionalServicesList = [
+  const additionalServicesList: string[] = [
     'Air Fresheners & Dispensers',
     'Soap & Hand Sanitiser Dispensers',
     'Paper Towel & Toilet Tissue Supply',
@@ -50,8 +71,8 @@ export default function SanitaryBinQuoteForm() {
     'Deep Cleaning & Disinfection'
   ];
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type, checked } = e.target as HTMLInputElement;
     
     if (type === 'checkbox') {
       if (checked) {
@@ -73,7 +94,7 @@ export default function SanitaryBinQuoteForm() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitStatus(null);
@@ -150,7 +171,7 @@ export default function SanitaryBinQuoteForm() {
           errorMessage = Object.entries(data.errors)
             .map(([field, errors]) => {
               const fieldName = field.replace(/_/g, ' ');
-              return `${fieldName}: ${errors.join(', ')}`;
+              return `${fieldName}: ${(errors as string[]).join(', ')}`;
             })
             .join(' | ');
         } else if (data.message) {
@@ -325,7 +346,25 @@ export default function SanitaryBinQuoteForm() {
           </select>
         </div>
 
-      
+        {/* Additional Services - Checkbox Group */}
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Additional Services</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {additionalServicesList.map(service => (
+              <label key={service} className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  name="additional_services"
+                  value={service}
+                  checked={formData.additional_services.includes(service)}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                />
+                <span className="text-sm text-gray-700">{service}</span>
+              </label>
+            ))}
+          </div>
+        </div>
 
         {/* Message */}
         <div className="md:col-span-2">
