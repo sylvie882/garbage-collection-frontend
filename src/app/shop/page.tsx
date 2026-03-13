@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Head from 'next/head';
+import { useSearchParams } from 'next/navigation';
 import { useCart } from '../../contexts/CartContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -35,6 +37,7 @@ interface Product {
   download_files: string | null;
   meta_title: string | null;
   meta_description: string | null;
+  meta_keywords: string | null;
   related_services: any[] | null;
   created_at: string;
   updated_at: string;
@@ -44,15 +47,9 @@ interface Product {
     id: number;
     name: string;
     slug: string;
+    meta_title?: string;
+    meta_description?: string;
   } | null;
-}
-
-interface Category {
-  id: number;
-  name: string;
-  slug: string;
-  products_count: number;
-  is_active: boolean;
 }
 
 interface ApiResponse<T> {
@@ -75,317 +72,113 @@ interface ApiResponse<T> {
   total: number;
 }
 
-// Notification Component
-interface NotificationProps {
-  type: 'success' | 'error' | 'info' | 'warning';
-  message: string;
-  onClose: () => void;
-  isVisible: boolean;
-}
-
-function Notification({ type, message, onClose, isVisible }: NotificationProps) {
-  if (!isVisible) return null;
-
-  const styles = {
-    success: 'bg-green-50 border-green-200 text-green-800',
-    error: 'bg-red-50 border-red-200 text-red-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800'
+// SEO Helper function to generate structured data
+const generateProductStructuredData = (products: Product[]) => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "itemListElement": products.slice(0, 20).map((product, index) => ({
+      "@type": "Product",
+      "position": index + 1,
+      "url": `https://sylviegarbagecollection.co.ke/shop/${product.slug}`,
+      "name": product.name,
+      "description": product.short_description || product.description,
+      "image": product.image_urls?.[0] || (product.images?.[0] ? `https://api.sylviegarbagecollection.co.ke/storage/${product.images[0]}` : null),
+      "offers": {
+        "@type": "Offer",
+        "price": product.price,
+        "priceCurrency": "KES",
+        "availability": product.quantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+      },
+      "brand": {
+        "@type": "Brand",
+        "name": product.brand || "Sylvie Collection"
+      },
+      "category": product.category?.name || "General"
+    }))
   };
+};
 
-  const icons = {
-    success: (
-      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-      </svg>
-    ),
-    error: (
-      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-      </svg>
-    ),
-    info: (
-      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-      </svg>
-    ),
-    warning: (
-      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-      </svg>
-    )
-  };
+// Toast Notification Component
+function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
 
   return (
-    <div className={`fixed top-24 right-4 z-50 max-w-sm w-full bg-white border rounded-lg shadow-lg p-4 transform transition-all duration-300 ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
-      <div className={`flex items-start space-x-3 p-3 rounded-lg border ${styles[type]}`}>
-        <div className="flex-shrink-0">
-          {icons[type]}
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-medium">{message}</p>
-        </div>
-        <button
-          onClick={onClose}
-          className="flex-shrink-0 ml-4 text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className={`fixed bottom-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 animate-slide-up ${
+      type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+    }`}>
+      <div className="flex items-center gap-2">
+        {type === 'success' ? (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        ) : (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
-        </button>
+        )}
+        <span className="text-sm font-medium">{message}</span>
       </div>
     </div>
   );
 }
 
-// Confirmation Modal Component
-interface ConfirmationModalProps {
-  isOpen: boolean;
-  title: string;
-  message: string;
-  confirmText?: string;
-  cancelText?: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-  type?: 'danger' | 'warning' | 'info';
-}
-
-function ConfirmationModal({ 
-  isOpen, 
-  title, 
-  message, 
-  confirmText = "Confirm", 
-  cancelText = "Cancel", 
-  onConfirm, 
-  onCancel,
-  type = 'warning'
-}: ConfirmationModalProps) {
-  if (!isOpen) return null;
-
-  const styles = {
-    danger: 'bg-red-50 border-red-200 text-red-800',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800'
-  };
-
-  const buttonStyles = {
-    danger: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
-    warning: 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500',
-    info: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
-  };
+// Quick View Modal
+function QuickViewModal({ product, onClose }: { product: Product | null; onClose: () => void }) {
+  if (!product) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full">
-        <div className={`p-6 border-b ${styles[type]}`}>
-          <h3 className="text-lg font-semibold">{title}</h3>
-        </div>
-        <div className="p-6">
-          <p className="text-gray-700 mb-6">{message}</p>
-          <div className="flex space-x-3 justify-end">
-            <button
-              onClick={onCancel}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-            >
-              {cancelText}
-            </button>
-            <button
-              onClick={onConfirm}
-              className={`px-4 py-2 text-white rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${buttonStyles[type]}`}
-            >
-              {confirmText}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Contact Form Modal Component
-interface ContactModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  product: Product | null;
-  onSubmit: (data: ContactFormData) => Promise<void>;
-  isLoading: boolean;
-}
-
-interface ContactFormData {
-  name: string;
-  email: string;
-  phone: string;
-  message: string;
-  product_id: number;
-}
-
-interface SellerInfo {
-  whatsapp_number: string;
-  email: string;
-  business_name: string;
-}
-
-function ContactModal({ isOpen, onClose, product, onSubmit, isLoading }: ContactModalProps) {
-  const [formData, setFormData] = useState<ContactFormData>({
-    name: '',
-    email: '',
-    phone: '',
-    message: '',
-    product_id: product?.id || 0
-  });
-
-  useEffect(() => {
-    if (product) {
-      setFormData(prev => ({
-        ...prev,
-        product_id: product.id,
-        message: `Hi, I'm interested in your product "${product.name}". Please provide more information.`
-      }));
-    }
-  }, [product]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await onSubmit(formData);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Contact Seller</h3>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-              disabled={isLoading}
-            >
+    <div className="fixed inset-0 z-50 overflow-y-auto" onClick={onClose}>
+      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" />
+        
+        <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+          <div className="absolute top-4 right-4">
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
-
-          {product && (
-            <div className="bg-gray-50 p-4 rounded-lg mb-4">
-              <div className="flex items-center space-x-3">
-                <img
-                  src={getProductImage(product)}
-                  alt={product.name}
-                  className="w-12 h-12 object-cover rounded"
-                />
-                <div>
-                  <h4 className="font-medium text-gray-900">{product.name}</h4>
-                  <p className="text-green-600 font-semibold">
-                    KES {formatPrice(product.price)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name *
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                required
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="Your full name"
+          
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            <div className="bg-gray-100 p-8 flex items-center justify-center">
+              <img
+                src={getProductImage(product)}
+                alt={product.name}
+                className="max-w-full h-auto max-h-80 object-contain"
+                onError={(e) => {
+                  e.currentTarget.src = '/placeholder-product.png';
+                }}
               />
             </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address *
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="your.email@example.com"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number *
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                required
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="+254 XXX XXX XXX"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-                Message *
-              </label>
-              <textarea
-                id="message"
-                name="message"
-                required
-                rows={4}
-                value={formData.message}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                placeholder="Tell us what you need..."
-              />
-            </div>
-
-            <div className="flex space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={isLoading}
-                className="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="flex-1 py-3 px-4 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center"
-              >
-                {isLoading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Sending...
-                  </>
-                ) : (
-                  'Send Message'
+            
+            <div className="p-8">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h3>
+              <p className="text-gray-600 mb-4">{product.short_description || product.description}</p>
+              
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-3xl font-bold text-green-600">
+                  KES {formatPrice(product.price)}
+                </span>
+                {product.compare_price && (
+                  <span className="text-lg text-gray-400 line-through">
+                    KES {formatPrice(product.compare_price)}
+                  </span>
                 )}
-              </button>
+              </div>
+              
+              <Link
+                href={`/shop/${product.slug}`}
+                className="block w-full bg-green-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+              >
+                View Full Details
+              </Link>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>
@@ -394,7 +187,6 @@ function ContactModal({ isOpen, onClose, product, onSubmit, isLoading }: Contact
 
 // Helper function to get product image URL
 const getProductImage = (product: Product) => {
-  // Check image_urls first
   if (product.image_urls && product.image_urls.length > 0) {
     const imageUrl = product.image_urls[0];
     if (imageUrl.startsWith('http')) {
@@ -402,7 +194,6 @@ const getProductImage = (product: Product) => {
     }
   }
   
-  // Check images array
   if (product.images && product.images.length > 0) {
     const imagePath = product.images[0];
     if (imagePath.startsWith('http')) {
@@ -412,10 +203,6 @@ const getProductImage = (product: Product) => {
     }
   }
   
-  // Return placeholder based on product type
-  if (product.name.toLowerCase().includes('mat')) {
-    return '/placeholder-mat.jpg';
-  }
   return '/placeholder-product.jpg';
 };
 
@@ -427,155 +214,77 @@ const formatPrice = (price: string | null): string => {
 };
 
 export default function ShopPage() {
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('created_at');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [sortBy, setSortBy] = useState<string>('created_at');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
-  const [showFilters, setShowFilters] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [contactModalOpen, setContactModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
-  const [sellerInfo, setSellerInfo] = useState<SellerInfo | null>(null);
+  const [totalProducts, setTotalProducts] = useState(0);
   
-  // Notification state
-  const [notification, setNotification] = useState<{
-    type: 'success' | 'error' | 'info' | 'warning';
-    message: string;
-    isVisible: boolean;
-  }>({
-    type: 'success',
-    message: '',
-    isVisible: false
-  });
-
-  // Confirmation modal state
-  const [confirmationModal, setConfirmationModal] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    onConfirm: (() => void) | null;
-    type?: 'danger' | 'warning' | 'info';
-  }>({
-    isOpen: false,
-    title: '',
-    message: '',
-    onConfirm: null,
-    type: 'warning'
-  });
-
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const { addToCompare, removeFromCompare, isInCompare } = useCompare();
 
   const API_BASE_URL = 'https://api.sylviegarbagecollection.co.ke/api';
+  const SITE_URL = 'https://sylviegarbagecollection.co.ke';
 
-  // Show notification
-  const showNotification = (type: 'success' | 'error' | 'info' | 'warning', message: string) => {
-    setNotification({ type, message, isVisible: true });
-    setTimeout(() => {
-      setNotification(prev => ({ ...prev, isVisible: false }));
-    }, 5000);
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
   };
 
-  // Show confirmation modal
-  const showConfirmation = (title: string, message: string, onConfirm: () => void, type?: 'danger' | 'warning' | 'info') => {
-    setConfirmationModal({
-      isOpen: true,
-      title,
-      message,
-      onConfirm,
-      type
-    });
-  };
-
-  // Handle confirmation
-  const handleConfirm = () => {
-    if (confirmationModal.onConfirm) {
-      confirmationModal.onConfirm();
-    }
-    setConfirmationModal({
-      isOpen: false,
-      title: '',
-      message: '',
-      onConfirm: null
-    });
-  };
-
-  // Handle cancel
-  const handleCancel = () => {
-    setConfirmationModal({
-      isOpen: false,
-      title: '',
-      message: '',
-      onConfirm: null
-    });
-  };
-
+  // Initialize from URL params
   useEffect(() => {
-    fetchCategories();
-    fetchSellerInfo();
-  }, []);
+    if (searchParams) {
+      const q = searchParams.get('q');
+      const sort = searchParams.get('sort');
+      const page = searchParams.get('page');
+      
+      if (q) setSearchTerm(q);
+      if (sort) setSortBy(sort);
+      if (page) setCurrentPage(parseInt(page));
+    }
+  }, [searchParams]);
+
+  // Update URL with search params for better SEO
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('q', searchTerm);
+    if (sortBy !== 'created_at') params.set('sort', sortBy);
+    if (currentPage > 1) params.set('page', currentPage.toString());
+    
+    const queryString = params.toString();
+    const url = queryString ? `/shop?${queryString}` : '/shop';
+    
+    window.history.replaceState({}, '', url);
+  }, [searchTerm, sortBy, currentPage]);
 
   useEffect(() => {
     fetchProducts();
-  }, [selectedCategory, sortBy, searchTerm, priceRange, currentPage]);
-
-  const fetchSellerInfo = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/seller-info`);
-      if (response.ok) {
-        const data = await response.json();
-        setSellerInfo(data);
-      }
-    } catch (error) {
-      console.error('Error fetching seller info:', error);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/categories`);
-      if (response.ok) {
-        const categoriesData = await response.json();
-        setCategories(Array.isArray(categoriesData) ? categoriesData : categoriesData.data || []);
-      } else {
-        console.error('Failed to fetch categories');
-        setCategories([]);
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      setCategories([]);
-    }
-  };
+  }, [searchTerm, sortBy, priceRange, currentPage]);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (selectedCategory !== 'all') params.append('category', selectedCategory);
-      if (sortBy) params.append('sort', sortBy);
       if (searchTerm) params.append('search', searchTerm);
+      if (sortBy) params.append('sort', sortBy);
       params.append('min_price', priceRange[0].toString());
       params.append('max_price', priceRange[1].toString());
       params.append('page', currentPage.toString());
-
-      console.log('Fetching products with params:', params.toString());
+      params.append('per_page', '24');
 
       const response = await fetch(`${API_BASE_URL}/products?${params}`);
       
       if (response.ok) {
         const productsData: ApiResponse<Product> = await response.json();
-        console.log('Products API response:', productsData);
-        
         setProducts(productsData.data || []);
         setTotalPages(productsData.last_page || 1);
+        setTotalProducts(productsData.total || 0);
       } else {
-        console.error('Failed to fetch products, status:', response.status);
         setProducts([]);
       }
     } catch (error) {
@@ -586,704 +295,533 @@ export default function ShopPage() {
     }
   };
 
-  const handleAddToCart = async (productId: number) => {
+  const handleAddToCart = async (productId: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     try {
       await addToCart(productId, 1);
-      const product = products.find(p => p.id === productId);
-      if (product) {
-        showNotification('success', `✅ ${product.name} added to cart!`);
-      }
+      showToast('Product added to cart!', 'success');
     } catch (error) {
-      showNotification('error', error instanceof Error ? error.message : 'Failed to add product to cart');
+      showToast('Failed to add product to cart', 'error');
     }
   };
 
-  const handleContactSeller = (product: Product) => {
-    setSelectedProduct(product);
-    setContactModalOpen(true);
-  };
-
-  const handleWhatsAppContact = (product: Product) => {
-    if (!sellerInfo) {
-      showNotification('warning', 'Seller information not available. Please try the email contact form.');
-      return;
-    }
-    
-    const message = `Hello! I'm interested in your product: ${product.name} (KES ${formatPrice(product.price)}). Please provide more information.`;
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${sellerInfo.whatsapp_number}?text=${encodedMessage}`;
-    
-    window.open(whatsappUrl, '_blank');
-  };
-
-  const handleInquirySubmit = async (formData: ContactFormData) => {
-    if (!selectedProduct) return;
-    
-    setIsSubmittingInquiry(true);
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/product-inquiry`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        showNotification('success', '✅ Your inquiry has been sent successfully! We will contact you shortly.');
-        setContactModalOpen(false);
-        setSelectedProduct(null);
-      } else {
-        showNotification('error', `❌ ${result.message || 'Failed to send inquiry. Please try again.'}`);
-      }
-    } catch (error) {
-      console.error('Error sending inquiry:', error);
-      showNotification('error', '❌ Failed to send inquiry. Please check your connection and try again.');
-    } finally {
-      setIsSubmittingInquiry(false);
+  const handleWishlistToggle = (product: Product, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id);
+      showToast('Removed from wishlist', 'success');
+    } else {
+      // Ensure images is a non-null array to satisfy the wishlist API/type expectations
+      const wishlistProduct = { ...product, images: product.images ?? [] };
+      addToWishlist(wishlistProduct);
+      showToast('Added to wishlist', 'success');
     }
   };
 
-  // Fix: Use type assertion to handle the images type mismatch
-  const prepareProductForWishlist = (product: Product): any => {
-    return {
-      ...product,
-      images: product.images || [],
-      brand: product.brand || null,
-      specifications: product.specifications || null,
-      features: product.features || null,
-      youtube_url: product.youtube_url || null,
-      weight: product.weight || null,
-      dimensions: product.dimensions || null,
-      download_files: product.download_files || null,
-      meta_title: product.meta_title || null,
-      meta_description: product.meta_description || null,
-      related_services: product.related_services || null
-    };
-  };
-
-  // Helper function to get stock status
   const getStockStatus = (product: Product) => {
     if (!product.track_quantity) return 'in_stock';
     return product.quantity > 0 ? 'in_stock' : 'out_of_stock';
   };
 
-  // Safe function to get features array
-  const getFeaturesArray = (product: Product): string[] => {
-    if (Array.isArray(product.features)) {
-      return product.features;
-    }
-    if (typeof product.features === 'string') {
-      try {
-        // Try to parse JSON string
-        const parsed = JSON.parse(product.features);
-        return Array.isArray(parsed) ? parsed : [parsed];
-      } catch {
-        // If it's a regular string, return as array
-        return [product.features];
-      }
-    }
-    return [];
-  };
-
-  // Safe function to get specifications
-  const getSpecifications = (product: Product): string[] => {
-    if (Array.isArray(product.specifications)) {
-      return product.specifications;
-    }
-    if (typeof product.specifications === 'string') {
-      try {
-        const parsed = JSON.parse(product.specifications);
-        if (typeof parsed === 'object') {
-          return Object.entries(parsed).map(([key, value]) => `${key}: ${value}`);
-        }
-        return Array.isArray(parsed) ? parsed : [parsed];
-      } catch {
-        return [product.specifications];
-      }
-    }
-    return [];
-  };
-
-  // Get all active products
   const activeProducts = products.filter(product => product.is_active);
 
-  // Handle pagination
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Generate page title based on search/filter
+  const getPageTitle = () => {
+    if (searchTerm) {
+      return `Search Results for "${searchTerm}" - Premium Products | Sylvie Collection`;
+    }
+    return 'Shop Premium Hygiene & Waste Management Products | Sylvie Collection';
+  };
+
+  // Generate meta description
+  const getMetaDescription = () => {
+    if (searchTerm) {
+      return `Browse our selection of ${searchTerm} products. Find high-quality hygiene supplies, waste management solutions, and more at Sylvie Collection. Shop now for fast delivery.`;
+    }
+    return 'Discover premium hygiene products, consumables, and waste management supplies at Sylvie Collection. Shop our curated collection of high-quality products for home and business. Same day delivery available.';
+  };
+
+  // Generate meta keywords
+  const getMetaKeywords = () => {
+    const baseKeywords = 'hygiene products, waste management, cleaning supplies, janitorial supplies, sanitation products, eco-friendly products, Kenya';
+    if (searchTerm) {
+      return `${searchTerm}, ${baseKeywords}`;
+    }
+    return baseKeywords;
+  };
+
+  // Get canonical URL
+  const getCanonicalUrl = () => {
+    const baseUrl = `${SITE_URL}/shop`;
+    if (searchTerm || sortBy !== 'created_at' || currentPage > 1) {
+      return baseUrl;
+    }
+    return baseUrl;
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      
-      {/* Notification */}
-      <Notification
-        type={notification.type}
-        message={notification.message}
-        onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
-        isVisible={notification.isVisible}
-      />
+    <>
+      <Head>
+        <title>{getPageTitle()}</title>
+        <meta name="description" content={getMetaDescription()} />
+        <meta name="keywords" content={getMetaKeywords()} />
+        <meta name="robots" content="index, follow" />
+        <meta name="googlebot" content="index, follow" />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href={getCanonicalUrl()} />
+        
+        {/* Open Graph Tags */}
+        <meta property="og:title" content={getPageTitle()} />
+        <meta property="og:description" content={getMetaDescription()} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`${SITE_URL}/shop`} />
+        <meta property="og:site_name" content="Sylvie Collection" />
+        <meta property="og:image" content={`${SITE_URL}/og-shop-image.jpg`} />
+        <meta property="og:locale" content="en_KE" />
+        
+        {/* Twitter Card Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={getPageTitle()} />
+        <meta name="twitter:description" content={getMetaDescription()} />
+        <meta name="twitter:image" content={`${SITE_URL}/twitter-shop-image.jpg`} />
+        
+        {/* Additional SEO Tags */}
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="language" content="English" />
+        <meta name="revisit-after" content="7 days" />
+        <meta name="author" content="Sylvie Collection" />
+        
+        {/* Geo Tags for Local SEO */}
+        <meta name="geo.region" content="KE" />
+        <meta name="geo.placename" content="Nairobi" />
+        
+        {/* Breadcrumb Schema */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": SITE_URL
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Shop",
+                  "item": `${SITE_URL}/shop`
+                }
+              ]
+            })
+          }}
+        />
+        
+        {/* Product List Schema (if products exist) */}
+        {activeProducts.length > 0 && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(generateProductStructuredData(activeProducts))
+            }}
+          />
+        )}
+        
+        {/* Organization Schema */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "Sylvie Collection",
+              "url": SITE_URL,
+              "logo": `${SITE_URL}/logo.png`,
+              "sameAs": [
+                "https://www.facebook.com/sylviecollection",
+                "https://www.instagram.com/sylviecollection",
+                "https://twitter.com/sylviecollection"
+              ],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "telephone": "+254-XXX-XXX-XXX",
+                "contactType": "customer service",
+                "areaServed": "KE",
+                "availableLanguage": "English"
+              }
+            })
+          }}
+        />
+        
+        {/* Hreflang Tags for International SEO */}
+        <link rel="alternate" href={`${SITE_URL}/shop`} hrefLang="en-ke" />
+        <link rel="alternate" href={`${SITE_URL}/shop`} hrefLang="x-default" />
+        
+        {/* Pagination Links for SEO */}
+        {currentPage > 1 && (
+          <link rel="prev" href={`${SITE_URL}/shop${currentPage > 2 ? `?page=${currentPage - 1}` : ''}`} />
+        )}
+        {currentPage < totalPages && (
+          <link rel="next" href={`${SITE_URL}/shop?page=${currentPage + 1}`} />
+        )}
+      </Head>
 
-      {/* Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={confirmationModal.isOpen}
-        title={confirmationModal.title}
-        message={confirmationModal.message}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-        type={confirmationModal.type}
-      />
-      
-      {/* Hero Section */}
-      <div className="bg-green-600 text-white py-20 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Shop Our Products</h1>
-            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-              Premium hygiene products, consumables, and waste management supplies for your home and business
-            </p>
-            <div className="flex flex-wrap justify-center gap-3 mb-8">
-              <span className="bg-green-700 px-4 py-2 rounded-full text-sm font-medium">🚀 Same Day Delivery</span>
-              <span className="bg-green-700 px-4 py-2 rounded-full text-sm font-medium">💳 Secure Payment</span>
-              <span className="bg-green-700 px-4 py-2 rounded-full text-sm font-medium">🔄 Easy Returns</span>
-              <span className="bg-green-700 px-4 py-2 rounded-full text-sm font-medium">⭐ Quality Guaranteed</span>
-            </div>
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+        <Header />
+        
+        {/* Toast Notification */}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+
+        {/* Quick View Modal */}
+        {quickViewProduct && (
+          <QuickViewModal
+            product={quickViewProduct}
+            onClose={() => setQuickViewProduct(null)}
+          />
+        )}
+
+        {/* Hero Section */}
+        <div className="relative bg-gradient-to-r from-green-600 to-green-700 pt-24 pb-16 overflow-hidden">
+          <div className="absolute inset-0 opacity-10">
+            <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <pattern id="pattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+                <circle cx="10" cy="10" r="1" fill="white" />
+              </pattern>
+              <rect x="0" y="0" width="100%" height="100%" fill="url(#pattern)" />
+            </svg>
           </div>
-        </div>
-      </div>
-
-      {/* Categories Section */}
-      {categories.length > 0 && (
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">Shop by Category</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <button
-                onClick={() => {
-                  setSelectedCategory('all');
-                  setCurrentPage(1);
-                }}
-                className={`group p-4 rounded-xl text-center transition-all duration-300 ${
-                  selectedCategory === 'all'
-                    ? 'bg-green-100 border-2 border-green-500 shadow-lg scale-105'
-                    : 'bg-gray-50 border-2 border-transparent hover:border-green-300 hover:shadow-md'
-                }`}
-              >
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-green-200 transition-colors">
-                  <span className="text-xl">🛍️</span>
-                </div>
-                <h3 className="font-semibold text-gray-900 text-sm mb-1">All Products</h3>
-                <p className="text-xs text-gray-500">{activeProducts.length} products</p>
-              </button>
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => {
-                    setSelectedCategory(category.slug);
-                    setCurrentPage(1);
-                  }}
-                  className={`group p-4 rounded-xl text-center transition-all duration-300 ${
-                    selectedCategory === category.slug
-                      ? 'bg-green-100 border-2 border-green-500 shadow-lg scale-105'
-                      : 'bg-gray-50 border-2 border-transparent hover:border-green-300 hover:shadow-md'
-                  }`}
-                >
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-green-200 transition-colors">
-                    <span className="text-xl">🛒</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm mb-1">{category.name}</h3>
-                  <p className="text-xs text-gray-500">{category.products_count || 0} products</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar Filters */}
-          <div className="lg:w-1/4">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-24">
-              {/* Mobile Filter Toggle */}
-              <div className="lg:hidden mb-4">
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <span className="font-semibold">Filters & Sort</span>
-                  <svg className={`w-5 h-5 transition-transform ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              </div>
-
-              <div className={`space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-                {/* Search */}
-                <div>
-                  <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
-                    Search Products
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      id="search"
-                      placeholder="What are you looking for?"
-                      value={searchTerm}
-                      onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setCurrentPage(1);
-                      }}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Price Range */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Price Range</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>KES {priceRange[0].toLocaleString()}</span>
-                      <span>KES {priceRange[1].toLocaleString()}</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="10000"
-                      step="100"
-                      value={priceRange[1]}
-                      onChange={(e) => {
-                        setPriceRange([priceRange[0], parseInt(e.target.value)]);
-                        setCurrentPage(1);
-                      }}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                    />
-                  </div>
-                </div>
-
-                {/* Sort Options */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Sort By</h3>
-                  <select
-                    value={sortBy}
+          
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto pt-8">
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                {searchTerm ? `Search: ${searchTerm}` : 'Premium Products'}
+              </h1>
+              <p className="text-xl text-green-50 mb-8">
+                {searchTerm 
+                  ? `Browse our selection of ${searchTerm} products`
+                  : 'Discover our curated collection of high-quality hygiene and waste management solutions'
+                }
+              </p>
+              
+              {/* Search Bar */}
+              <div className="max-w-2xl mx-auto">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchTerm}
                     onChange={(e) => {
-                      setSortBy(e.target.value);
+                      setSearchTerm(e.target.value);
                       setCurrentPage(1);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  >
-                    <option value="created_at">Newest First</option>
-                    <option value="price">Price: Low to High</option>
-                    <option value="-price">Price: High to Low</option>
-                    <option value="name">Name: A to Z</option>
-                    <option value="-name">Name: Z to A</option>
-                    <option value="featured">Featured</option>
-                  </select>
-                </div>
-
-                {/* Quick Category Links */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Categories</h3>
-                  <div className="space-y-2">
+                    className="w-full px-6 py-4 pl-14 pr-12 text-gray-900 bg-white rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    aria-label="Search products"
+                  />
+                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  {searchTerm && (
                     <button
                       onClick={() => {
-                        setSelectedCategory('all');
+                        setSearchTerm('');
                         setCurrentPage(1);
                       }}
-                      className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                        selectedCategory === 'all'
-                          ? 'bg-green-100 text-green-700 font-semibold'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
+                      className="absolute inset-y-0 right-0 pr-5 flex items-center"
+                      aria-label="Clear search"
                     >
-                      All Products ({activeProducts.length})
+                      <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     </button>
-                    {categories.map((category) => (
-                      <button
-                        key={category.id}
-                        onClick={() => {
-                          setSelectedCategory(category.slug);
-                          setCurrentPage(1);
-                        }}
-                        className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                          selectedCategory === category.slug
-                            ? 'bg-green-100 text-green-700 font-semibold'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
-                      >
-                        {category.name} ({category.products_count || 0})
-                      </button>
-                    ))}
-                  </div>
+                  )}
                 </div>
-
-                {/* Clear Filters */}
-                <button
-                  onClick={() => {
-                    setSelectedCategory('all');
-                    setSearchTerm('');
-                    setPriceRange([0, 10000]);
-                    setSortBy('created_at');
-                    setCurrentPage(1);
-                  }}
-                  className="w-full py-2 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-                >
-                  Clear All Filters
-                </button>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Products Grid */}
-          <div className="lg:w-3/4">
-            {/* Results Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {selectedCategory !== 'all' 
-                    ? categories.find(c => c.slug === selectedCategory)?.name || 'Category'
-                    : 'All Products'
-                  }
-                </h2>
-                <p className="text-gray-600 mt-1">
-                  Showing {activeProducts.length} product{activeProducts.length !== 1 ? 's' : ''}
-                  {searchTerm && ` for "${searchTerm}"`}
-                  {totalPages > 1 && ` - Page ${currentPage} of ${totalPages}`}
-                </p>
-              </div>
-              
-              {/* Mobile Filter Toggle */}
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Filter Bar */}
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <label htmlFor="sort-by" className="text-sm font-medium text-gray-700">Sort by:</label>
+              <select
+                id="sort-by"
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                aria-label="Sort products by"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
-                </svg>
-                Filters
-              </button>
+                <option value="created_at">Newest</option>
+                <option value="price">Price: Low to High</option>
+                <option value="-price">Price: High to Low</option>
+                <option value="name">Name: A to Z</option>
+              </select>
             </div>
+            
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600">
+                {totalProducts} product{totalProducts !== 1 ? 's' : ''}
+                {searchTerm && ` found for "${searchTerm}"`}
+              </span>
+            </div>
+          </div>
 
-            {loading ? (
-              // Loading Skeleton
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden animate-pulse">
-                    <div className="bg-gray-200 h-48 w-full"></div>
-                    <div className="p-4 space-y-3">
-                      <div className="bg-gray-200 h-4 rounded w-3/4"></div>
-                      <div className="bg-gray-200 h-3 rounded w-1/2"></div>
-                      <div className="bg-gray-200 h-6 rounded w-1/3"></div>
-                      <div className="bg-gray-200 h-10 rounded"></div>
-                    </div>
+          {/* Loading State */}
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
+                  <div className="bg-gray-200 h-64 w-full"></div>
+                  <div className="p-4 space-y-3">
+                    <div className="bg-gray-200 h-4 rounded w-3/4"></div>
+                    <div className="bg-gray-200 h-4 rounded w-1/2"></div>
+                    <div className="bg-gray-200 h-6 rounded w-1/3"></div>
                   </div>
-                ))}
-              </div>
-            ) : activeProducts.length === 0 ? (
-              // Empty State
-              <div className="text-center py-16 bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                  </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
-                <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  {searchTerm 
-                    ? `We couldn't find any products matching "${searchTerm}". Try adjusting your search or filters.`
-                    : 'No products available in this category at the moment.'
-                  }
-                </p>
+              ))}
+            </div>
+          ) : activeProducts.length === 0 ? (
+            // Empty State with SEO-friendly content
+            <div className="text-center py-16">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">No products found</h2>
+              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                {searchTerm 
+                  ? `We couldn't find any products matching "${searchTerm}". Try different keywords or browse our categories.`
+                  : 'No products available in this category at the moment. Please check back later.'
+                }
+              </p>
+              {searchTerm && (
                 <button
                   onClick={() => {
-                    setSelectedCategory('all');
                     setSearchTerm('');
-                    setPriceRange([0, 10000]);
                     setCurrentPage(1);
                   }}
                   className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                  aria-label="Clear search and browse all products"
                 >
                   Browse All Products
                 </button>
-              </div>
-            ) : (
-              // Products Grid - Displaying ALL active products
-              <>
-                {/* Products Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {activeProducts.map((product) => {
-                    const features = getFeaturesArray(product);
-                    const specifications = getSpecifications(product);
-                    
-                    return (
-                      <div key={product.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 group">
-                        <div className="relative">
-                          <Link href={`/shop/${product.slug}`}>
-                            <div className="aspect-w-16 aspect-h-12 bg-gray-100 overflow-hidden">
-                              <img
-                                src={getProductImage(product)}
-                                alt={product.name}
-                                className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                                onError={(e) => {
-                                  e.currentTarget.src = '/placeholder-product.png';
-                                }}
-                              />
-                            </div>
-                          </Link>
-                          
-                          {/* Badges */}
-                          <div className="absolute top-3 left-3 flex flex-col gap-2">
-                            {product.is_featured && (
-                              <span className="bg-green-500 text-white px-2 py-1 text-xs rounded-full font-bold shadow-lg">
-                                ⭐ Featured
-                              </span>
-                            )}
-                            {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
-                              <span className="bg-red-500 text-white px-2 py-1 text-xs rounded-full font-bold shadow-lg">
-                                🔥 Sale
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Stock Status Badge */}
-                          <div className="absolute top-3 right-3">
-                            <span className={`px-2 py-1 text-xs rounded-full font-bold shadow-lg ${
-                              getStockStatus(product) === 'in_stock' 
-                                ? 'bg-green-500 text-white' 
-                                : 'bg-red-500 text-white'
-                            }`}>
-                              {getStockStatus(product) === 'in_stock' ? 'In Stock' : 'Out of Stock'}
-                            </span>
-                          </div>
-                        </div>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Products Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {activeProducts.map((product) => (
+                  <article
+                    key={product.id}
+                    className="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                    itemScope
+                    itemType="https://schema.org/Product"
+                  >
+                    <Link href={`/shop/${product.slug}`} className="block">
+                      <div className="relative aspect-square bg-gray-100 overflow-hidden">
+                        <img
+                          src={getProductImage(product)}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder-product.png';
+                          }}
+                          itemProp="image"
+                        />
                         
-                        <div className="p-4">
-                          {/* Category */}
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
-                              {product.category?.name || 'Uncategorized'}
+                        {/* Badges */}
+                        <div className="absolute top-3 left-3 flex flex-col gap-2">
+                          {product.is_featured && (
+                            <span className="bg-yellow-400 text-white px-2 py-1 text-xs rounded-full font-bold shadow-lg">
+                              Featured
                             </span>
-                            {product.brand && (
-                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                {product.brand}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Product Name */}
-                          <Link href={`/shop/${product.slug}`}>
-                            <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-green-600 transition-colors h-12">
-                              {product.name}
-                            </h3>
-                          </Link>
-                          
-                          {/* Description */}
-                          <p className="text-gray-600 text-sm mb-3 line-clamp-2 h-10">
-                            {product.short_description || product.description || 'No description available'}
-                          </p>
-
-                          {/* Features Preview */}
-                          {features.length > 0 && (
-                            <div className="mb-3">
-                              <div className="flex flex-wrap gap-1">
-                                {features.slice(0, 2).map((feature, index) => (
-                                  <span 
-                                    key={index}
-                                    className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded"
-                                  >
-                                    {feature}
-                                  </span>
-                                ))}
-                                {features.length > 2 && (
-                                  <span className="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded">
-                                    +{features.length - 2} more
-                                  </span>
-                                )}
-                              </div>
-                            </div>
                           )}
-
-                          {/* Price */}
-                          {/* <div className="flex items-center space-x-2 mb-4">
-                            <span className="text-lg font-bold text-green-600">
-                              KES {formatPrice(product.price)}
+                          {product.compare_price && (
+                            <span className="bg-red-500 text-white px-2 py-1 text-xs rounded-full font-bold shadow-lg">
+                              -{Math.round((1 - parseFloat(product.price) / parseFloat(product.compare_price)) * 100)}%
                             </span>
-                            {product.compare_price && parseFloat(product.compare_price) > parseFloat(product.price) && (
-                              <span className="text-sm text-gray-500 line-through">
-                                KES {formatPrice(product.compare_price)}
-                              </span>
-                            )}
-                          </div> */}
+                          )}
+                        </div>
 
-                          {/* Add to Cart Button */}
-                          <button
-                            onClick={() => handleAddToCart(product.id)}
-                            disabled={getStockStatus(product) !== 'in_stock'}
-                            className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
-                              getStockStatus(product) === 'in_stock'
-                                ? 'bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg transform hover:scale-105'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        {/* Quick View Button */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setQuickViewProduct(product);
+                          }}
+                          className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100"
+                          aria-label={`Quick view ${product.name}`}
+                        >
+                          <span className="bg-white text-gray-900 px-4 py-2 rounded-full text-sm font-semibold shadow-lg transform -translate-y-2 group-hover:translate-y-0 transition-transform">
+                            Quick View
+                          </span>
+                        </button>
+
+                        {/* Wishlist Button */}
+                        <button
+                          onClick={(e) => handleWishlistToggle(product, e)}
+                          className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors"
+                          aria-label={isInWishlist(product.id) ? "Remove from wishlist" : "Add to wishlist"}
+                        >
+                          <svg
+                            className={`w-5 h-5 ${
+                              isInWishlist(product.id) ? 'text-red-500 fill-current' : 'text-gray-600'
                             }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                           >
-                            {getStockStatus(product) === 'in_stock' ? (
-                              <>
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                                Add to Cart
-                              </>
-                            ) : (
-                              'Out of Stock'
-                            )}
-                          </button>
-                          <br />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                            />
+                          </svg>
+                        </button>
 
-                            <p className='justify-center  items-center text-red-600 hover:text-red-700'>Contact Seller</p>
-                          
-                          {/* Contact Seller & Quick Actions */}
-                          <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
-                           
-                            <button 
-                              onClick={() => isInWishlist(product.id) ? removeFromWishlist(product.id) : addToWishlist(prepareProductForWishlist(product))}
-                              className={`text-sm flex items-center gap-1 transition-colors ${
-                                isInWishlist(product.id) 
-                                  ? 'text-red-600 hover:text-red-700' 
-                                  : 'text-gray-500 hover:text-green-600'
-                              }`}
-                            >
-                              <svg className="w-4 h-4" fill={isInWishlist(product.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                              </svg>
-                              {isInWishlist(product.id) ? 'Saved' : 'Wishlist'}
-                            </button>
-
-                            {/* Contact Seller Buttons */}
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleWhatsAppContact(product)}
-                                className="text-sm flex items-center gap-1 text-green-600 hover:text-green-700 transition-colors"
-                                title="Contact via WhatsApp"
-                              >
-                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893-.001-3.189-1.262-6.209-3.553-8.485"/>
-                                </svg>
-                                WhatsApp
-                              </button>
-                              
-                              <button
-                                onClick={() => handleContactSeller(product)}
-                                className="text-sm flex items-center gap-1 text-blue-600 hover:text-blue-700 transition-colors"
-                                title="Send Message"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                Email
-                              </button>
-                            </div>
-                          </div>
+                        {/* Stock Status */}
+                        <div className="absolute bottom-3 left-3">
+                          <span className={`px-2 py-1 text-xs rounded-full font-medium shadow-lg ${
+                            getStockStatus(product) === 'in_stock'
+                              ? 'bg-green-500 text-white'
+                              : 'bg-gray-500 text-white'
+                          }`}>
+                            {getStockStatus(product) === 'in_stock' ? 'In Stock' : 'Out of Stock'}
+                          </span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center items-center space-x-2 mt-8">
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                    >
-                      Previous
-                    </button>
-                    
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        className={`px-4 py-2 border rounded-lg ${
-                          currentPage === page
-                            ? 'bg-green-600 text-white border-green-600'
-                            : 'border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+                      <div className="p-4">
+                        {/* Category */}
+                        {product.category && (
+                          <span className="text-xs font-medium text-green-600 uppercase tracking-wider">
+                            {product.category.name}
+                          </span>
+                        )}
+
+                        {/* Product Name */}
+                        <h3 className="font-semibold text-gray-900 mt-1 mb-2 line-clamp-2 h-12" itemProp="name">
+                          {product.name}
+                        </h3>
+
+                        {/* Hidden description for SEO */}
+                        <meta itemProp="description" content={product.short_description || product.description} />
+                        <meta itemProp="sku" content={product.sku} />
+                        {product.brand && <meta itemProp="brand" content={product.brand} />}
+
+                        {/* Price */}
+                        <div className="flex items-center gap-2 mb-4" itemProp="offers" itemScope itemType="https://schema.org/Offer">
+                          <span className="text-xl font-bold text-gray-900" itemProp="price" content={product.price}>
+                            KES {formatPrice(product.price)}
+                          </span>
+                          <meta itemProp="priceCurrency" content="KES" />
+                          <meta itemProp="availability" content={getStockStatus(product) === 'in_stock' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'} />
+                          {product.compare_price && (
+                            <span className="text-sm text-gray-400 line-through">
+                              KES {formatPrice(product.compare_price)}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Add to Cart Button */}
+                        <button
+                          onClick={(e) => handleAddToCart(product.id, e)}
+                          disabled={getStockStatus(product) !== 'in_stock'}
+                          className={`w-full py-2.5 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+                            getStockStatus(product) === 'in_stock'
+                              ? 'bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg'
+                              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                          }`}
+                          aria-label={`Add ${product.name} to cart`}
+                        >
+                          {getStockStatus(product) === 'in_stock' ? (
+                            <>
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
+                              Add to Cart
+                            </>
+                          ) : (
+                            'Out of Stock'
+                          )}
+                        </button>
+                      </div>
+                    </Link>
+                  </article>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <nav className="flex justify-center items-center space-x-2 mt-12" aria-label="Pagination">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                    aria-label="Previous page"
+                  >
+                    Previous
+                  </button>
+                  
+                  <span className="px-4 py-2 text-gray-700">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                    aria-label="Next page"
+                  >
+                    Next
+                  </button>
+                </nav>
+              )}
+            </>
+          )}
         </div>
+
+        <Footer />
       </div>
 
-      {/* Featured Products Banner */}
-      {activeProducts.filter(p => p.is_featured).length > 0 && (
-        <div className="bg-green-50 border-t border-green-200 py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900">Featured Products</h2>
-              <p className="text-gray-600 mt-2">Check out our most popular items</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {activeProducts.filter(p => p.is_featured).slice(0, 3).map((product) => (
-                <div key={product.id} className="bg-white rounded-lg shadow-md border border-green-200 p-6 text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">⭐</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">{product.name}</h3>
-                  {/* <p className="text-green-600 font-bold text-lg mb-3">
-                    KES {formatPrice(product.price)}
-                  </p> */}
-                  <Link 
-                    href={`/shop/${product.slug}`}
-                    className="inline-block bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors"
-                  >
-                    View Product
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Contact Modal */}
-      <ContactModal
-        isOpen={contactModalOpen}
-        onClose={() => {
-          setContactModalOpen(false);
-          setSelectedProduct(null);
-        }}
-        product={selectedProduct}
-        onSubmit={handleInquirySubmit}
-        isLoading={isSubmittingInquiry}
-      />
-
-      <Footer />
-    </div>
+      <style jsx>{`
+        @keyframes slide-up {
+          from {
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+      `}</style>
+    </>
   );
 }
