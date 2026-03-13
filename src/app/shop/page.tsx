@@ -8,7 +8,6 @@ import { useCart } from '../../contexts/CartContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { useCompare } from '@/contexts/CompareContext';
 
 interface Product {
   id: number;
@@ -71,33 +70,6 @@ interface ApiResponse<T> {
   to: number;
   total: number;
 }
-
-// SEO Helper function to generate structured data
-const generateProductStructuredData = (products: Product[]) => {
-  return {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    "itemListElement": products.slice(0, 20).map((product, index) => ({
-      "@type": "Product",
-      "position": index + 1,
-      "url": `https://sylviegarbagecollection.co.ke/shop/${product.slug}`,
-      "name": product.name,
-      "description": product.short_description || product.description,
-      "image": product.image_urls?.[0] || (product.images?.[0] ? `https://api.sylviegarbagecollection.co.ke/storage/${product.images[0]}` : null),
-      "offers": {
-        "@type": "Offer",
-        "price": product.price,
-        "priceCurrency": "KES",
-        "availability": product.quantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
-      },
-      "brand": {
-        "@type": "Brand",
-        "name": product.brand || "Sylvie Collection"
-      },
-      "category": product.category?.name || "General"
-    }))
-  };
-};
 
 // Toast Notification Component
 function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
@@ -187,6 +159,8 @@ function QuickViewModal({ product, onClose }: { product: Product | null; onClose
 
 // Helper function to get product image URL
 const getProductImage = (product: Product) => {
+  if (typeof window === 'undefined') return '/placeholder-product.jpg'; // Return placeholder during SSR
+  
   if (product.image_urls && product.image_urls.length > 0) {
     const imageUrl = product.image_urls[0];
     if (imageUrl.startsWith('http')) {
@@ -219,12 +193,13 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('created_at');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const [priceRange] = useState<[number, number]>([0, 10000]);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
+  const [isClient, setIsClient] = useState(false);
   
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -232,12 +207,19 @@ export default function ShopPage() {
   const API_BASE_URL = 'https://api.sylviegarbagecollection.co.ke/api';
   const SITE_URL = 'https://sylviegarbagecollection.co.ke';
 
+  // Set isClient to true when component mounts (client-side only)
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
   };
 
-  // Initialize from URL params
+  // Initialize from URL params (client-side only)
   useEffect(() => {
+    if (!isClient) return;
+    
     if (searchParams) {
       const q = searchParams.get('q');
       const sort = searchParams.get('sort');
@@ -247,10 +229,12 @@ export default function ShopPage() {
       if (sort) setSortBy(sort);
       if (page) setCurrentPage(parseInt(page));
     }
-  }, [searchParams]);
+  }, [searchParams, isClient]);
 
-  // Update URL with search params for better SEO
+  // Update URL with search params (client-side only)
   useEffect(() => {
+    if (!isClient) return;
+    
     const params = new URLSearchParams();
     if (searchTerm) params.set('q', searchTerm);
     if (sortBy !== 'created_at') params.set('sort', sortBy);
@@ -260,11 +244,12 @@ export default function ShopPage() {
     const url = queryString ? `/shop?${queryString}` : '/shop';
     
     window.history.replaceState({}, '', url);
-  }, [searchTerm, sortBy, currentPage]);
+  }, [searchTerm, sortBy, currentPage, isClient]);
 
   useEffect(() => {
+    if (!isClient) return;
     fetchProducts();
-  }, [searchTerm, sortBy, priceRange, currentPage]);
+  }, [searchTerm, sortBy, priceRange, currentPage, isClient]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -313,8 +298,13 @@ export default function ShopPage() {
       removeFromWishlist(product.id);
       showToast('Removed from wishlist', 'success');
     } else {
-      // Ensure images is a non-null array to satisfy the wishlist API/type expectations
-      const wishlistProduct = { ...product, images: product.images ?? [] };
+      // Create a clean product object for wishlist
+      const wishlistProduct = {
+        ...product,
+        images: product.images || [],
+        specifications: product.specifications || null,
+        features: product.features || null
+      };
       addToWishlist(wishlistProduct);
       showToast('Added to wishlist', 'success');
     }
@@ -354,11 +344,31 @@ export default function ShopPage() {
 
   // Get canonical URL
   const getCanonicalUrl = () => {
-    const baseUrl = `${SITE_URL}/shop`;
-    if (searchTerm || sortBy !== 'created_at' || currentPage > 1) {
-      return baseUrl;
-    }
-    return baseUrl;
+    return `${SITE_URL}/shop`; // Always return base URL for canonical
+  };
+
+  // Generate structured data (only on client-side or with static data)
+  const generateProductStructuredData = () => {
+    if (!isClient || activeProducts.length === 0) return null;
+    
+    return {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "itemListElement": activeProducts.slice(0, 20).map((product, index) => ({
+        "@type": "Product",
+        "position": index + 1,
+        "url": `${SITE_URL}/shop/${product.slug}`,
+        "name": product.name,
+        "description": product.short_description || product.description,
+        "image": getProductImage(product),
+        "offers": {
+          "@type": "Offer",
+          "price": product.price,
+          "priceCurrency": "KES",
+          "availability": product.quantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+        }
+      }))
+    };
   };
 
   return (
@@ -368,7 +378,6 @@ export default function ShopPage() {
         <meta name="description" content={getMetaDescription()} />
         <meta name="keywords" content={getMetaKeywords()} />
         <meta name="robots" content="index, follow" />
-        <meta name="googlebot" content="index, follow" />
         
         {/* Canonical URL */}
         <link rel="canonical" href={getCanonicalUrl()} />
@@ -392,7 +401,6 @@ export default function ShopPage() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
         <meta name="language" content="English" />
-        <meta name="revisit-after" content="7 days" />
         <meta name="author" content="Sylvie Collection" />
         
         {/* Geo Tags for Local SEO */}
@@ -424,12 +432,12 @@ export default function ShopPage() {
           }}
         />
         
-        {/* Product List Schema (if products exist) */}
-        {activeProducts.length > 0 && (
+        {/* Product List Schema - Only render on client side */}
+        {isClient && activeProducts.length > 0 && generateProductStructuredData() && (
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
-              __html: JSON.stringify(generateProductStructuredData(activeProducts))
+              __html: JSON.stringify(generateProductStructuredData())
             }}
           />
         )}
@@ -444,11 +452,6 @@ export default function ShopPage() {
               "name": "Sylvie Collection",
               "url": SITE_URL,
               "logo": `${SITE_URL}/logo.png`,
-              "sameAs": [
-                "https://www.facebook.com/sylviecollection",
-                "https://www.instagram.com/sylviecollection",
-                "https://twitter.com/sylviecollection"
-              ],
               "contactPoint": {
                 "@type": "ContactPoint",
                 "telephone": "+254-XXX-XXX-XXX",
@@ -459,25 +462,13 @@ export default function ShopPage() {
             })
           }}
         />
-        
-        {/* Hreflang Tags for International SEO */}
-        <link rel="alternate" href={`${SITE_URL}/shop`} hrefLang="en-ke" />
-        <link rel="alternate" href={`${SITE_URL}/shop`} hrefLang="x-default" />
-        
-        {/* Pagination Links for SEO */}
-        {currentPage > 1 && (
-          <link rel="prev" href={`${SITE_URL}/shop${currentPage > 2 ? `?page=${currentPage - 1}` : ''}`} />
-        )}
-        {currentPage < totalPages && (
-          <link rel="next" href={`${SITE_URL}/shop?page=${currentPage + 1}`} />
-        )}
       </Head>
 
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
         <Header />
         
-        {/* Toast Notification */}
-        {toast && (
+        {/* Toast Notification - Only show on client */}
+        {isClient && toast && (
           <Toast
             message={toast.message}
             type={toast.type}
@@ -485,8 +476,8 @@ export default function ShopPage() {
           />
         )}
 
-        {/* Quick View Modal */}
-        {quickViewProduct && (
+        {/* Quick View Modal - Only show on client */}
+        {isClient && quickViewProduct && (
           <QuickViewModal
             product={quickViewProduct}
             onClose={() => setQuickViewProduct(null)}
@@ -586,8 +577,8 @@ export default function ShopPage() {
             </div>
           </div>
 
-          {/* Loading State */}
-          {loading ? (
+          {/* Loading State - Show skeleton during SSR and loading */}
+          {(loading || !isClient) ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
@@ -601,7 +592,7 @@ export default function ShopPage() {
               ))}
             </div>
           ) : activeProducts.length === 0 ? (
-            // Empty State with SEO-friendly content
+            // Empty State
             <div className="text-center py-16">
               <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -612,7 +603,7 @@ export default function ShopPage() {
               <p className="text-gray-600 mb-6 max-w-md mx-auto">
                 {searchTerm 
                   ? `We couldn't find any products matching "${searchTerm}". Try different keywords or browse our categories.`
-                  : 'No products available in this category at the moment. Please check back later.'
+                  : 'No products available at the moment. Please check back later.'
                 }
               </p>
               {searchTerm && (
@@ -636,8 +627,6 @@ export default function ShopPage() {
                   <article
                     key={product.id}
                     className="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                    itemScope
-                    itemType="https://schema.org/Product"
                   >
                     <Link href={`/shop/${product.slug}`} className="block">
                       <div className="relative aspect-square bg-gray-100 overflow-hidden">
@@ -648,7 +637,6 @@ export default function ShopPage() {
                           onError={(e) => {
                             e.currentTarget.src = '/placeholder-product.png';
                           }}
-                          itemProp="image"
                         />
                         
                         {/* Badges */}
@@ -723,22 +711,15 @@ export default function ShopPage() {
                         )}
 
                         {/* Product Name */}
-                        <h3 className="font-semibold text-gray-900 mt-1 mb-2 line-clamp-2 h-12" itemProp="name">
+                        <h3 className="font-semibold text-gray-900 mt-1 mb-2 line-clamp-2 h-12">
                           {product.name}
                         </h3>
 
-                        {/* Hidden description for SEO */}
-                        <meta itemProp="description" content={product.short_description || product.description} />
-                        <meta itemProp="sku" content={product.sku} />
-                        {product.brand && <meta itemProp="brand" content={product.brand} />}
-
                         {/* Price */}
-                        <div className="flex items-center gap-2 mb-4" itemProp="offers" itemScope itemType="https://schema.org/Offer">
-                          <span className="text-xl font-bold text-gray-900" itemProp="price" content={product.price}>
+                        <div className="flex items-center gap-2 mb-4">
+                          <span className="text-xl font-bold text-gray-900">
                             KES {formatPrice(product.price)}
                           </span>
-                          <meta itemProp="priceCurrency" content="KES" />
-                          <meta itemProp="availability" content={getStockStatus(product) === 'in_stock' ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'} />
                           {product.compare_price && (
                             <span className="text-sm text-gray-400 line-through">
                               KES {formatPrice(product.compare_price)}
