@@ -19,8 +19,8 @@ interface Product {
 interface ApiResponse<T> { current_page: number; data: T[]; last_page: number; total: number; }
 
 const getProductImage = (p: Product) => {
-  if (p.image_urls?.length > 0 && p.image_urls[0].startsWith('http')) return p.image_urls[0];
-  if (p.images?.length > 0) return p.images[0].startsWith('http') ? p.images[0] : `https://api.sylviegarbagecollection.co.ke/storage/${p.images[0]}`;
+  if (Array.isArray(p.image_urls) && p.image_urls.length > 0 && p.image_urls[0].startsWith('http')) return p.image_urls[0];
+  if (Array.isArray(p.images) && p.images.length > 0) return p.images[0].startsWith('http') ? p.images[0] : `https://api.sylviegarbagecollection.co.ke/storage/${p.images[0]}`;
   return '/placeholder-product.jpg';
 };
 const formatPrice = (price: string | null) => {
@@ -99,7 +99,7 @@ export default function ShopContent() {
   const handleWishlist = (product: Product, e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
     if (isInWishlist(product.id)) { removeFromWishlist(product.id); setToast({ message: 'Removed from wishlist', type: 'success' }); }
-    else { addToWishlist({ ...product, images: product.images || [], specifications: null, features: null }); setToast({ message: 'Added to wishlist', type: 'success' }); }
+    else { addToWishlist({ ...product, images: product.images || [] } as any); setToast({ message: 'Added to wishlist', type: 'success' }); }
   };
 
   const inStock = (p: Product) => !p.track_quantity || p.quantity > 0;
@@ -137,7 +137,7 @@ export default function ShopContent() {
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-3 flex items-center justify-between gap-4 flex-wrap">
           <p className="text-sm text-slate-500">
             <span className="font-semibold text-slate-900">{totalProducts}</span> product{totalProducts !== 1 ? 's' : ''}
-            {searchTerm && <span className="ml-1">for "{searchTerm}"</span>}
+            {searchTerm && <span className="ml-1">for &quot;{searchTerm}&quot;</span>}
           </p>
           <div className="flex items-center gap-2">
             <label className="text-xs text-slate-500 font-medium">Sort:</label>
