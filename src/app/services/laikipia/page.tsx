@@ -7,7 +7,18 @@ export const metadata = {
   description: 'Professional garbage collection and waste management services in Laikipia County. Reliable, eco-friendly solutions for homes and businesses.',
 };
 
-const locations = [Laikipia West, Laikipia East, Laikipia North, Nanyuki Town, Dol Dol, Rumuruti, Nyahururu, Ol Pejeta, Naro Moru, Mukogodo].map(l => l.trim());
+const locations = [
+  'Laikipia West',
+  'Laikipia East',
+  'Laikipia North',
+  'Nanyuki Town',
+  'Dol Dol',
+  'Rumuruti',
+  'Nyahururu',
+  'Ol Pejeta',
+  'Naro Moru',
+  'Mukogodo',
+].map(l => l.trim());
 
 export default function LaikipiaServices() {
   return (

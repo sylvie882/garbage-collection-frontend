@@ -7,7 +7,7 @@ export const metadata = {
   description: 'Professional garbage collection and waste management services in Nairobi County. Reliable, eco-friendly solutions for homes and businesses.',
 };
 
-const locations = [Kilimani, Lavington, Westlands, Parklands, Karen, Runda, Langata, Kileleshwa, Spring Valley, Upper Hill, Hurlingham, Ngong Road, Muthaiga, Kitisuru, Nyari, South B, South C, Embakasi, Utawala, Donholm, Buruburu, Dagoretti, Kawangware, Kikuyu, Loresho, Ridgeways, Garden Estate, Thome Estate, Ruai, Athi River].map(l => l.trim());
+const locations = ['Kilimani', 'Lavington', 'Westlands', 'Parklands', 'Karen', 'Runda', 'Langata', 'Kileleshwa', 'Spring Valley', 'Upper Hill', 'Hurlingham', 'Ngong Road', 'Muthaiga', 'Kitisuru', 'Nyari', 'South B', 'South C', 'Embakasi', 'Utawala', 'Donholm', 'Buruburu', 'Dagoretti', 'Kawangware', 'Kikuyu', 'Loresho', 'Ridgeways', 'Garden Estate', 'Thome Estate', 'Ruai', 'Athi River'].map(l => l.trim());
 
 export default function NairobiServices() {
   return (

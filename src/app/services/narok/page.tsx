@@ -7,7 +7,7 @@ export const metadata = {
   description: 'Professional garbage collection and waste management services in Narok County. Reliable, eco-friendly solutions for homes and businesses.',
 };
 
-const locations = [Kilgoris, Emurua Dikirr, Narok North, Narok East, Narok West, Narok South, Narok Town, Olposimoru, Transmara, Suswa, Mara Region].map(l => l.trim());
+const locations = ['Kilgoris', 'Emurua Dikirr', 'Narok North', 'Narok East', 'Narok West', 'Narok South', 'Narok Town', 'Olposimoru', 'Transmara', 'Suswa', 'Mara Region'].map(l => l.trim());
 
 export default function NarokServices() {
   return (

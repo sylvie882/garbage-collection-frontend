@@ -7,7 +7,21 @@ export const metadata = {
   description: 'Professional garbage collection and waste management services in Nakuru County. Reliable, eco-friendly solutions for homes and businesses.',
 };
 
-const locations = [Milimani Estate, Kiamunyi Estate, Naka Estate, Ngata Estate, Section 58 Estate, Villa View Estate, Naivasha Town, Gilgil, Naivasha-Nakuru Highway, Bahati Estate, Freehold Estate, Pipeline Estate, London Estate].map(l => l.trim());
+const locations = [
+  'Milimani Estate',
+  'Kiamunyi Estate',
+  'Naka Estate',
+  'Ngata Estate',
+  'Section 58 Estate',
+  'Villa View Estate',
+  'Naivasha Town',
+  'Gilgil',
+  'Naivasha-Nakuru Highway',
+  'Bahati Estate',
+  'Freehold Estate',
+  'Pipeline Estate',
+  'London Estate',
+].map(l => l.trim());
 
 export default function NakuruServices() {
   return (
