@@ -4,256 +4,106 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 interface QuoteFormData {
-  name: string;
-  email: string;
-  phone: string;
-  company?: string;
-  service_type: string;
-  message: string;
+  name: string; email: string; phone: string; company?: string; service_type: string; message: string;
 }
-
 const serviceOptions = [
-  'Garbage Collection & Waste Disposal',
-  'Pest Control/Fumigation',
-  'Sanitary Bin Services',
-  'Washroom Solutions',
-  'House Clearance',
-  'Food Waste Services',
-  'URINAL MANAGEMENT SERVICES',
-  'MATTING SOLUTION SERVICES',
-  'Clinical Waste & Sharp Services',
-  'SECURE SHREDDING',
-  'Other'
+  'Garbage Collection & Waste Disposal','Pest Control/Fumigation','Sanitary Bin Services',
+  'Washroom Solutions','House Clearance','Food Waste Services','Urinal Management',
+  'Matting Solutions','Clinical Waste & Sharp Services','Secure Shredding','Other',
 ];
-
-interface QuoteFormProps {
-  onSubmit: (data: QuoteFormData) => Promise<any>;
-  isSubmitting: boolean;
-}
+interface QuoteFormProps { onSubmit: (data: QuoteFormData) => Promise<any>; isSubmitting: boolean; }
 
 export default function QuoteForm({ onSubmit, isSubmitting }: QuoteFormProps) {
   const [submitMessage, setSubmitMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors }
-  } = useForm<QuoteFormData>();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<QuoteFormData>();
 
   const handleFormSubmit = async (data: QuoteFormData) => {
-    setSubmitMessage('');
-    setIsSuccess(false);
-
+    setSubmitMessage(''); setIsSuccess(false);
     try {
       const response = await onSubmit(data);
-      setSubmitMessage(response.message || 'Quote request submitted successfully! We will contact you soon.');
-      setIsSuccess(true);
-      reset(); // Reset form after successful submission
-    } catch (error: unknown) {
-      // Proper TypeScript error handling
-      if (error instanceof Error) {
-        setSubmitMessage(error.message || 'Failed to submit quote request. Please try again.');
-      } else if (typeof error === 'object' && error !== null && 'response' in error) {
-        const apiError = error as { response?: { data?: { message?: string } } };
-        setSubmitMessage(
-          apiError.response?.data?.message || 
-          'Failed to submit quote request. Please try again.'
-        );
-      } else {
-        setSubmitMessage('Failed to submit quote request. Please try again.');
-      }
+      setSubmitMessage(response.message || 'Quote request submitted! We will contact you soon.');
+      setIsSuccess(true); reset();
+    } catch (error: any) {
+      setSubmitMessage(error?.response?.data?.message || error?.message || 'Failed to submit. Please try again.');
       setIsSuccess(false);
     }
   };
 
+  const inputClass = (hasError?: boolean) =>
+    `w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all ${
+      hasError ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-slate-50 hover:border-slate-300'
+    }`;
+
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-        {/* Header */}
-        <div className="bg-green-600 px-8 py-6">
-          <h2 className="text-3xl font-bold text-white text-center">
-            Request a Free Quote
-          </h2>
-          <p className="text-green-100 text-center mt-2">
-            Fill out the form below and we&apos;ll get back to you within 24 hours
-          </p>
-        </div>
+    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="bg-green-800 px-7 py-5">
+        <h2 className="text-xl font-bold text-white" style={{ fontFamily: "'Fraunces', serif" }}>Request a Free Quote</h2>
+        <p className="text-green-200 text-sm mt-1">We'll get back to you within 24 hours.</p>
+      </div>
 
-        {/* Form */}
-        <div className="p-8">
-          {submitMessage && (
-            <div className={`mb-6 p-4 rounded-lg ${
-              isSuccess 
-                ? 'bg-green-50 text-green-800 border border-green-200' 
-                : 'bg-red-50 text-red-800 border border-red-200'
-            }`}>
-              {submitMessage}
-            </div>
-          )}
+      <div className="p-7">
+        {submitMessage && (
+          <div className={`rounded-xl p-4 mb-6 ${isSuccess ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+            <p className={`text-sm font-semibold ${isSuccess ? 'text-green-900' : 'text-red-900'}`}>{submitMessage}</p>
+          </div>
+        )}
 
-          <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Name */}
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  {...register('name', { required: 'Name is required' })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Enter your full name"
-                />
-                {errors.name && (
-                  <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-                )}
-              </div>
-
-              {/* Email */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  {...register('email', { 
-                    required: 'Email is required',
-                    pattern: {
-                      value: /^\S+@\S+$/i,
-                      message: 'Invalid email address'
-                    }
-                  })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Enter your email"
-                />
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Phone */}
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number *
-                </label>
-                <input
-                  type="tel"
-                  id="phone"
-                  {...register('phone', { required: 'Phone number is required' })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
-                  placeholder="+254 XXX XXX XXX"
-                />
-                {errors.phone && (
-                  <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
-                )}
-              </div>
-
-              {/* Company */}
-              <div>
-                <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-2">
-                  Company (Optional)
-                </label>
-                <input
-                  type="text"
-                  id="company"
-                  {...register('company')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Your company name"
-                />
-              </div>
-            </div>
-
-            {/* Service Type */}
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label htmlFor="service_type" className="block text-sm font-medium text-gray-700 mb-2">
-                Service Needed *
-              </label>
-              <select
-                id="service_type"
-                {...register('service_type', { required: 'Please select a service' })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 appearance-none bg-white"
-              >
-                <option value="">Select a service</option>
-                {serviceOptions.map((service) => (
-                  <option key={service} value={service}>
-                    {service}
-                  </option>
-                ))}
-              </select>
-              {errors.service_type && (
-                <p className="mt-1 text-sm text-red-600">{errors.service_type.message}</p>
-              )}
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Full Name *</label>
+              <input {...register('name', { required: 'Name is required' })} placeholder="Your full name" className={inputClass(!!errors.name)} />
+              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
             </div>
-
-            {/* Message */}
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                Project Details *
-              </label>
-              <textarea
-                id="message"
-                rows={6}
-                {...register('message', { 
-                  required: 'Please provide project details',
-                  minLength: {
-                    value: 10,
-                    message: 'Please provide more details (at least 10 characters)'
-                  }
-                })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 resize-vertical"
-                placeholder="Tell us about your project, specific requirements, timeline, and any other relevant details..."
-              />
-              {errors.message && (
-                <p className="mt-1 text-sm text-red-600">{errors.message.message}</p>
-              )}
-            </div>
-
-            {/* Submit Button */}
-            <div className="flex justify-center pt-4">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-orange-500 text-white px-12 py-4 rounded-lg font-semibold text-lg hover:bg-orange-600 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Submitting...</span>
-                  </div>
-                ) : (
-                  'Submit Quote Request'
-                )}
-              </button>
-            </div>
-
-            {/* Help Text */}
-            <p className="text-center text-gray-500 text-sm mt-4">
-              We respect your privacy. Your information will never be shared with third parties.
-            </p>
-          </form>
-        </div>
-
-        {/* Contact Info */}
-        <div className="bg-gray-50 px-8 py-6 border-t">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="text-center md:text-left">
-              <h3 className="font-semibold text-gray-900">Prefer to talk directly?</h3>
-              <p className="text-gray-600">Call us now for immediate assistance</p>
-            </div>
-            <div className="flex items-center space-x-2 text-green-700 font-semibold text-lg">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-              </svg>
-              <span>+254 711515752</span>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email Address *</label>
+              <input type="email" {...register('email', { required: 'Email is required', pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' } })} placeholder="your@email.com" className={inputClass(!!errors.email)} />
+              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
             </div>
           </div>
-        </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Phone Number *</label>
+              <input type="tel" {...register('phone', { required: 'Phone is required' })} placeholder="+254 XXX XXX XXX" className={inputClass(!!errors.phone)} />
+              {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Company (Optional)</label>
+              <input {...register('company')} placeholder="Your company name" className={inputClass()} />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Service Needed *</label>
+            <select {...register('service_type', { required: 'Please select a service' })} className={`${inputClass(!!errors.service_type)} appearance-none`}>
+              <option value="">Select a service</option>
+              {serviceOptions.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            {errors.service_type && <p className="text-red-500 text-xs mt-1">{errors.service_type.message}</p>}
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Project Details *</label>
+            <textarea rows={5} {...register('message', { required: 'Please provide details', minLength: { value: 10, message: 'At least 10 characters required' } })}
+              placeholder="Include your location, waste type, frequency needed, and any specific requirements..."
+              className={`${inputClass(!!errors.message)} resize-none`} />
+            {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message.message}</p>}
+          </div>
+          <button type="submit" disabled={isSubmitting}
+            className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition-all text-sm">
+            {isSubmitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                Submitting...
+              </span>
+            ) : 'Submit Quote Request'}
+          </button>
+          <p className="text-center text-xs text-slate-400">We respect your privacy. Your information will not be shared with third parties.</p>
+        </form>
+      </div>
+
+      <div className="border-t border-slate-100 px-7 py-5 bg-slate-50 flex flex-col sm:flex-row justify-between items-center gap-3">
+        <div><p className="font-semibold text-slate-900 text-sm">Prefer to call?</p><p className="text-slate-500 text-xs">Speak directly with our team</p></div>
+        <a href="tel:+254711515752" className="text-green-700 font-bold text-lg hover:text-green-800 transition-colors">+254 711 515 752</a>
       </div>
     </div>
   );

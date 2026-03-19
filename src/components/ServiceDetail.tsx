@@ -2,699 +2,341 @@
 
 import { Service } from '@/types';
 import { useState } from 'react';
+import Link from 'next/link';
 
-interface ServiceDetailProps {
-  service: Service;
-}
+interface ServiceDetailProps { service: Service; }
 
 export default function ServiceDetail({ service }: ServiceDetailProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'features' | 'benefits' | 'gallery' | 'videos'>('overview');
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
-  const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null);
-  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'features' | 'benefits' | 'gallery' | 'video'>('overview');
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+  const [showFullDesc, setShowFullDesc] = useState(false);
 
-  // Safe array handling
-  const features: string[] = Array.isArray(service.features) 
-    ? service.features 
-    : service.features 
-      ? [service.features]
-      : [];
+  // ── helpers ────────────────────────────────────────────────
+  const features: string[] = Array.isArray(service.features) ? service.features : service.features ? [service.features as unknown as string] : [];
+  const benefits: string[]  = Array.isArray(service.benefits)  ? service.benefits  : service.benefits  ? [service.benefits  as unknown as string] : [];
 
-  const benefits: string[] = Array.isArray(service.benefits) 
-    ? service.benefits 
-    : service.benefits 
-      ? [service.benefits]
-      : [];
+  const resolveUrl = (path: string) => path.startsWith('http') ? path : `https://api.sylviegarbagecollection.co.ke/storage/${path}`;
+  const mainImage = service.image_url || (service.image_path ? resolveUrl(service.image_path) : null);
+  const gallery: string[] = ((service as any).gallery_images_urls?.length
+    ? (service as any).gallery_images_urls
+    : (service as any).gallery_images?.map((p: string) => resolveUrl(p)) ?? []);
 
-  const getImageUrl = (imagePath: string) => {
-    if (imagePath.startsWith('http')) return imagePath;
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.sylviegarbagecollection.co.ke';
-    return `${API_URL}/storage/${imagePath}`;
+  const getYTId = (url: string) => {
+    const m = url.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/);
+    return m ? m[1] : null;
   };
+  const ytId = service.youtube_url ? getYTId(service.youtube_url) : null;
 
-  // Get main service image
-  const mainImageUrl = service.image_url || (service.image_path ? getImageUrl(service.image_path) : null);
+  const tabs = [
+    { key: 'overview', label: 'Overview' },
+    ...(features.length ? [{ key: 'features', label: 'Features' }] : []),
+    ...(benefits.length  ? [{ key: 'benefits', label: 'Benefits' }]  : []),
+    ...(gallery.length || mainImage ? [{ key: 'gallery', label: 'Gallery' }] : []),
+    ...(ytId ? [{ key: 'video', label: 'Video' }] : []),
+  ] as { key: typeof activeTab; label: string }[];
 
-  // Get gallery images - safely handle missing property
-  const galleryImages: string[] = (service as any).gallery_images ? 
-    (service as any).gallery_images.map((img: string) => getImageUrl(img)) : [];
+  const descWords = service.full_description?.split(' ').length ?? 0;
+  const isLong = descWords > 80;
+  const shortDesc = service.full_description?.split(' ').slice(0, 80).join(' ') + '…';
 
-  // Get YouTube videos
-  const getYouTubeId = (url: string) => {
-    if (!url) return null;
-    const match = url.match(
-      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
-    );
-    return match ? match[1] : null;
-  };
+  const priceDisplay = service.price
+    ? `KES ${Number(service.price).toLocaleString()}${service.price_unit ? ` / ${service.price_unit}` : ''}`
+    : null;
 
-  // Handle single YouTube URL
-  const youtubeUrls = service.youtube_url ? [service.youtube_url] : [];
-
-  const youtubeVideos = youtubeUrls
-    .map(url => ({
-      url,
-      videoId: getYouTubeId(url),
-      embedUrl: getYouTubeId(url) ? `https://www.youtube.com/embed/${getYouTubeId(url)}` : null
-    }))
-    .filter(video => video.videoId);
-
-  // Generate structured data for the service
-  const serviceStructuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'Service',
-    'name': service.name,
-    'description': service.description,
-    'provider': {
-      '@type': 'Organization',
-      'name': 'Sylvie Garbage Collection',
-      'url': 'https://sylviegarbagecollection.co.ke',
-      'telephone': '+254-711-515752',
-      'address': {
-        '@type': 'PostalAddress',
-        'addressLocality': 'Nairobi',
-        'addressCountry': 'KE'
-      }
-    },
-    'areaServed': ['Nairobi', 'Nakuru', 'Narok', 'Laikipia'],
-    'serviceType': service.category || 'Waste Management',
-    'offers': {
-      '@type': 'Offer',
-      'price': service.price,
-      'priceCurrency': 'KES',
-      'priceSpecification': {
-        '@type': 'UnitPriceSpecification',
-        'price': service.price,
-        'priceCurrency': 'KES',
-        'unitCode': service.price_unit || 'SERVICE'
-      }
-    }
-  };
-
-  // Fixed navigation functions for modals
-  const navigateImage = (direction: 'prev' | 'next') => {
-    if (selectedImageIndex === null) return;
-    
-    if (selectedImageIndex === -1) {
-      // Currently viewing main image
-      setSelectedImageIndex(direction === 'next' ? 0 : galleryImages.length - 1);
-    } else {
-      // Currently viewing gallery image
-      if (direction === 'next') {
-        setSelectedImageIndex(selectedImageIndex < galleryImages.length - 1 ? selectedImageIndex + 1 : -1);
-      } else {
-        setSelectedImageIndex(selectedImageIndex > 0 ? selectedImageIndex - 1 : -1);
-      }
-    }
-  };
-
-  const navigateVideo = (direction: 'prev' | 'next') => {
-    if (selectedVideoIndex === null) return;
-    
-    if (direction === 'next') {
-      setSelectedVideoIndex(selectedVideoIndex < youtubeVideos.length - 1 ? selectedVideoIndex + 1 : 0);
-    } else {
-      setSelectedVideoIndex(selectedVideoIndex > 0 ? selectedVideoIndex - 1 : youtubeVideos.length - 1);
-    }
-  };
-
-  // Function to safely render HTML content
-  const renderHTMLContent = (htmlContent: string) => {
-    if (!htmlContent) return null;
-    
-    return (
-      <div 
-        className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-em:text-gray-700 prose-ul:text-gray-800 prose-ol:text-gray-800 prose-li:text-gray-800 prose-a:text-green-600 prose-a:no-underline hover:prose-a:underline prose-sm sm:prose-base"
-        dangerouslySetInnerHTML={{ __html: htmlContent }}
-      />
-    );
-  };
-
-  // Function to create a short description from HTML content
-  const createShortDescription = (htmlContent: string, maxLength: number = 200) => {
-    if (!htmlContent) return '';
-    
-    // Remove HTML tags and get plain text
-    const text = htmlContent.replace(/<[^>]*>/g, '');
-    
-    // Trim to max length and add ellipsis if needed
-    if (text.length <= maxLength) return text;
-    
-    return text.substring(0, maxLength).trim() + '...';
-  };
-
-  // Check if description is long enough to need truncation
-  const isLongDescription = service.full_description && service.full_description.replace(/<[^>]*>/g, '').length > 200;
-
+  // ── render ─────────────────────────────────────────────────
   return (
     <>
-      {/* Structured Data for SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceStructuredData) }}
-      />
-      
-      {/* Image Modal - Mobile Optimized */}
-      {selectedImageIndex !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-2 sm:p-4">
-          <div className="relative max-w-4xl max-h-full w-full">
-            <button
-              onClick={() => setSelectedImageIndex(null)}
-              className="absolute -top-10 sm:-top-12 right-0 text-white text-lg sm:text-xl hover:text-gray-300 z-10 bg-gray-800 px-3 py-1 rounded-lg"
-            >
-              ✕ Close
-            </button>
-            <img
-              src={selectedImageIndex === -1 ? mainImageUrl || '' : galleryImages[selectedImageIndex] || ''}
-              alt={`${service.name} - Image ${selectedImageIndex + 1}`}
-              className="max-w-full max-h-full object-contain rounded-lg"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-            {(galleryImages.length > 0 || mainImageUrl) && (
-              <div className="flex justify-center mt-3 sm:mt-4 space-x-1 sm:space-x-2">
-                <button
-                  onClick={() => navigateImage('prev')}
-                  className="bg-gray-800 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base"
-                >
-                  ← Prev
-                </button>
-                <span className="text-white self-center px-2 py-1 sm:px-4 sm:py-2 bg-gray-800 rounded-lg text-sm sm:text-base">
-                  {selectedImageIndex === -1 ? 'Main' : `${selectedImageIndex + 1}/${galleryImages.length}`}
-                </span>
-                <button
-                  onClick={() => navigateImage('next')}
-                  className="bg-gray-800 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base"
-                >
-                  Next →
-                </button>
-              </div>
-            )}
-          </div>
+      {/* Lightbox */}
+      {lightboxImg && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setLightboxImg(null)}>
+          <button className="absolute top-4 right-4 text-white/70 hover:text-white text-2xl font-bold w-10 h-10 flex items-center justify-center">✕</button>
+          <img src={lightboxImg} alt="Gallery" className="max-w-full max-h-[90vh] object-contain rounded-xl" onClick={e => e.stopPropagation()} />
         </div>
       )}
 
-      {/* Video Modal - Mobile Optimized */}
-      {selectedVideoIndex !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-2 sm:p-4">
-          <div className="relative max-w-4xl w-full mx-2 sm:mx-0">
-            <button
-              onClick={() => setSelectedVideoIndex(null)}
-              className="absolute -top-10 sm:-top-12 right-0 text-white text-lg sm:text-xl hover:text-gray-300 z-10 bg-gray-800 px-3 py-1 rounded-lg"
-            >
-              ✕ Close
-            </button>
-            <div className="aspect-video bg-black rounded-lg overflow-hidden">
-              <iframe
-                src={youtubeVideos[selectedVideoIndex]?.embedUrl || ''}
-                className="w-full h-full"
-                allowFullScreen
-                title={`${service.name} Service Video ${selectedVideoIndex + 1}`}
-                loading="lazy"
-              />
-            </div>
-            {youtubeVideos.length > 1 && (
-              <div className="flex justify-center mt-3 sm:mt-4 space-x-1 sm:space-x-2">
-                <button
-                  onClick={() => navigateVideo('prev')}
-                  className="bg-gray-800 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base"
-                >
-                  ← Prev
-                </button>
-                <span className="text-white self-center px-2 py-1 sm:px-4 sm:py-2 bg-gray-800 rounded-lg text-sm sm:text-base">
-                  Video {selectedVideoIndex + 1}/{youtubeVideos.length}
-                </span>
-                <button
-                  onClick={() => navigateVideo('next')}
-                  className="bg-gray-800 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base"
-                >
-                  Next →
-                </button>
+      {/* ── Hero banner ─────────────────────────────────────────── */}
+      <section className="bg-green-800 py-12 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+        <div className="relative max-w-7xl mx-auto px-4 lg:px-8">
+          <div className="flex flex-wrap items-start gap-4 justify-between">
+            <div className="flex-1 min-w-0">
+              {service.category && (
+                <Link href={`/services?category=${encodeURIComponent(service.category)}`}
+                  className="inline-block text-xs font-bold uppercase tracking-widest text-green-300 hover:text-white transition-colors mb-3">
+                  {service.category}
+                </Link>
+              )}
+              <h1 className="text-3xl lg:text-4xl font-bold text-white mb-3 leading-tight" style={{ fontFamily: "'Fraunces', serif" }}>
+                {service.name}
+              </h1>
+              <p className="text-green-200 leading-relaxed max-w-2xl text-sm lg:text-base">{service.description}</p>
+              {/* Meta tags */}
+              <div className="flex flex-wrap gap-2 mt-4">
+                {service.duration && <span className="bg-green-700/60 text-green-100 border border-green-600 text-xs px-3 py-1 rounded-full">{service.duration}</span>}
+                {service.frequency && <span className="bg-green-700/60 text-green-100 border border-green-600 text-xs px-3 py-1 rounded-full">{service.frequency}</span>}
+                {service.featured && <span className="bg-orange-500/80 text-white text-xs px-3 py-1 rounded-full font-bold">Featured</span>}
               </div>
-            )}
-          </div>
-        </div>
-      )}
-      
-      {/* Hidden SEO content for search engines */}
-      <div className="sr-only" aria-hidden="true">
-        <h1>{service.name} - Professional Waste Management Service | Sylvie Garbage Collection</h1>
-        <h2>Comprehensive {service.name} Solutions in Kenya</h2>
-        <p>
-          Sylvie Garbage Collection provides professional {service.name.toLowerCase()} services 
-          across Nairobi, Nakuru, Narok, and Laikipia counties. {service.description}
-        </p>
-        
-        <h3>Service Details & Features</h3>
-        <p>
-          Our {service.name} service includes comprehensive waste management solutions tailored 
-          to your specific needs. We serve both residential and commercial clients with reliable, 
-          eco-friendly disposal methods.
-        </p>
-
-        {features.length > 0 && (
-          <>
-            <h4>Key Features of Our {service.name} Service</h4>
-            <ul>
-              {features.map((feature, index) => (
-                <li key={index}>{feature}</li>
-              ))}
-            </ul>
-          </>
-        )}
-
-        {benefits.length > 0 && (
-          <>
-            <h4>Benefits of Choosing Our {service.name} Service</h4>
-            <ul>
-              {benefits.map((benefit, index) => (
-                <li key={index}>{benefit}</li>
-              ))}
-            </ul>
-          </>
-        )}
-
-        <h5>Pricing & Service Information</h5>
-        <p>
-          {service.price && `Starting from KSh ${service.price}`} 
-          {service.price_unit && ` per ${service.price_unit}`}
-          {service.duration && ` | Service Duration: ${service.duration}`}
-          {service.frequency && ` | Available Frequency: ${service.frequency}`}
-        </p>
-
-        <h6>Service Areas Covered</h6>
-        <p>
-          We provide {service.name.toLowerCase()} services throughout Kenya including Nairobi County 
-          (Karen, Runda, Westlands, Kilimani, Lavington), Nakuru County (Milimani, Naivasha), 
-          Narok County, and Laikipia County. Our reliable service ensures proper waste management 
-          and environmental protection.
-        </p>
-
-        <p>
-          Contact Sylvie Garbage Collection today for professional {service.name.toLowerCase()} 
-          solutions. Call +254 711 515 752 or visit our website for free quotes and consultations.
-        </p>
-      </div>
-
-      {/* CLEAN GREEN HERO SECTION - Mobile Optimized */}
-      <section className="bg-green-600 pt-20 pb-12 lg:pt-28 lg:pb-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            {/* Service Type/Category */}
-            <div className="inline-flex items-center gap-2 bg-green-500 rounded-full px-3 py-1 sm:px-4 sm:py-2 mb-4 sm:mb-6">
-              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-300 rounded-full"></span>
-              <span className="text-green-100 text-xs sm:text-sm font-medium">
-                {service.category || 'Waste Management Service'}
-              </span>
             </div>
-
-            {/* Service Name */}
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 sm:mb-6">
-              {service.name}
-            </h1>
-
-            {/* Service Description */}
-            <p className="text-green-100 text-base sm:text-lg mb-6 sm:mb-10 max-w-2xl mx-auto px-2">
-              {service.description}
-            </p>
-
-            {/* CTA Buttons - Mobile Stacked */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
-              <a
-                href="/quote"
-                className="bg-white text-green-600 px-6 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 inline-flex items-center gap-2 sm:gap-3 shadow-lg w-full sm:w-auto justify-center border-2 border-white rounded-lg text-sm sm:text-base"
-              >
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                Get Free Quote
-              </a>
-              <a
-                href="/contact"
-                className="bg-transparent text-white px-6 py-3 sm:px-8 sm:py-4 rounded-lg font-semibold hover:bg-white hover:text-green-600 transition-colors duration-200 inline-flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center border-2 border-white rounded-lg text-sm sm:text-base"
-              >
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                  />
-                </svg>
-                Contact Expert
-              </a>
+            {/* Price card */}
+            <div className="bg-white/10 border border-white/20 backdrop-blur-sm rounded-2xl p-5 text-white min-w-[200px] flex-shrink-0">
+              {priceDisplay ? (
+                <>
+                  <p className="text-xs text-green-300 uppercase tracking-wider mb-1">Starting from</p>
+                  <p className="text-2xl font-bold" style={{ fontFamily: "'Fraunces', serif" }}>{priceDisplay}</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-green-200 mb-2">Get a free quote</p>
+                  <p className="text-xs text-green-300">No obligation · 24hr response</p>
+                </>
+              )}
+              <div className="mt-4 flex flex-col gap-2">
+                <Link href="/quote" className="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center font-bold py-2.5 rounded-xl text-sm transition-colors">Free Quote</Link>
+                <a href="tel:+254711515752" className="block w-full bg-white/10 hover:bg-white/20 text-white text-center font-semibold py-2.5 rounded-xl text-sm transition-colors">Call Us</a>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* MAIN CONTENT - Mobile Optimized */}
-      <section className="py-12 sm:py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
-          {/* Media Section - Mobile First */}
-          <div className="space-y-4 sm:space-y-6 order-2 lg:order-1">
-            {/* Main Video or Image - Responsive Height */}
-            {youtubeVideos.length > 0 ? (
-              <div className="h-48 sm:h-64 lg:h-80 rounded-lg overflow-hidden shadow-lg border border-gray-300">
-                <iframe
-                  src={`${youtubeVideos[0].embedUrl}?rel=0&modestbranding=1`}
-                  className="w-full h-full"
-                  allowFullScreen
-                  title={`${service.name} Service Video - Sylvie Garbage Collection Waste Management`}
-                  loading="lazy"
-                />
-              </div>
-            ) : mainImageUrl ? (
-              <div className="h-48 sm:h-64 lg:h-80 rounded-lg overflow-hidden shadow-lg border border-gray-300 cursor-pointer">
-                <img
-                  src={mainImageUrl}
-                  alt={`${service.name} Service - Professional Waste Management by Sylvie Garbage Collection`}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                  loading="lazy"
-                  onClick={() => setSelectedImageIndex(-1)}
-                />
-              </div>
-            ) : (
-              <div className="h-48 sm:h-64 lg:h-80 bg-green-100 rounded-lg flex items-center justify-center text-green-800 text-base sm:text-lg font-medium border-2 border-green-300 px-4 text-center">
-                {service.name} Service Image
-              </div>
-            )}
+      {/* ── Main content ─────────────────────────────────────────── */}
+      <section className="py-12">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+          <div className="grid lg:grid-cols-3 gap-10">
 
-            {/* Additional Videos - Mobile Grid */}
-            {youtubeVideos.length > 1 && (
-              <div>
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">More Videos</h3>
-                <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                  {youtubeVideos.slice(1).map((video, index) => (
-                    <div 
-                      key={index}
-                      className="h-24 sm:h-32 rounded-lg overflow-hidden cursor-pointer hover:brightness-95 transition-all border border-gray-300 relative"
-                      onClick={() => setSelectedVideoIndex(index + 1)}
-                    >
-                      <img
-                        src={`https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`}
-                        alt={`${service.name} - Video ${index + 2}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-600 rounded-full flex items-center justify-center">
-                          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z"/>
-                          </svg>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Gallery Thumbnails - Mobile Optimized */}
-            {galleryImages.length > 0 && (
-              <div>
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3">Gallery Images</h3>
-                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-                  {mainImageUrl && youtubeVideos.length === 0 && (
-                    <div 
-                      className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:brightness-95 transition-all border-2 border-green-500"
-                      onClick={() => setSelectedImageIndex(-1)}
-                    >
-                      <img
-                        src={mainImageUrl}
-                        alt={`${service.name} - Main Image`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  {galleryImages.map((image, index) => (
-                    <div 
-                      key={index}
-                      className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:brightness-95 transition-all border border-gray-300"
-                      onClick={() => setSelectedImageIndex(index)}
-                    >
-                      <img
-                        src={image}
-                        alt={`${service.name} - Gallery Image ${index + 1}`}
-                        className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Service Highlights - Mobile Compact */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              <div className="bg-green-100 rounded-lg p-2 sm:p-3 text-center border-2 border-green-300">
-                <div className="text-green-700 font-bold text-xs sm:text-sm">✓ Certified</div>
-                <div className="text-green-800 text-xs">Professional Team</div>
-              </div>
-              <div className="bg-green-100 rounded-lg p-2 sm:p-3 text-center border-2 border-green-300">
-                <div className="text-green-700 font-bold text-xs sm:text-sm">♻️ Eco</div>
-                <div className="text-green-800 text-xs">100% Recycling</div>
-              </div>
-              <div className="bg-green-100 rounded-lg p-2 sm:p-3 text-center border-2 border-green-300">
-                <div className="text-green-700 font-bold text-xs sm:text-sm">⏰ 24/7</div>
-                <div className="text-green-800 text-xs">Emergency</div>
-              </div>
-              <div className="bg-green-100 rounded-lg p-2 sm:p-3 text-center border-2 border-green-300">
-                <div className="text-green-700 font-bold text-xs sm:text-sm">🏠</div>
-                <div className="text-green-800 text-xs">Res & Comm</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Tabs & Content - Mobile Optimized */}
-          <div className="order-1 lg:order-2">
-            <div className="border-b-2 border-gray-300 mb-4 sm:mb-6">
-              <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto pb-1">
-                {['overview', 'features', 'benefits', 'gallery', 'videos'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab as any)}
-                    className={`py-2 px-1 sm:py-3 sm:px-2 border-b-2 font-medium text-xs sm:text-sm capitalize whitespace-nowrap transition-colors min-w-max ${
-                      activeTab === tab
-                        ? 'border-green-600 text-green-700'
-                        : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-400'
-                    }`}
-                    aria-label={`View ${tab} for ${service.name} service`}
-                  >
-                    {tab}
+            {/* Left: tabs + content */}
+            <div className="lg:col-span-2">
+              {/* Tab nav */}
+              <div className="flex gap-1 border-b border-slate-200 mb-8 overflow-x-auto">
+                {tabs.map(t => (
+                  <button key={t.key} onClick={() => setActiveTab(t.key)}
+                    className={`px-4 py-2.5 text-sm font-semibold whitespace-nowrap border-b-2 transition-all -mb-px ${
+                      activeTab === t.key
+                        ? 'border-green-700 text-green-700'
+                        : 'border-transparent text-slate-500 hover:text-slate-900'
+                    }`}>
+                    {t.label}
                   </button>
                 ))}
-              </nav>
-            </div>
+              </div>
 
-            <div className="text-gray-800">
+              {/* Tab: Overview */}
               {activeTab === 'overview' && (
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Service Overview</h2>
+                  <h2 className="text-xl font-bold text-slate-900 mb-4" style={{ fontFamily: "'Fraunces', serif" }}>Service Overview</h2>
                   {service.full_description ? (
                     <div>
-                      {/* Show short description by default, full description when expanded */}
-                      {!showFullDescription && isLongDescription ? (
-                        <div>
-                          <div className="prose prose-sm sm:prose-lg max-w-none mb-3 sm:mb-4">
-                            <p className="text-gray-800 text-sm sm:text-base">
-                              {createShortDescription(service.full_description)}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => setShowFullDescription(true)}
-                            className="text-green-600 hover:text-green-800 font-medium flex items-center gap-1 sm:gap-2 transition-colors text-sm sm:text-base"
-                          >
-                            Read More
-                            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </button>
-                        </div>
-                      ) : (
-                        <div>
-                          {renderHTMLContent(service.full_description)}
-                          {isLongDescription && (
-                            <button
-                              onClick={() => setShowFullDescription(false)}
-                              className="text-green-600 hover:text-green-800 font-medium flex items-center gap-1 sm:gap-2 mt-3 sm:mt-4 transition-colors text-sm sm:text-base"
-                            >
-                              Show Less
-                              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                              </svg>
-                            </button>
-                          )}
-                        </div>
+                      <div className="prose prose-slate prose-sm lg:prose-base max-w-none text-slate-700 leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: isLong && !showFullDesc ? `<p>${shortDesc}</p>` : service.full_description }} />
+                      {isLong && (
+                        <button onClick={() => setShowFullDesc(v => !v)}
+                          className="mt-3 text-green-700 hover:text-green-800 text-sm font-semibold flex items-center gap-1 transition-colors">
+                          {showFullDesc ? 'Show Less' : 'Read More'}
+                          <svg className={`w-4 h-4 transition-transform ${showFullDesc ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                        </button>
                       )}
                     </div>
                   ) : (
-                    <div className="prose prose-sm sm:prose-lg max-w-none">
-                      <p className="text-base sm:text-lg mb-3 sm:mb-4">
-                        Our {service.name} service provides comprehensive waste management solutions for both residential and commercial properties across Kenya.
-                      </p>
-                      
-                      <div className="bg-blue-100 border-l-4 border-blue-600 p-3 sm:p-4 mb-4 sm:mb-6 rounded-lg">
-                        <p className="text-blue-800 text-xs sm:text-sm">
-                          <strong>Service Coverage:</strong> Available in Nairobi, Nakuru, Narok, and Laikipia counties.
-                        </p>
+                    <div className="text-slate-600 leading-relaxed space-y-4">
+                      <p>Our {service.name} service provides comprehensive waste management solutions for both residential and commercial properties across Kenya.</p>
+                      <div className="bg-green-50 border-l-4 border-green-500 px-4 py-3 rounded-r-xl text-sm text-green-800">
+                        Available across Nairobi, Nakuru, Narok and Laikipia counties — 500+ locations served.
                       </div>
+                    </div>
+                  )}
+
+                  {/* Default features inline on overview if no tabs */}
+                  {features.length > 0 && !tabs.find(t => t.key === 'features') && (
+                    <div className="mt-6">
+                      <h3 className="font-bold text-slate-900 mb-3 text-sm">What's included</h3>
+                      <ul className="space-y-2">
+                        {features.map((f, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                            <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <svg className="w-2.5 h-2.5 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                            </div>
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>
               )}
 
+              {/* Tab: Features */}
               {activeTab === 'features' && (
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Service Features</h2>
-                  <ul className="space-y-2 sm:space-y-3">
-                    {features.length > 0 ? (
-                      features.map((f, i) => (
-                        <li key={i} className="flex items-start">
-                          <span className="text-green-600 mr-2 sm:mr-3 mt-0.5 sm:mt-1 flex-shrink-0 text-sm sm:text-base">✓</span>
-                          <span className="text-sm sm:text-base">{f}</span>
-                        </li>
-                      ))
-                    ) : (
-                      <div className="space-y-2 sm:space-y-3">
-                        {['Professional and trained waste management team', 'Eco-friendly disposal and recycling methods', 'Flexible scheduling to suit your needs', 'Competitive pricing with no hidden costs'].map((feature, index) => (
-                          <li key={index} className="flex items-start">
-                            <span className="text-green-600 mr-2 sm:mr-3 mt-0.5 sm:mt-1 flex-shrink-0 text-sm sm:text-base">✓</span>
-                            <span className="text-sm sm:text-base">{feature}</span>
-                          </li>
-                        ))}
-                      </div>
-                    )}
+                  <h2 className="text-xl font-bold text-slate-900 mb-6" style={{ fontFamily: "'Fraunces', serif" }}>Service Features</h2>
+                  <ul className="space-y-3">
+                    {(features.length ? features : ['Professional trained team','Eco-friendly disposal','Flexible scheduling','Competitive pricing']).map((f, i) => (
+                      <li key={i} className="flex items-start gap-3 bg-white rounded-xl border border-slate-200 px-4 py-3">
+                        <div className="w-5 h-5 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <svg className="w-3 h-3 text-green-700" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                        </div>
+                        <span className="text-slate-700 text-sm">{f}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               )}
 
+              {/* Tab: Benefits */}
               {activeTab === 'benefits' && (
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Service Benefits</h2>
-                  <ul className="space-y-2 sm:space-y-3">
-                    {benefits.length > 0 ? (
-                      benefits.map((b, i) => (
-                        <li key={i} className="flex items-start">
-                          <span className="text-green-600 mr-2 sm:mr-3 mt-0.5 sm:mt-1 flex-shrink-0 text-sm sm:text-base">🌿</span>
-                          <span className="text-sm sm:text-base">{b}</span>
-                        </li>
-                      ))
-                    ) : (
-                      <div className="space-y-2 sm:space-y-3">
-                        {['Cleaner and healthier environment', 'Reduced risk of pests and contamination', 'Environmentally responsible waste disposal', 'Time-saving and convenient service'].map((benefit, index) => (
-                          <li key={index} className="flex items-start">
-                            <span className="text-green-600 mr-2 sm:mr-3 mt-0.5 sm:mt-1 flex-shrink-0 text-sm sm:text-base">🌿</span>
-                            <span className="text-sm sm:text-base">{benefit}</span>
-                          </li>
-                        ))}
-                      </div>
-                    )}
+                  <h2 className="text-xl font-bold text-slate-900 mb-6" style={{ fontFamily: "'Fraunces', serif" }}>Service Benefits</h2>
+                  <ul className="space-y-3">
+                    {(benefits.length ? benefits : ['Cleaner, healthier environment','Reduced pest risk','Environmentally responsible','Saves your time']).map((b, i) => (
+                      <li key={i} className="flex items-start gap-3 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+                        <div className="w-5 h-5 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                        </div>
+                        <span className="text-green-900 text-sm">{b}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               )}
 
+              {/* Tab: Gallery */}
               {activeTab === 'gallery' && (
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Service Gallery</h2>
-                  {galleryImages.length > 0 || mainImageUrl ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                      {mainImageUrl && youtubeVideos.length === 0 && (
-                        <div 
-                          className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:brightness-95 transition-all border-2 border-green-500"
-                          onClick={() => setSelectedImageIndex(-1)}
-                        >
-                          <img
-                            src={mainImageUrl}
-                            alt={`${service.name} - Main Image`}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="bg-green-500 text-white text-xs p-1 text-center">Main</div>
-                        </div>
+                  <h2 className="text-xl font-bold text-slate-900 mb-6" style={{ fontFamily: "'Fraunces', serif" }}>Gallery</h2>
+                  {(gallery.length > 0 || mainImage) ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {mainImage && (
+                        <button onClick={() => setLightboxImg(mainImage)} className="aspect-square rounded-xl overflow-hidden border-2 border-green-500 hover:opacity-95 transition-opacity">
+                          <img src={mainImage} alt={`${service.name} main`} className="w-full h-full object-cover" />
+                        </button>
                       )}
-                      {galleryImages.map((image, index) => (
-                        <div 
-                          key={index}
-                          className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:brightness-95 transition-all border border-gray-300"
-                          onClick={() => setSelectedImageIndex(index)}
-                        >
-                          <img
-                            src={image}
-                            alt={`${service.name} - Gallery Image ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
+                      {gallery.map((img, i) => (
+                        <button key={i} onClick={() => setLightboxImg(img)} className="aspect-square rounded-xl overflow-hidden border border-slate-200 hover:border-green-400 hover:opacity-95 transition-all">
+                          <img src={img} alt={`${service.name} ${i+1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                        </button>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-600 text-center py-6 sm:py-8 bg-gray-100 rounded-lg text-sm sm:text-base">No gallery images available.</p>
+                    <p className="text-slate-500 text-sm py-8 text-center bg-slate-50 rounded-xl">No gallery images available.</p>
                   )}
                 </div>
               )}
 
-              {activeTab === 'videos' && (
+              {/* Tab: Video */}
+              {activeTab === 'video' && ytId && (
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Service Videos</h2>
-                  {youtubeVideos.length > 0 ? (
-                    <div className="space-y-4 sm:space-y-6">
-                      {youtubeVideos.map((video, index) => (
-                        <div key={index} className="border-2 border-gray-300 rounded-lg overflow-hidden">
-                          <div className="aspect-video bg-black">
-                            <iframe
-                              src={`${video.embedUrl}?rel=0&modestbranding=1`}
-                              className="w-full h-full"
-                              allowFullScreen
-                              title={`${service.name} Service Video ${index + 1}`}
-                              loading="lazy"
-                            />
-                          </div>
-                          <div className="p-2 sm:p-4 bg-gray-100">
-                            <p className="text-xs sm:text-sm text-gray-700">Video {index + 1} of {youtubeVideos.length}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-600 text-center py-6 sm:py-8 bg-gray-100 rounded-lg text-sm sm:text-base">No videos available.</p>
-                  )}
+                  <h2 className="text-xl font-bold text-slate-900 mb-6" style={{ fontFamily: "'Fraunces', serif" }}>Service Video</h2>
+                  <div className="rounded-2xl overflow-hidden border border-slate-200 aspect-video">
+                    <iframe
+                      src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`}
+                      className="w-full h-full"
+                      allowFullScreen
+                      title={`${service.name} — Sylvie Garbage Collection`}
+                      loading="lazy"
+                    />
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Additional CTA - Mobile Optimized */}
-            <div className="mt-6 sm:mt-8 p-4 sm:p-6  rounded-lg border-6 border-green-600 shadow-lg">
-              <h3 className="text-xl sm:text-2xl font-black text-black mb-3 sm:mb-4">Ready to Get Started?</h3>
-              <p className="text-black mb-4 sm:mb-5 font-medium text-sm sm:text-base">
-                Contact us today for a free consultation and quote for our {service.name} service.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <a
-                  href="tel:+254711515752"
-                  className="bg-green-600 text-white px-4 py-3 sm:px-8 sm:py-4 rounded-lg font-black hover:bg-green-800 transition-colors text-center border-4 border-green-600 no-underline text-sm sm:text-base"
-                >
-                  📞 Call: +254 711 515 752
-                </a>
-                <a
-                  href="/contact"
-                  className="bg-white text-green-600 px-4 py-3 sm:px-8 sm:py-4 rounded-lg font-black hover:bg-green-600 hover:text-white transition-colors text-center border-4 border-green-600 no-underline text-sm sm:text-base"
-                >
-                  📧 Send Message
-                </a>
+            {/* Right: sidebar */}
+            <div className="space-y-5">
+              {/* Main image */}
+              {mainImage && !ytId && (
+                <div className="rounded-2xl overflow-hidden border border-slate-200 aspect-video bg-slate-100">
+                  <img src={mainImage} alt={service.name} className="w-full h-full object-cover" />
+                </div>
+              )}
+              {/* YouTube thumbnail */}
+              {ytId && (
+                <button onClick={() => setActiveTab('video')}
+                  className="w-full rounded-2xl overflow-hidden border border-slate-200 aspect-video bg-slate-900 relative group">
+                  <img src={`https://img.youtube.com/vi/${ytId}/maxresdefault.jpg`} alt={service.name}
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-70 transition-opacity"
+                    onError={e => { (e.currentTarget as HTMLImageElement).src = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`; }} />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                      <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                  </div>
+                </button>
+              )}
+
+              {/* Service details card */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-5">
+                <h3 className="font-bold text-slate-900 mb-4 text-sm" style={{ fontFamily: "'Fraunces', serif" }}>Service Details</h3>
+                <div className="space-y-3">
+                  {service.category && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Category</span>
+                      <span className="font-semibold text-slate-900">{service.category}</span>
+                    </div>
+                  )}
+                  {priceDisplay && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Price</span>
+                      <span className="font-bold text-green-700">{priceDisplay}</span>
+                    </div>
+                  )}
+                  {service.duration && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Duration</span>
+                      <span className="font-semibold text-slate-900">{service.duration}</span>
+                    </div>
+                  )}
+                  {service.frequency && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-500">Frequency</span>
+                      <span className="font-semibold text-slate-900">{service.frequency}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Coverage</span>
+                    <span className="font-semibold text-slate-900 text-right">4 Counties · 500+ locations</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Support</span>
+                    <span className="font-semibold text-green-700">24/7 Available</span>
+                  </div>
+                </div>
+                <div className="border-t border-slate-100 mt-4 pt-4 space-y-2">
+                  <Link href="/quote" className="block w-full bg-green-700 hover:bg-green-800 text-white text-center font-bold py-3 rounded-xl text-sm transition-colors">Get Free Quote</Link>
+                  <a href="tel:+254711515752" className="block w-full border border-slate-200 hover:border-green-400 text-slate-700 text-center font-semibold py-3 rounded-xl text-sm transition-all">+254 711 515 752</a>
+                </div>
               </div>
+
+              {/* Trust badges */}
+              <div className="bg-green-50 border border-green-100 rounded-2xl p-5">
+                <h3 className="font-bold text-slate-900 mb-3 text-sm" style={{ fontFamily: "'Fraunces', serif" }}>Why Choose Us</h3>
+                <div className="space-y-2.5">
+                  {[
+                    'Certified & trained professionals',
+                    '100% eco-friendly disposal',
+                    'Serving 500+ locations',
+                    '24/7 customer support',
+                    'No hidden charges',
+                  ].map((item) => (
+                    <div key={item} className="flex items-center gap-2 text-xs text-slate-700">
+                      <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                      </div>
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* WhatsApp CTA */}
+              <a href={`https://wa.me/254711515752?text=${encodeURIComponent(`Hi, I'm interested in your ${service.name} service. Could you please provide more information?`)}`}
+                target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl p-4 transition-colors">
+                <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                <div>
+                  <p className="font-bold text-sm">Chat on WhatsApp</p>
+                  <p className="text-green-100 text-xs">Quick reply · Available now</p>
+                </div>
+              </a>
             </div>
           </div>
         </div>

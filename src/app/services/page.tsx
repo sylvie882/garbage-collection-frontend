@@ -1,585 +1,365 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { Service } from '../../types';
 import ServicesSearch from '../../components/ServicesSearch';
 import ServiceCard from '../../components/ServiceCard';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-interface SearchParams {
-  search?: string;
-  category?: string;
-  page?: string;
-}
+interface SearchParams { search?: string; category?: string; page?: string; }
 
-// SEO Metadata
-export const metadata = {
-  title: 'Waste Management Services | Sylvie Garbage Collection Kenya',
-  description: 'Professional waste management services in Kenya. Garbage collection, recycling, pest control & cleaning services for residential & commercial properties across Nairobi, Nakuru, Narok & Laikipia.',
-  keywords: 'waste management services Kenya, garbage collection Nairobi, recycling services, pest control, cleaning services, commercial waste disposal, residential garbage collection',
-  openGraph: {
-    title: 'Professional Waste Management Services | Sylvie Garbage Collection',
-    description: 'Comprehensive waste management solutions including garbage collection, recycling, pest control and cleaning services across Kenya.',
-    type: 'website',
-    locale: 'en_KE',
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
-};
+const API = 'https://api.sylviegarbagecollection.co.ke/api';
+const SITE = 'https://sylviegarbagecollection.co.ke';
 
-// Structured Data for Service Catalog
-const generateStructuredData = (services: Service[]) => ({
-  '@context': 'https://schema.org',
-  '@type': 'ItemList',
-  'name': 'Waste Management Services - Sylvie Garbage Collection',
-  'description': 'Professional waste management and environmental services in Kenya',
-  'url': 'https://sylviegarbagecollection.co.ke/services',
-  'numberOfItems': services.length,
-  'itemListElement': services.map((service, index) => ({
-    '@type': 'Service',
-    'position': index + 1,
-    'name': service.name,
-    'description': service.description,
-    'serviceType': service.category || 'Waste Management',
-    'areaServed': ['Nairobi', 'Nakuru', 'Narok', 'Laikipia'],
-    'provider': {
-      '@type': 'Organization',
-      'name': 'Sylvie Garbage Collection',
-      'url': 'https://sylviegarbagecollection.co.ke'
-    }
-  }))
-});
-
-async function getServices(params: SearchParams = {}): Promise<{
-  services: Service[];
-  totalCount: number;
-  currentPage: number;
-  totalPages: number;
-}> {
-  try {
-    const { search, category, page = '1' } = params;
-    
-    // Use direct fetch instead of serviceApi
-    const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/services', {
-      next: { revalidate: 60 }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch services: ${response.status}`);
-    }
-    
-    let services = await response.json();
-    
-    // Ensure services is an array
-    if (!Array.isArray(services)) {
-      services = [];
-    }
-
-    // Apply search filter
-    if (search) {
-      services = services.filter((service: Service) =>
-        service.name.toLowerCase().includes(search.toLowerCase()) ||
-        service.description?.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    // Apply category filter
-    if (category && category !== 'all') {
-      services = services.filter((service: Service) =>
-        service.category?.toLowerCase() === category.toLowerCase()
-      );
-    }
-
-    // Pagination - 8 services per page
-    const currentPage = parseInt(page);
-    const servicesPerPage = 8;
-    const totalCount = services.length;
-    const totalPages = Math.ceil(totalCount / servicesPerPage);
-    
-    const startIndex = (currentPage - 1) * servicesPerPage;
-    const paginatedServices = services.slice(startIndex, startIndex + servicesPerPage);
-
-    return {
-      services: paginatedServices,
-      totalCount,
-      currentPage,
-      totalPages
-    };
-  } catch (error) {
-    console.error('Error fetching services:', error);
-    return {
-      services: [],
-      totalCount: 0,
-      currentPage: 1,
-      totalPages: 1
-    };
-  }
-}
-
-// Get unique categories for filter
-async function getCategories(): Promise<string[]> {
-  try {
-    const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/services', {
-      next: { revalidate: 60 }
-    });
-    
-    if (!response.ok) {
-      return ['all'];
-    }
-    
-    const services = await response.json();
-    
-    if (!Array.isArray(services)) {
-      return ['all'];
-    }
-    
-    const categories = services
-      .map((service: Service) => service.category)
-      .filter(Boolean)
-      .filter((category, index, self) => 
-        self.indexOf(category) === index
-      ) as string[];
-    return ['all', ...categories];
-  } catch (error) {
-    return ['all'];
-  }
-}
-
-export default async function ServicesPage({
-  searchParams
-}: {
-  searchParams: Promise<SearchParams>
-}) {
+// ─── SEO metadata ───────────────────────────────────────────
+export async function generateMetadata({ searchParams }: { searchParams: Promise<SearchParams> }): Promise<Metadata> {
   const params = await searchParams;
-  const { services, totalCount, currentPage, totalPages } = await getServices(params);
-  const categories = await getCategories();
+  const search = params.search || '';
+  const category = params.category && params.category !== 'all' ? params.category : '';
 
-  // Generate pagination numbers
-  const getPaginationNumbers = () => {
-    const pages = [];
-    const maxVisiblePages = 5;
-    
-    if (totalPages <= maxVisiblePages) {
-      // Show all pages if total pages is less than or equal to max visible
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      // Show pages with ellipsis
-      if (currentPage <= 3) {
-        // Near the beginning
-        for (let i = 1; i <= 4; i++) {
-          pages.push(i);
-        }
-        pages.push('...');
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        // Near the end
-        pages.push(1);
-        pages.push('...');
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        // In the middle
-        pages.push(1);
-        pages.push('...');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pages.push(i);
-        }
-        pages.push('...');
-        pages.push(totalPages);
-      }
-    }
-    
-    return pages;
+  const title = search
+    ? `"${search}" Services | Sylvie Garbage Collection Kenya`
+    : category
+    ? `${category} Services | Sylvie Garbage Collection Kenya`
+    : 'Professional Waste Management Services | Sylvie Garbage Collection Kenya';
+
+  const description = search
+    ? `Find "${search}" waste management services from Sylvie Garbage Collection. Serving Nairobi, Nakuru, Narok & Laikipia counties with eco-friendly solutions.`
+    : category
+    ? `Professional ${category} services from Sylvie Garbage Collection across Kenya. Eco-friendly, reliable and certified. Get a free quote today.`
+    : 'Professional waste management services in Kenya: garbage collection, recycling, pest control, sanitary bins and cleaning services. Serving Nairobi, Nakuru, Narok & Laikipia counties.';
+
+  return {
+    title,
+    description,
+    keywords: [
+      'waste management services Kenya',
+      'garbage collection Nairobi',
+      'recycling services Kenya',
+      'pest control Nairobi',
+      'sanitary bin services Kenya',
+      'cleaning services Nairobi',
+      'commercial waste management Kenya',
+      'residential garbage collection',
+      'Sylvie garbage collection',
+      ...(category ? [category, `${category} Kenya`, `${category} Nairobi`] : []),
+      ...(search ? [search, `${search} Kenya`] : []),
+    ].join(', '),
+    openGraph: {
+      title,
+      description,
+      url: `${SITE}/services${search ? `?search=${search}` : ''}`,
+      type: 'website',
+      locale: 'en_KE',
+      images: [{ url: `${SITE}/og-services.jpg`, width: 1200, height: 630, alt: 'Sylvie Garbage Collection Services Kenya' }],
+    },
+    twitter: { card: 'summary_large_image', title, description },
+    alternates: { canonical: `${SITE}/services` },
+    robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 } },
   };
+}
 
-  const paginationNumbers = getPaginationNumbers();
+// ─── Data fetching ───────────────────────────────────────────
+async function getAllServices(): Promise<Service[]> {
+  try {
+    const res = await fetch(`${API}/services`, { next: { revalidate: 120 } });
+    if (!res.ok) throw new Error(`${res.status}`);
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch { return []; }
+}
 
-  // Generate structured data
-  const structuredData = generateStructuredData(services);
+async function getFilteredServices(params: SearchParams) {
+  const all = await getAllServices();
+  let filtered = all;
+  if (params.search) {
+    const q = params.search.toLowerCase();
+    filtered = filtered.filter(s =>
+      s.name?.toLowerCase().includes(q) ||
+      s.description?.toLowerCase().includes(q) ||
+      s.category?.toLowerCase().includes(q) ||
+      (Array.isArray(s.features) && s.features.some(f => f?.toLowerCase().includes(q)))
+    );
+  }
+  if (params.category && params.category !== 'all') {
+    filtered = filtered.filter(s => s.category?.toLowerCase() === params.category!.toLowerCase());
+  }
+  const page = parseInt(params.page || '1');
+  const perPage = 9;
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const items = filtered.slice((page - 1) * perPage, page * perPage);
+  return { services: items, totalCount: total, currentPage: page, totalPages, allCount: all.length };
+}
+
+async function getCategories(all: Service[]): Promise<string[]> {
+  const cats = [...new Set(all.map(s => s.category).filter(Boolean))] as string[];
+  return ['all', ...cats];
+}
+
+// ─── Structured data ─────────────────────────────────────────
+function buildStructuredData(services: Service[], totalCount: number) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Waste Management Services — Sylvie Garbage Collection',
+    description: 'Professional waste management, garbage collection and environmental services across Kenya',
+    url: `${SITE}/services`,
+    numberOfItems: totalCount,
+    itemListElement: services.slice(0, 10).map((s, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'Service',
+        name: s.name,
+        description: s.description,
+        url: `${SITE}/services/${s.slug || s.id}`,
+        provider: { '@type': 'Organization', name: 'Sylvie Garbage Collection', url: SITE },
+        areaServed: ['Nairobi County', 'Nakuru County', 'Narok County', 'Laikipia County'],
+        serviceType: s.category || 'Waste Management',
+        ...(s.price ? { offers: { '@type': 'Offer', price: s.price, priceCurrency: 'KES' } } : {}),
+      },
+    })),
+  };
+}
+
+function buildBreadcrumb() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE },
+      { '@type': 'ListItem', position: 2, name: 'Services', item: `${SITE}/services` },
+    ],
+  };
+}
+
+// ─── Page component ───────────────────────────────────────────
+export default async function ServicesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const params = await searchParams;
+  const allServices = await getAllServices();
+  const { services, totalCount, currentPage, totalPages } = await getFilteredServices(params);
+  const categories = await getCategories(allServices);
+
+  // Pagination numbers
+  const pages: (number | '…')[] = [];
+  if (totalPages <= 7) { for (let i = 1; i <= totalPages; i++) pages.push(i); }
+  else if (currentPage <= 3) { [1,2,3,4].forEach(p => pages.push(p)); pages.push('…'); pages.push(totalPages); }
+  else if (currentPage >= totalPages - 2) { pages.push(1); pages.push('…'); for (let i = totalPages-3; i <= totalPages; i++) pages.push(i); }
+  else { pages.push(1); pages.push('…'); [currentPage-1,currentPage,currentPage+1].forEach(p => pages.push(p)); pages.push('…'); pages.push(totalPages); }
+
+  const structuredData = buildStructuredData(services, totalCount);
+  const breadcrumb = buildBreadcrumb();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50">
-      {/* Structured Data for SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
-      
-      {/* Hidden SEO content for search engines */}
+    <div className="min-h-screen bg-slate-50 pt-[72px]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      {/* SEO structured data */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
+
+      {/* Hidden SEO text */}
       <div className="sr-only" aria-hidden="true">
-        <h1>Waste Management Services - Sylvie Garbage Collection Kenya</h1>
-        <h2>Professional Garbage Collection & Environmental Services</h2>
-        <p>
-          Sylvie Garbage Collection offers comprehensive waste management services across Kenya including 
-          Nairobi, Nakuru, Narok, and Laikipia counties. Our professional services include residential garbage 
-          collection, commercial waste disposal, recycling programs, pest control, and cleaning services.
-        </p>
-        
-        <h3>Our Service Categories</h3>
-        <ul>
-          <li>Residential Garbage Collection - Regular waste pickup for homes and apartments</li>
-          <li>Commercial Waste Management - Business waste disposal solutions</li>
-          <li>Recycling Services - Eco-friendly waste sorting and processing</li>
-          <li>Pest Control Services - Effective pest elimination and prevention</li>
-          <li>Cleaning Services - Professional cleaning and sanitation</li>
-          <li>Industrial Waste Disposal - Specialized industrial waste management</li>
-        </ul>
-
-        <h4>Service Areas Covered</h4>
-        <p>
-          We provide waste management services throughout Kenya with focus on Nairobi County (Karen, Runda, 
-          Westlands, Kilimani, Lavington), Nakuru County (Milimani, Naivasha), Narok County, and Laikipia County. 
-          Our reliable garbage collection services ensure clean and healthy environments for residential and 
-          commercial properties.
-        </p>
-
-        <h5>Why Choose Our Waste Management Services?</h5>
-        <ul>
-          <li>Experienced and qualified waste management professionals</li>
-          <li>100% recycling commitment and eco-friendly practices</li>
-          <li>24/7 emergency services and customer support</li>
-          <li>Affordable pricing with flexible service plans</li>
-          <li>Modern equipment and sustainable disposal methods</li>
-          <li>Same-day service available in most areas</li>
-        </ul>
-
-        <p>
-          With over {totalCount} professional services available, Sylvie Garbage Collection is your trusted 
-          partner for all waste management needs in Kenya. Contact us today for free quotes and customized 
-          service solutions.
-        </p>
+        <h1>Professional Waste Management Services — Sylvie Garbage Collection Kenya</h1>
+        <p>Comprehensive garbage collection, recycling, pest control and cleaning services across Nairobi, Nakuru, Narok and Laikipia counties. {totalCount} professional services available.</p>
+        {services.slice(0, 5).map(s => (
+          <div key={s.id}>
+            <h2>{s.name}</h2>
+            <p>{s.description}</p>
+            {Array.isArray(s.features) && <ul>{s.features.map((f, i) => <li key={i}>{f}</li>)}</ul>}
+          </div>
+        ))}
       </div>
 
       <Header />
-      
-      {/* Compact Professional Hero Section */}
-      <section className="relative bg-gradient-to-br from-green-800 via-green-700 to-emerald-800 py-12 lg:py-16 overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-black/10">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(120,119,198,0.1)_0%,transparent_50%)]"></div>
-        </div>
-        
-        {/* Subtle Floating Elements */}
-        <div className="absolute top-4 left-4 w-10 h-10 bg-green-500/20 rounded-full "></div>
-        <div className="absolute bottom-4 right-4 w-12 h-12 bg-orange-400/10 rounded-full "></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-2xl lg:text-4xl font-bold text-white mb-6 pt-20 leading-tight">
-            Professional <span className="text-orange-300">Waste & Garbage Collection </span> Services
-          </h1>
 
-          <p className="text-green-100 text-lg mb-8 max-w-3xl mx-auto">
-            Comprehensive garbage collection, recycling, and environmental services across Kenya. 
-            Serving residential, commercial, and industrial clients with 100% recycling commitment.
+      {/* ── Hero ───────────────────────────────────────────────── */}
+      <section className="bg-green-800 py-16 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+        <div className="relative max-w-4xl mx-auto px-4 text-center">
+          <nav aria-label="Breadcrumb" className="flex justify-center mb-5">
+            <ol className="flex items-center gap-2 text-xs text-green-300">
+              <li><Link href="/" className="hover:text-white transition-colors">Home</Link></li>
+              <li className="text-green-600">/</li>
+              <li className="text-green-100 font-semibold">Services</li>
+            </ol>
+          </nav>
+          <p className="text-xs font-bold uppercase tracking-widest text-green-300 mb-3">
+            {params.category && params.category !== 'all' ? params.category : 'What We Offer'}
           </p>
-          
-          {/* Compact CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-            <Link 
-              href="/quote" 
-              className="group bg-gradient-to-r from-orange-500 to-amber-600 text-white px-6 py-3 rounded-lg text-sm font-semibold hover:from-orange-600 hover:to-amber-700 transition-all duration-300 inline-flex items-center gap-2 shadow-lg hover:shadow-orange-500/25 hover:scale-105 transform"
-            >
-              <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Get Free Quote
-            </Link>
-            <Link 
-              href="#services-grid"
-              className="group border border-white/50 text-white px-6 py-3 rounded-lg text-sm font-semibold hover:bg-white/10  transition-all duration-300 inline-flex items-center gap-2 shadow-lg hover:scale-105 transform"
-            >
-              <svg className="w-4 h-4 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-              Explore {totalCount}+ Services
-            </Link>
+          <h1 className="text-4xl lg:text-5xl font-bold text-white mb-5" style={{ fontFamily: "'Fraunces', serif" }}>
+            {params.search
+              ? <>Results for <span className="text-orange-300">&quot;{params.search}&quot;</span></>
+              : params.category && params.category !== 'all'
+              ? <>{params.category} <span className="text-orange-300">Services</span></>
+              : <>Professional <span className="text-orange-300">Waste Management</span> Services</>
+            }
+          </h1>
+          <p className="text-green-200 max-w-2xl mx-auto leading-relaxed mb-8">
+            {totalCount > 0
+              ? `${totalCount} professional service${totalCount !== 1 ? 's' : ''} available across Nairobi, Nakuru, Narok and Laikipia counties.`
+              : 'Comprehensive garbage collection, recycling and environmental services across Kenya.'}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/quote" className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-7 py-3 rounded-xl transition-all text-sm shadow-lg">Get Free Quote</Link>
+            <a href="#services-grid" className="border border-white/40 text-white hover:bg-white/10 font-semibold px-7 py-3 rounded-xl transition-all text-sm">
+              Browse {totalCount > 0 ? `${totalCount} ` : ''}Services
+            </a>
           </div>
         </div>
       </section>
 
-      {/* Compact Search and Filter Section */}
-      <section className="py-8 bg-white border-b border-gray-200/60">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">
-              Find Waste Management Services
-            </h2>
-            <p className="text-sm text-gray-600">
-              Search and filter our comprehensive service catalog
-            </p>
-          </div>
-          <ServicesSearch 
-            categories={categories}
-            initialSearch={params.search}
-            initialCategory={params.category}
-          />
+      {/* ── Stats strip ─────────────────────────────────────────── */}
+      <div className="bg-white border-b border-slate-100">
+        <div className="max-w-5xl mx-auto px-4 py-4 grid grid-cols-2 md:grid-cols-4 gap-0 divide-x divide-slate-100">
+          {[
+            { n: `${allServices.length}+`, l: 'Total Services' },
+            { n: '500+', l: 'Locations Covered' },
+            { n: '4', l: 'Counties Served' },
+            { n: '100%', l: 'Eco-Friendly' },
+          ].map(s => (
+            <div key={s.l} className="text-center px-4 py-2">
+              <div className="text-lg font-bold text-green-800" style={{ fontFamily: "'Fraunces', serif" }}>{s.n}</div>
+              <div className="text-xs text-slate-500">{s.l}</div>
+            </div>
+          ))}
         </div>
-      </section>
+      </div>
 
-      {/* Services Grid Section */}
-      <section id="services-grid" className="py-16 bg-gradient-to-b from-white to-gray-50/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Results Header */}
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-12 gap-6">
-            <div className="flex-1">
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
-                Our Service <span className="text-green-600">Catalog</span>
+      {/* ── Search bar ───────────────────────────────────────────── */}
+      <div className="bg-white border-b border-slate-200 sticky top-[72px] z-30 shadow-sm">
+        <div className="max-w-3xl mx-auto px-4 py-4">
+          <ServicesSearch categories={categories} initialSearch={params.search} initialCategory={params.category} />
+        </div>
+      </div>
+
+      {/* ── Services grid ────────────────────────────────────────── */}
+      <section id="services-grid" className="py-14">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+          {/* Results header */}
+          <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900" style={{ fontFamily: "'Fraunces', serif" }}>
+                {params.search ? `Search results for "${params.search}"` : params.category && params.category !== 'all' ? `${params.category} Services` : 'Our Service Catalog'}
               </h2>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                <span className="bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
-                  <span className="font-semibold text-green-600">{totalCount}</span> Professional Services Available
-                </span>
-                {params.search && (
-                  <span className="bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
-                    Search: <span className="font-medium">"{params.search}"</span>
-                  </span>
-                )}
-                {params.category && params.category !== 'all' && (
-                  <span className="bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
-                    Category: <span className="font-medium text-green-600">{params.category}</span>
-                  </span>
-                )}
-              </div>
+              <p className="text-slate-500 text-sm mt-0.5">
+                {totalCount} service{totalCount !== 1 ? 's' : ''} found
+                {params.category && params.category !== 'all' && <> · <span className="text-green-700 font-medium">{params.category}</span></>}
+                {totalPages > 1 && <> · Page {currentPage} of {totalPages}</>}
+              </p>
             </div>
-            
-            {/* Page Info */}
-            <div className="bg-white px-6 py-4 rounded-2xl border border-gray-200 shadow-sm">
-              <div className="text-sm text-gray-600">
-                Page <span className="font-bold text-green-600">{currentPage}</span> of{' '}
-                <span className="font-bold text-gray-900">{totalPages}</span>
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                Showing {services.length} of {totalCount} services
-              </div>
-            </div>
+            {(params.search || (params.category && params.category !== 'all')) && (
+              <Link href="/services" className="text-xs border border-slate-200 hover:border-green-400 text-slate-600 hover:text-green-700 px-3 py-1.5 rounded-lg transition-all font-semibold">
+                Clear filters
+              </Link>
+            )}
           </div>
 
-          {/* Services Grid - 3 cards per row */}
+          {/* Category quick filters */}
+          {categories.length > 2 && !params.search && (
+            <div className="flex flex-wrap gap-2 mb-8">
+              {categories.map(cat => (
+                <Link key={cat} href={cat === 'all' ? '/services' : `/services?category=${encodeURIComponent(cat)}`}
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                    (cat === 'all' && !params.category) || params.category === cat
+                      ? 'bg-green-700 text-white border-green-700'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-green-400 hover:text-green-700'
+                  }`}>
+                  {cat === 'all' ? 'All Services' : cat}
+                </Link>
+              ))}
+            </div>
+          )}
+
           {services.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-                {services.map((service) => (
-                  <ServiceCard key={service.id} service={service} />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                {services.map(service => (
+                  <div key={service.id} className="hover:-translate-y-1 transition-transform duration-300">
+                    <ServiceCard service={service} />
+                  </div>
                 ))}
               </div>
 
-              {/* Simple Pagination with Solid Colors */}
+              {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex flex-col items-center justify-center space-y-6 pt-12 border-t border-gray-200/60">
-                  {/* Results Summary */}
-                  <div className="text-sm text-gray-600 text-center">
-                    Showing <span className="font-semibold text-gray-900">{((currentPage - 1) * 8) + 1}-{Math.min(currentPage * 8, totalCount)}</span> of{' '}
-                    <span className="font-semibold text-gray-900">{totalCount}</span> services
-                  </div>
-
-                  {/* Pagination Numbers with Solid Colors */}
-                  <div className="flex items-center space-x-3">
-                    {/* Previous Button */}
-                    {currentPage > 1 && (
-                      <Link
-                        href={{
-                          pathname: '/services',
-                          query: {
-                            ...params,
-                            page: currentPage - 1
-                          }
-                        }}
-                        className="flex items-center justify-center w-12 h-12 text-sm font-semibold bg-blue-500 text-white rounded-xl hover:bg-blue-600 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 border-2 border-blue-400"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                      </Link>
-                    )}
-
-                    {/* Page Numbers with Solid Colors */}
-                    {paginationNumbers.map((page, index) => (
-                      page === '...' ? (
-                        <span key={`ellipsis-${index}`} className="px-4 py-2 text-gray-500 font-medium text-lg">
-                          ...
-                        </span>
-                      ) : (
-                        <Link
-                          key={page}
-                          href={{
-                            pathname: '/services',
-                            query: {
-                              ...params,
-                              page: page as number
-                            }
-                          }}
-                          className={`flex items-center justify-center w-12 h-12 text-lg font-bold rounded-xl transition-all duration-300 transform hover:scale-110 border-2 ${
-                            page === currentPage
-                              ? 'bg-green-500 text-white border-green-400 shadow-lg'
-                              : 'bg-orange-400 text-white border-orange-300 hover:bg-orange-500 shadow-md hover:shadow-lg'
-                          }`}
-                        >
-                          {page}
-                        </Link>
-                      )
-                    ))}
-
-                    {/* Next Button */}
-                    {currentPage < totalPages && (
-                      <Link
-                        href={{
-                          pathname: '/services',
-                          query: {
-                            ...params,
-                            page: currentPage + 1
-                          }
-                        }}
-                        className="flex items-center justify-center w-12 h-12 text-sm font-semibold bg-blue-500 text-white rounded-xl hover:bg-blue-600 shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 border-2 border-blue-400"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </Link>
-                    )}
-                  </div>
-
-                  {/* Quick Page Navigation with Solid Colors */}
-                  <div className="flex items-center space-x-3 text-sm text-gray-600">
-                    <span className="font-medium text-gray-700">Quick jump:</span>
-                    <div className="flex gap-2">
-                      {[1, 2, 3].map(page => (
-                        page <= totalPages && (
-                          <Link
-                            key={page}
-                            href={{
-                              pathname: '/services',
-                              query: {
-                                ...params,
-                                page: page
-                              }
-                            }}
-                            className={`flex items-center justify-center w-10 h-10 font-semibold rounded-lg transition-all duration-300 transform hover:scale-110 border-2 ${
-                              page === currentPage
-                                ? 'bg-purple-500 text-white border-purple-400 shadow-lg'
-                                : 'bg-teal-500 text-white border-teal-400 hover:bg-teal-600 shadow-md hover:shadow-lg'
-                            }`}
-                          >
-                            {page}
-                          </Link>
-                        )
-                      ))}
-                      {totalPages > 3 && (
-                        <>
-                          <span className="flex items-center px-2 text-gray-400 text-lg">···</span>
-                          <Link
-                            href={{
-                              pathname: '/services',
-                              query: {
-                                ...params,
-                                page: totalPages
-                              }
-                            }}
-                            className={`flex items-center justify-center w-10 h-10 font-semibold rounded-lg transition-all duration-300 transform hover:scale-110 border-2 ${
-                              totalPages === currentPage
-                                ? 'bg-purple-500 text-white border-purple-400 shadow-lg'
-                                : 'bg-teal-500 text-white border-teal-400 hover:bg-teal-600 shadow-md hover:shadow-lg'
-                            }`}
-                          >
-                            {totalPages}
-                          </Link>
-                        </>
-                      )}
-                    </div>
-                  </div>
+                <div className="flex items-center justify-center gap-2 pt-4 border-t border-slate-100">
+                  {currentPage > 1 && (
+                    <Link href={{ pathname: '/services', query: { ...params, page: currentPage - 1 } }}
+                      className="px-4 py-2 rounded-xl bg-white border border-slate-200 hover:border-green-400 text-slate-600 hover:text-green-700 transition-all text-sm font-semibold">
+                      ← Prev
+                    </Link>
+                  )}
+                  {pages.map((p, i) => p === '…' ? (
+                    <span key={`e${i}`} className="px-2 text-slate-400 text-sm">…</span>
+                  ) : (
+                    <Link key={p} href={{ pathname: '/services', query: { ...params, page: p } }}
+                      className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition-all ${p === currentPage ? 'bg-green-700 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-600 hover:border-green-400 hover:text-green-700'}`}>
+                      {p}
+                    </Link>
+                  ))}
+                  {currentPage < totalPages && (
+                    <Link href={{ pathname: '/services', query: { ...params, page: currentPage + 1 } }}
+                      className="px-4 py-2 rounded-xl bg-white border border-slate-200 hover:border-green-400 text-slate-600 hover:text-green-700 transition-all text-sm font-semibold">
+                      Next →
+                    </Link>
+                  )}
                 </div>
               )}
             </>
           ) : (
-            <div className="text-center py-20">
-              <div className="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-lg">
-                <svg className="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+            <div className="text-center py-24 bg-white rounded-2xl border border-slate-200">
+              <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               </div>
-              <h3 className="text-3xl font-bold text-gray-900 mb-4">
-                No Waste Management Services Found
+              <h3 className="text-xl font-bold text-slate-900 mb-2" style={{ fontFamily: "'Fraunces', serif" }}>
+                {params.search ? `No services match "${params.search}"` : 'No services found'}
               </h3>
-              <p className="text-gray-600 mb-10 max-w-md mx-auto text-lg">
-                {params.search 
-                  ? `We couldn't find any waste management services matching "${params.search}". Try different keywords or browse our full catalog.`
-                  : 'Our professional waste management service catalog is currently being updated. Please check back soon or contact us for immediate assistance.'
-                }
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href="/services"
-                  className="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-4 rounded-2xl font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-300 inline-flex items-center justify-center gap-3 shadow-lg hover:shadow-xl hover:scale-105"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                  Browse All Services
-                </Link>
-                <Link
-                  href="/contact"
-                  className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-2xl font-semibold hover:border-green-500 hover:text-green-700 hover:bg-green-50 transition-all duration-300 inline-flex items-center justify-center gap-3 shadow-sm hover:shadow-md"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  Contact Our Waste Management Experts
-                </Link>
+              <p className="text-slate-500 text-sm mb-6">Try a different search or browse all services.</p>
+              <div className="flex gap-3 justify-center">
+                <Link href="/services" className="bg-green-700 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-green-800 transition-colors">Browse All Services</Link>
+                <Link href="/contact" className="border border-slate-200 text-slate-700 px-6 py-3 rounded-xl text-sm font-semibold hover:border-green-400 transition-colors">Contact Us</Link>
               </div>
             </div>
           )}
         </div>
       </section>
 
-      {/* Professional CTA Section */}
-      <section className="relative bg-gradient-to-br from-green-800 via-green-700 to-emerald-800 py-20 overflow-hidden">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-black/10">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.1)_1px,transparent_0)] bg-[length:32px_32px]"></div>
-        </div>
-        
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-            Ready for Professional Waste Management?
-          </h2>
-          <p className="text-lg text-green-100 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Join thousands of satisfied residential and commercial clients across Kenya who trust 
-            Sylvie Garbage Collection for reliable, eco-friendly waste management solutions. 
-            Get your personalized quote today.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-5 justify-center">
-            <Link 
-              href="/quote" 
-              className="group bg-gradient-to-r from-orange-500 to-orange-600 text-white px-10 py-5 rounded-2xl text-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-300 inline-flex items-center gap-3 shadow-2xl hover:shadow-orange-500/25 hover:scale-105"
-            >
-              <svg className="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Get Instant Quote
-            </Link>
-            <Link 
-              href="/contact" 
-              className="group border-2 border-white/80 text-white px-10 py-5 rounded-2xl text-lg font-semibold hover:bg-white/10  transition-all duration-300 inline-flex items-center gap-3 shadow-2xl hover:scale-105"
-            >
-              <svg className="w-6 h-6 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-              Talk to Waste Management Expert
-            </Link>
+      {/* ── Counties strip ───────────────────────────────────────── */}
+      <section className="py-12 bg-white border-y border-slate-100">
+        <div className="max-w-5xl mx-auto px-4">
+          <p className="text-center text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">Services available across</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { name: 'Nairobi County', sub: '500+ locations', href: '/services/nairobi' },
+              { name: 'Nakuru County', sub: '30+ locations', href: '/services/nakuru' },
+              { name: 'Narok County', sub: '6 major areas', href: '/services/narok' },
+              { name: 'Laikipia County', sub: '6 key locations', href: '/services/laikipia' },
+            ].map(c => (
+              <Link key={c.name} href={c.href}
+                className="bg-slate-50 hover:bg-green-50 border border-slate-200 hover:border-green-300 rounded-xl px-4 py-4 text-center transition-all group">
+                <p className="font-bold text-slate-900 text-sm group-hover:text-green-800 transition-colors">{c.name}</p>
+                <p className="text-xs text-green-600 mt-0.5">{c.sub}</p>
+              </Link>
+            ))}
           </div>
-          <p className="text-green-200/80 text-sm mt-8">
-            ✨ 100% Recycling Commitment • 24/7 Emergency Services • Licensed & Insured • Eco-Friendly Solutions
-          </p>
+        </div>
+      </section>
+
+      {/* ── CTA ──────────────────────────────────────────────────── */}
+      <section className="py-20 bg-green-800 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+        <div className="relative max-w-3xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4" style={{ fontFamily: "'Fraunces', serif" }}>Ready for Professional Waste Management?</h2>
+          <p className="text-green-200 mb-8 leading-relaxed">Get a personalised quote for your home or business — we respond within 24 hours.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/quote" className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg">Get Free Quote</Link>
+            <Link href="/contact" className="border-2 border-white/40 hover:bg-white/10 text-white font-semibold px-8 py-4 rounded-xl transition-all">Talk to Us</Link>
+          </div>
+          <div className="mt-8 flex flex-wrap gap-5 justify-center text-green-300 text-xs">
+            {['Free Quote','No Hidden Charges','24/7 Support','100% Eco-Friendly'].map(t => (
+              <span key={t} className="flex items-center gap-1.5"><span className="text-green-400">✓</span>{t}</span>
+            ))}
+          </div>
         </div>
       </section>
 

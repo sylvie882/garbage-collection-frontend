@@ -1,174 +1,91 @@
-// src/app/services/laikipia/page.tsx
 import Link from 'next/link';
 import Header from '../../../components/Header';
 import Footer from '../../../components/Footer';
 
 export const metadata = {
   title: 'Laikipia Garbage Collection Services | Sylvie Waste Management',
-  description: 'Professional garbage collection and waste management services in Laikipia County. Serving Nanyuki, Rumuruti, Dol Dol, and all major areas across the county.',
-  keywords: 'Laikipia garbage collection, waste management Laikipia, Nanyuki garbage services, Rumuruti waste disposal, Dol Dol recycling, Laikipia County waste management',
+  description: 'Professional garbage collection and waste management services in Laikipia County. Reliable, eco-friendly solutions for homes and businesses.',
 };
 
-const laikipiaLocations = [
-  // Major Towns
-  'Nanyuki Town', 'Rumuruti Town', 'Dol Dol', 'Nyahururu',
-  'Kinamba', 'Sipili', 'Ol-Moran', 'Mukogodo',
-  
-  // Constituencies
-  'Laikipia East', 'Laikipia West', 'Laikipia North',
-  
-  // Specific Areas
-  'Mount Kenya Region', 'Lewa Conservancy', 'Ol Pejeta Conservancy',
-  'Nanyuki Airbase', 'Nanyuki Industrial Area', 'Nanyuki Market',
-  'Rumuruti Market', 'Dol Dol Trading Centre',
-  
-  // Estates & Residential Areas
-  'Nanyuki Estates', 'Rumuruti Estates', 'Dol Dol Residential Areas',
-  
-  // Roads & Highways
-  'Nairobi-Nanyuki Highway', 'Nyahururu-Nanyuki Road',
-  'Rumuruti-Maralal Road', 'Dol Dol-Wamba Road'
-];
+const locations = [Laikipia West, Laikipia East, Laikipia North, Nanyuki Town, Dol Dol, Rumuruti, Nyahururu, Ol Pejeta, Naro Moru, Mukogodo].map(l => l.trim());
 
 export default function LaikipiaServices() {
   return (
-    <div className="min-h-screen pt-32 bg-gradient-to-br from-gray-50 to-indigo-50">
+    <div className="min-h-screen bg-slate-50 pt-[72px]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <Header />
-      
-      {/* Hero Section */}
-      <section className="relative py-20 bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-3 text-indigo-200 font-semibold text-sm uppercase tracking-wider mb-4">
-            <div className="w-8 h-px bg-indigo-200"></div>
-            Laikipia County
-            <div className="w-8 h-px bg-indigo-200"></div>
-          </div>
-          <h1 className="text-4xl lg:text-6xl font-bold mb-6">
+
+      <section className="bg-green-800 py-16 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+        <div className="relative max-w-4xl mx-auto px-4 text-center">
+          <p className="text-xs font-bold uppercase tracking-widest text-green-300 mb-3">Laikipia County</p>
+          <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4" style={{ fontFamily: "'Fraunces', serif" }}>
             Laikipia Garbage Collection Services
           </h1>
-          <p className="text-xl text-indigo-100 max-w-3xl mx-auto leading-relaxed">
-            Professional waste management solutions serving Laikipia County including 
-            Nanyuki, Rumuruti, Dol Dol, and surrounding conservancy areas.
+          <p className="text-green-200 text-lg max-w-2xl mx-auto leading-relaxed">
+            Professional waste management solutions serving 6 key locations locations across Laikipia County. Reliable, eco-friendly collection for homes and businesses.
           </p>
         </div>
       </section>
 
-      {/* Service Areas */}
-      <section className="py-20 bg-white">
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-6">
-              Service Areas in <span className="text-indigo-600">Laikipia</span>
+          <div className="text-center mb-10">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-600 mb-2">Coverage</p>
+            <h2 className="text-3xl font-bold text-slate-900" style={{ fontFamily: "'Fraunces', serif" }}>
+              Service Areas in <span className="text-green-700">Laikipia</span>
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Comprehensive waste management coverage throughout Laikipia County, 
-              from urban centers to rural communities and conservancies.
-            </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {laikipiaLocations.map((location, index) => (
-              <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg hover:bg-indigo-50 transition-colors">
-                <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-                <span className="text-gray-800 font-medium">{location}</span>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-10">
+            {locations.map((location, i) => (
+              <div key={i} className="flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-green-50 border border-slate-200 hover:border-green-200 rounded-xl transition-all">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0" />
+                <span className="text-slate-700 text-sm font-medium">{location}</span>
               </div>
             ))}
           </div>
-
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-8 text-center">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Conservancy & Wildlife Area Services</h3>
-            <p className="text-gray-600 mb-6">
-              We provide specialized waste management solutions for conservancies, 
-              wildlife facilities, and tourism establishments in Laikipia.
-            </p>
-            <Link 
-              href="/contact"
-              className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-all duration-300 inline-flex items-center gap-2"
-            >
-              Conservancy Waste Solutions
-            </Link>
+          <div className="bg-green-50 border border-green-100 rounded-2xl p-7 text-center">
+            <p className="text-slate-600 text-sm mb-4">Don't see your area? We likely still serve your location — contact us to confirm.</p>
+            <Link href="/contact" className="bg-green-700 text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-green-800 transition-colors inline-block">Confirm Your Area</Link>
           </div>
         </div>
       </section>
 
-      {/* Services Offered */}
-      <section className="py-20 bg-gradient-to-br from-indigo-50 to-purple-50">
+      <section className="py-16 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-6">
-              Laikipia Waste Management <span className="text-purple-600">Solutions</span>
+          <div className="text-center mb-10">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-600 mb-2">Our Services</p>
+            <h2 className="text-3xl font-bold text-slate-900" style={{ fontFamily: "'Fraunces', serif" }}>
+              Laikipia Waste Management Solutions
             </h2>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              {
-                title: 'Town Services',
-                description: 'Regular garbage collection in Nanyuki and urban areas',
-                icon: '🏙️'
-              },
-              {
-                title: 'Conservancy Waste',
-                description: 'Specialized solutions for wildlife conservancies',
-                icon: '🦒'
-              },
-              {
-                title: 'Commercial Collection',
-                description: 'Business waste management for shops and industries',
-                icon: '🏭'
-              },
-              {
-                title: 'Rural Services',
-                description: 'Waste management for rural communities and townships',
-                icon: '🏞️'
-              },
-              {
-                title: 'Military Base Services',
-                description: 'Waste solutions for military installations',
-                icon: '🎖️'
-              },
-              {
-                title: 'Eco-Friendly Disposal',
-                description: 'Environmentally conscious waste disposal methods',
-                icon: '♻️'
-              }
-            ].map((service, index) => (
-              <div key={index} className="bg-white rounded-2xl p-8 shadow-lg text-center">
-                <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-2xl">
-                  {service.icon}
+              { title: 'Residential Collection', desc: 'Regular garbage pickup for homes and apartments' },
+              { title: 'Commercial Services', desc: 'Waste solutions for businesses and offices' },
+              { title: 'Recycling Programs', desc: 'Eco-friendly sorting and recycling services' },
+              { title: 'Bulk Waste Removal', desc: 'Large item and construction waste disposal' },
+            ].map((s, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-md hover:-translate-y-1 transition-all">
+                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                  <div className="w-4 h-4 bg-green-600 rounded-full" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{service.title}</h3>
-                <p className="text-gray-600 text-sm">{service.description}</p>
+                <h3 className="font-bold text-slate-900 mb-2 text-sm" style={{ fontFamily: "'Fraunces', serif" }}>{s.title}</h3>
+                <p className="text-slate-500 text-xs leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-indigo-800 text-white">
-        <div className="max-w-4xl mx-auto px-4 lg:px-8 text-center">
-          <h2 className="text-3xl lg:text-5xl font-bold mb-6">
-            Professional Waste Management in Laikipia
+      <section className="py-16 bg-green-800">
+        <div className="max-w-3xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4" style={{ fontFamily: "'Fraunces', serif" }}>
+            Ready for Reliable Waste Management in Laikipia?
           </h2>
-          <p className="text-xl text-indigo-100 mb-8 leading-relaxed">
-            Join businesses, conservancies, and residents across Laikipia County who trust Sylvie for reliable garbage collection.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link 
-              href="/quote" 
-              className="bg-purple-500 text-white px-8 py-4 rounded-xl text-lg font-semibold shadow-2xl hover:bg-purple-600 transition-all duration-300 hover:scale-105 inline-flex items-center gap-3"
-            >
-              Get Laikipia Quote
-            </Link>
-            <Link 
-              href="/contact" 
-              className="bg-white text-indigo-800 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-gray-100 transition-all duration-300 hover:scale-105"
-            >
-              Call Our Laikipia Team
-            </Link>
+          <p className="text-green-200 mb-8">Join hundreds of clients who trust Sylvie for clean, eco-friendly waste collection.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/quote" className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 py-3.5 rounded-xl transition-all">Get Free Quote</Link>
+            <Link href="/contact" className="border-2 border-white/40 hover:bg-white/10 text-white font-semibold px-8 py-3.5 rounded-xl transition-all">Contact Us</Link>
           </div>
         </div>
       </section>

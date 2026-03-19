@@ -1,37 +1,5 @@
 "use client";
 
-// NUCLEAR CACHE BUSTING - FIXED VERSION
-if (typeof window !== 'undefined') {
-  const originalFetch = window.fetch;
-  window.fetch = function(...args) {
-    const [url, options] = args;
-    
-    if (typeof url === 'string' && url.includes('quote-requests')) {
-      console.log('🚨 NUCLEAR: Using cache-busted fetch');
-      
-      // Create new URL with cache busting (this works!)
-      const newUrl = new URL(url);
-      newUrl.searchParams.set('_cache_bust', Date.now().toString());
-      newUrl.searchParams.set('_uid', Math.random().toString(36).substring(2, 15));
-      newUrl.searchParams.set('_emergency', 'true');
-      
-      // REMOVE the problematic headers that cause CORS issues
-      const newOptions = {
-        ...options,
-        // Only keep safe headers that don't trigger CORS preflight
-        headers: {
-          ...options?.headers,
-          // Remove Cache-Control, Pragma, X-Emergency-Bypass - they cause CORS issues
-        },
-      };
-      
-      return originalFetch.call(this, newUrl.toString(), newOptions);
-    }
-    
-    return originalFetch.apply(this, args);
-  };
-}
-
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import QuoteForm from '../../components/QuoteForm';
@@ -39,56 +7,31 @@ import FloatingButtons from '../../components/FloatingButtons';
 import { useState } from 'react';
 
 interface QuoteFormData {
-  name: string;
-  email: string;
-  phone: string;
-  company?: string;
-  service_type: string;
-  message: string;
+  name: string; email: string; phone: string;
+  company?: string; service_type: string; message: string;
 }
 
 export default function QuotePage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // SIMPLE POST - No CSRF needed since backend allows it
   const submitQuoteRequest = async (formData: QuoteFormData) => {
     setIsSubmitting(true);
-    
     try {
-      console.log('🔄 Starting quote submission...');
-
       const response = await fetch('https://api.sylviegarbagecollection.co.ke/quote-requests', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(formData)
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(formData),
       });
-
-      console.log('📨 Quote submitted, response status:', response.status);
-
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        throw new Error(errorData.message || `Error: ${response.status}`);
       }
-
       const result = await response.json();
-      console.log('✅ Quote submission successful:', result);
-      
-      // Show success card
       setShowSuccess(true);
-      
-      // Auto-hide success card after 8 seconds
-      setTimeout(() => {
-        setShowSuccess(false);
-      }, 8000);
-      
+      setTimeout(() => setShowSuccess(false), 8000);
       return result;
-      
     } catch (error) {
-      console.error('❌ Quote submission failed:', error);
       throw error;
     } finally {
       setIsSubmitting(false);
@@ -96,200 +39,57 @@ export default function QuotePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-50 pt-[72px]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <Header />
-      
-      {/* Success Card */}
-      {showSuccess && (
-        <div className="fixed top-48 right-4 left-4 md:left-auto md:right-4 z-50 max-w-md slide-in-from-right duration-500">
-          <div className="bg-green-600 text-white p-6 rounded-2xl shadow-2xl border-2 border-green-300">
-            <div className="flex items-center gap-4">
-              <div className="flex-shrink-0 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h4 className="font-bold text-lg mb-1">Quote Request Submitted!</h4>
-                <p className="text-green-100 text-sm">
-                  Thank you! We&apos;ve received your quote request and will contact you within 24 hours.
-                </p>
-              </div>
-              <button 
-                onClick={() => setShowSuccess(false)}
-                className="flex-shrink-0 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Loading Overlay */}
-      {isSubmitting && (
-        <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-sm mx-4">
-            <div className="flex items-center gap-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-              <div>
-                <h4 className="font-bold text-gray-900">Submitting Quote...</h4>
-                <p className="text-gray-600 text-sm">Please wait while we process your request</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Enhanced Breadcrumb */}
-      <section className="bg-green-700 py-6 shadow-lg">
-        <div className="container mx-auto px-4">
-          <nav className="text-white text-sm font-medium">
-            <a href="/" className="hover:text-green-200 transition-colors duration-300">Home</a>
-            <span className="mx-2">/</span>
-            <span className="text-green-200 font-semibold">Request Quote</span>
-          </nav>
+      {/* Hero */}
+      <section className="bg-green-800 py-14 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+        <div className="relative max-w-3xl mx-auto px-4 text-center">
+          <p className="text-xs font-bold uppercase tracking-widest text-green-300 mb-3">No Obligation</p>
+          <h1 className="text-4xl font-bold text-white mb-3" style={{ fontFamily: "'Fraunces', serif" }}>Get Your Free Quote</h1>
+          <p className="text-green-200">Fill in the form and we'll respond within 24 hours with a tailored solution.</p>
         </div>
       </section>
 
-      <div className="py-16">
-        <div className="container mx-auto px-4">
-          {/* Enhanced Header */}
-          <div className="text-center mb-16 px-4">
-            <div className="inline-flex items-center gap-4 text-green-600 font-semibold text-sm uppercase tracking-wider mb-6">
-              <div className="w-12 h-1 bg-green-400 rounded-full"></div>
-              Get Your Custom Quote
-              <div className="w-12 h-1 bg-green-400 rounded-full"></div>
+      <div className="max-w-5xl mx-auto px-4 py-16">
+        {showSuccess && (
+          <div className="bg-green-50 border border-green-200 rounded-2xl p-6 mb-8 flex gap-4">
+            <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
             </div>
-            <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-              Request Your <span className="text-green-600">Quote</span>
-            </h1>
-            <p className="text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed bg-green-50 p-6 rounded-2xl border border-green-200">
-              Get a free, no-obligation quote for our professional waste management services. 
-              We&apos;ll get back to you within 24 hours with competitive pricing.
-            </p>
+            <div>
+              <p className="font-bold text-green-900">Quote request received!</p>
+              <p className="text-green-700 text-sm mt-1">Our team will contact you within 24 hours with a customised solution and pricing.</p>
+            </div>
           </div>
-
-          <div className="max-w-6xl mx-auto">
-            {/* Enhanced Quote Form Container */}
-            <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12 mb-16 border-2 border-green-200 relative overflow-hidden">
-              {/* Decorative elements */}
-              <div className="absolute top-0 left-0 w-32 h-32 bg-green-100 rounded-full -translate-x-16 -translate-y-16 opacity-50"></div>
-              <div className="absolute bottom-0 right-0 w-48 h-48 bg-green-100 rounded-full translate-x-24 translate-y-24 opacity-50"></div>
-              
-              <div className="relative z-10">
-                <div className="text-center mb-10">
-                  <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                    Tell Us About Your Needs
-                  </h2>
-                  <p className="text-gray-600 text-lg">
-                    Fill out the form below and we&apos;ll provide you with a customized quote
-                  </p>
-                </div>
-                {/* Pass the direct submit function to QuoteForm */}
-                <QuoteForm onSubmit={submitQuoteRequest} isSubmitting={isSubmitting} />
-              </div>
-            </div>
-
-            {/* Enhanced Info Cards */}
-            <div className="grid md:grid-cols-3 gap-8 mb-16">
-              {[
-                {
-                  title: 'Fast Response',
-                  description: 'We typically respond to quote requests within 2-4 hours during business days.',
-                  icon: '⚡',
-                  gradient: 'from-yellow-400 to-amber-500',
-                  bg: 'bg-amber-50'
-                },
-                {
-                  title: 'Transparent Pricing',
-                  description: 'No hidden fees. We provide detailed, transparent pricing for all our services.',
-                  icon: '💰',
-                  gradient: 'from-green-500 to-emerald-600',
-                  bg: 'bg-green-50'
-                },
-                {
-                  title: 'Expert Consultation',
-                  description: 'Get free expert advice on the best waste management solutions for your needs.',
-                  icon: '👨‍💼',
-                  gradient: 'from-blue-500 to-cyan-600',
-                  bg: 'bg-blue-50'
-                }
-              ].map((item, index) => (
-                <div key={index} className={`${item.bg} rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-3 p-8 border-2 border-white relative overflow-hidden group`}>
-                  {/* Background pattern */}
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-white/30 rounded-full -translate-y-8 translate-x-8 group-hover:scale-150 transition-transform duration-500"></div>
-                  
-                  <div className="relative z-10 text-center">
-                    <div className={`w-20 h-20 mx-auto mb-6 rounded-2xl bg-orange-500 flex items-center justify-center text-3xl shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                      {item.icon}
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">{item.title}</h3>
-                    <p className="text-gray-700 leading-relaxed">{item.description}</p>
+        )}
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <QuoteForm onSubmit={submitQuoteRequest} isSubmitting={isSubmitting} />
+          </div>
+          <div className="space-y-5">
+            <div className="bg-green-800 rounded-2xl p-6 text-white">
+              <h3 className="font-bold text-lg mb-4" style={{ fontFamily: "'Fraunces', serif" }}>Why Get a Quote?</h3>
+              <div className="space-y-3">
+                {['Free, no-obligation assessment','Tailored pricing for your needs','Response within 24 hours','Flexible service plans available'].map(item => (
+                  <div key={item} className="flex gap-2 text-sm text-green-100">
+                    <span className="text-green-400 mt-0.5">✓</span>{item}
                   </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Enhanced Contact Alternatives */}
-            <div className="bg-green-600 rounded-3xl p-12 text-center relative overflow-hidden shadow-2xl">
-              {/* Background pattern */}
-              <div className="absolute top-0 left-0 w-full h-full opacity-10">
-                <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full"></div>
-                <div className="absolute bottom-10 right-10 w-48 h-48 bg-white rounded-full"></div>
-              </div>
-              
-              <div className="relative z-10">
-                <h3 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-                  Prefer to Talk Directly?
-                </h3>
-                <p className="text-green-100 text-lg mb-8 max-w-2xl mx-auto">
-                  Our team is ready to assist you with personalized service recommendations and immediate quotes.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                  <a 
-                    href="tel:+254711515752"
-                    className="bg-white text-green-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 inline-flex items-center gap-3 shadow-lg hover:shadow-xl hover:scale-105 border-2 border-transparent hover:border-green-200"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                    Call Us: (+254) 711515752
-                  </a>
-                  <a 
-                    href="mailto:sylviegarbagecollection@gmail.com"
-                    className="bg-transparent text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 transition-all duration-300 inline-flex items-center gap-3 border-2 border-white hover:border-green-200 hover:scale-105"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    Email Us
-                  </a>
-                </div>
+                ))}
               </div>
             </div>
-
-            {/* Additional Services Preview */}
-            <div className="mt-20 text-center">
-              <h3 className="text-3xl font-bold text-gray-900 mb-4">
-                Our Popular Services
-              </h3>
-              <p className="text-gray-600 mb-12 max-w-2xl mx-auto">
-                We offer comprehensive waste management solutions for residential, commercial, and industrial clients.
-              </p>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {[
-                  { name: 'Residential', icon: '🏠', color: 'bg-blue-100 text-blue-700' },
-                  { name: 'Commercial', icon: '🏢', color: 'bg-green-100 text-green-700' },
-                  { name: 'Industrial', icon: '🏭', color: 'bg-orange-100 text-orange-700' },
-                  { name: 'Recycling', icon: '♻️', color: 'bg-green-100 text-green-700' }
-                ].map((service, index) => (
-                  <div key={index} className={`${service.color} rounded-xl p-6 text-center font-semibold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105`}>
-                    <div className="text-3xl mb-3">{service.icon}</div>
-                    <div>{service.name}</div>
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <h4 className="font-bold text-slate-900 mb-3 text-sm">Prefer to call?</h4>
+              <a href="tel:+254711515752" className="block text-green-700 font-bold text-lg hover:text-green-800 transition-colors">+254 711 515 752</a>
+              <p className="text-slate-400 text-xs mt-1">24/7 — all days</p>
+            </div>
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <h4 className="font-bold text-slate-900 mb-3 text-sm">Coverage Areas</h4>
+              <div className="space-y-1.5">
+                {['Nairobi County (500+ locations)','Nakuru County (30+ locations)','Narok County','Laikipia County'].map(area => (
+                  <div key={area} className="text-sm text-slate-600 flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0" />{area}
                   </div>
                 ))}
               </div>
