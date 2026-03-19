@@ -12,7 +12,7 @@ interface ContactFormData { name: string; email: string; phone: string; message:
 
 const getProductImage = (p: CartProduct) => {
   if (p.image_urls?.length > 0 && p.image_urls[0].startsWith('http')) return p.image_urls[0];
-  if (p.images?.length > 0) return p.images[0].startsWith('http') ? p.images[0] : `https://api.sylviegarbagecollection.co.ke/storage/${p.images[0]}`;
+  if (p.images && p.images.length > 0) return p.images[0].startsWith('http') ? p.images[0] : `https://api.sylviegarbagecollection.co.ke/storage/${p.images[0]}`;
   return '/placeholder-product.jpg';
 };
 const formatPrice = (price: number) => price.toLocaleString();
@@ -21,8 +21,26 @@ function ContactModal({ isOpen, onClose, product, onSubmit, isLoading }: {
   isOpen: boolean; onClose: () => void; product: CartProduct | null;
   onSubmit: (d: ContactFormData) => Promise<void>; isLoading: boolean;
 }) {
-  const [formData, setFormData] = useState<ContactFormData>({ name:'', email:'', phone:'', message:'', product_id: product?.id || 0 });
-  useEffect(() => { if (product) setFormData(p => ({ ...p, product_id: product.id, message: `Hi, I'm interested in "${product.name}". Please provide more information.` })); }, [product]);
+  const [formData, setFormData] = useState<ContactFormData>(() => ({
+    name: '',
+    email: '',
+    phone: '',
+    message: product ? `Hi, I'm interested in "${product.name}". Please provide more information.` : '',
+    product_id: product?.id || 0
+  }));
+  useEffect(() => {
+    if (product && isOpen) {
+      // Defer updating state to the next tick to avoid synchronous setState inside the effect
+      const id = setTimeout(() => {
+        setFormData(p => ({
+          ...p,
+          product_id: product.id,
+          message: `Hi, I'm interested in "${product.name}". Please provide more information.`
+        }));
+      }, 0);
+      return () => clearTimeout(id);
+    }
+  }, [product, isOpen]);
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
