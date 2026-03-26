@@ -20,7 +20,7 @@ export default function Header() {
     { name: 'About', href: '/about' },
     { name: 'Services', href: '/services' },
      { name: 'Sanitary Bins', href: '/sanitary-bins' },
-    { name: 'Shop', href: '/shop' },
+    { name: 'BinBags', href: '/bin-bags' },
     { name: 'Contact', href: '/contact' },
   ];
 
