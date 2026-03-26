@@ -493,7 +493,7 @@ export default function BinBagsPage() {
       </p>
     </div>
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
-      {COUNTIES.filter(c => FEATURED_SLUGS.includes(c.slug)).map((county: County) => (
+      {COUNTIES.filter(c => FEATURED_SLUGS.includes(c.slug)).map((county: CountyData) => (
         <Link
           key={county.slug}
           href={`/bin-bags/${county.slug}`}
