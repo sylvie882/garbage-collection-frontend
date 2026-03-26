@@ -9,6 +9,7 @@ import { COUNTIES, getCountyBySlug, ALL_COUNTY_SLUGS } from '@/lib/counties';
 
 const SITE = 'https://sylviegarbagecollection.co.ke';
 
+
 export async function generateStaticParams() {
   return ALL_COUNTY_SLUGS.map(slug => ({ county: slug }));
 }

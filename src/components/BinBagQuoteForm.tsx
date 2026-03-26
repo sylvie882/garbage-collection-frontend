@@ -513,6 +513,7 @@ export default function BinBagQuoteForm() {
       <p className="text-center text-xs text-slate-400 mt-4">
         By submitting, you agree to our privacy policy. We'll contact you within 2 hours during business days.
       </p>
+      
     </form>
   );
 }

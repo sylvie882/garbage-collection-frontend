@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BinBagQuoteForm from '@/components/BinBagQuoteForm';
-import { COUNTIES, type County } from '@/lib/counties';
+import { COUNTIES, type CountyData } from '@/lib/counties';
 
 const SITE = 'https://sylviegarbagecollection.co.ke';
 
@@ -150,7 +150,7 @@ const faqs = [
 const FEATURED_SLUGS = ['nairobi', 'mombasa', 'kisumu', 'nakuru', 'uasin-gishu', 'kiambu', 'machakos', 'kajiado', 'meru', 'kilifi'];
 
 export default function BinBagsPage() {
-  const featuredCounties = COUNTIES.filter((c: County) => FEATURED_SLUGS.includes(c.slug));
+  const featuredCounties = COUNTIES.filter((c: CountyData) => FEATURED_SLUGS.includes(c.slug));
 
   return (
     <div className="min-h-screen bg-slate-50 pt-[72px]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -508,7 +508,7 @@ export default function BinBagsPage() {
     <div className="bg-white border border-slate-200 rounded-2xl p-6">
       <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">All 47 Counties — Click to View Local Page</p>
       <div className="flex flex-wrap gap-2">
-        {COUNTIES.map((county: County) => (
+        {COUNTIES.map((county: CountyData) => (
           <Link
             key={county.slug}
             href={`/bin-bags/${county.slug}`}
