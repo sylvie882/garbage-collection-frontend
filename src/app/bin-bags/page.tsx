@@ -541,6 +541,7 @@ export default function BinBagsPage() {
         </div>
       </section>
 
+      
       {/* SEO TEXT */}
       <section className="py-10 bg-slate-50 border-t border-slate-100">
         <div className="max-w-4xl mx-auto px-4 text-slate-500 text-sm leading-relaxed">
@@ -549,6 +550,7 @@ export default function BinBagsPage() {
           </p>
         </div>
       </section>
+
 
       <Footer />
     </div>

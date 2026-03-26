@@ -60,8 +60,8 @@ export default function Header() {
               <Image src="/logo.jpeg" alt="Sylvie Waste Collection" fill className="object-contain p-1" priority />
             </div>
             <div className="leading-tight">
-              <div className="font-bold text-green-800 text-base" style={{ fontFamily: "'Fraunces', serif" }}>Sylvie</div>
-              <div className="text-xs font-semibold text-orange-500 uppercase tracking-wider -mt-0.5">Waste Collection</div>
+<div className="font-bold text-green-800 text-[32px]" style={{ fontFamily: "'Fraunces', serif" }}>Sylvie</div>
+              <div className="text-xs font-semibold text-orange-500 tracking-wider -mt-0.5">Waste Collection</div>
             </div>
           </Link>
 
