@@ -34,9 +34,6 @@ export default function Carousel() {
     fetchCarousels();
   }, []);
 
-
-  
-
   useEffect(() => {
     if (carousels.length === 0) return;
     intervalRef.current = setInterval(() => {
