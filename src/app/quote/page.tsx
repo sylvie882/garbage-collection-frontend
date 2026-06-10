@@ -18,7 +18,7 @@ export default function QuotePage() {
   const submitQuoteRequest = async (formData: QuoteFormData) => {
     setIsSubmitting(true);
     try {
-      const response = await fetch('https://api.sylviegarbagecollection.co.ke/quote-requests', {
+      const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/quote-requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(formData),
