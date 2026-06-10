@@ -15,22 +15,15 @@ export default function Carousel() {
   const [direction, setDirection] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch carousel slides
   useEffect(() => {
     const fetchCarousels = async () => {
       try {
-        console.log('Fetching carousels from:', `${API_URL}/carousels`);
-        const response = await axios.get<CarouselType[]>(`${API_URL}/carousels`);
-        console.log('API Response:', response.data);
-        
+        const response = await axios.get<CarouselType[]>(`${API_URL}/api/carousels`);
         const activeSlides = response.data.filter((c) => c.is_active);
-        console.log('Active slides:', activeSlides);
-        
         const normalizedSlides = activeSlides.map((slide) => ({
           ...slide,
           image_url: slide.image_url || slide.image_path || '/placeholder.jpg',
         }));
-        
         setCarousels(normalizedSlides);
       } catch (error) {
         console.error('Error fetching carousels:', error);
@@ -41,15 +34,12 @@ export default function Carousel() {
     fetchCarousels();
   }, []);
 
-  // Auto slide every 6 seconds
   useEffect(() => {
     if (carousels.length === 0) return;
-    
     intervalRef.current = setInterval(() => {
       setDirection(0);
       setCurrentIndex((prev) => (prev + 1) % carousels.length);
     }, 6000);
-    
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
@@ -70,20 +60,19 @@ export default function Carousel() {
     setCurrentIndex(index);
   };
 
-  // Simplified slide variants without complex easing
   const slideVariants = {
     enter: (direction: number) => ({
       x: direction === 0 ? 1000 : -1000,
-      opacity: 0
+      opacity: 0,
     }),
     center: {
       x: 0,
-      opacity: 1
+      opacity: 1,
     },
     exit: (direction: number) => ({
       x: direction === 0 ? -1000 : 1000,
-      opacity: 0
-    })
+      opacity: 0,
+    }),
   };
 
   if (isLoading) {
@@ -130,17 +119,17 @@ export default function Carousel() {
           animate="center"
           exit="exit"
           transition={{
-            x: { type: "spring", stiffness: 300, damping: 30 },
-            opacity: { duration: 0.5 }
+            x: { type: 'spring', stiffness: 300, damping: 30 },
+            opacity: { duration: 0.5 },
           }}
           className="absolute inset-0 w-full h-full"
         >
           {/* Background Image */}
-          <div 
+          <div
             className="w-full h-full bg-cover bg-center"
             style={{ backgroundImage: `url(${carousels[currentIndex].image_url})` }}
           />
-          
+
           {/* Overlay and Content */}
           <div className="absolute inset-0 bg-gradient-to-b pt-24 from-black/60 via-black/40 to-black/70 flex items-center justify-center">
             <div className="text-center text-white px-4 max-w-3xl">
@@ -202,7 +191,7 @@ export default function Carousel() {
         <>
           <button
             onClick={prevSlide}
-            className="absolute left-5 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full  transition z-10"
+            className="absolute left-5 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full transition z-10"
             aria-label="Previous slide"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -212,7 +201,7 @@ export default function Carousel() {
 
           <button
             onClick={nextSlide}
-            className="absolute right-5 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full  transition z-10"
+            className="absolute right-5 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full transition z-10"
             aria-label="Next slide"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
