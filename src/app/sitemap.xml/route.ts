@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server';
 import { ALL_COUNTY_SLUGS } from '@/lib/counties';
 
-const BASE = 'https://sylviegarbagecollection.co.ke';
+const BASE = 'https://www.sylviegarbagecollection.co.ke';
 const API  = 'https://api.sylviegarbagecollection.co.ke/api';
 
 // ─── Fetch live service slugs from your API ───────────────────

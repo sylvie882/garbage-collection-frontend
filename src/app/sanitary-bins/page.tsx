@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 import SanitaryBinQuoteForm from '@/components/SanitaryBinQuoteForm';
 import { COUNTIES } from '@/lib/counties';
 
-const SITE = 'https://sylviegarbagecollection.co.ke';
+const SITE = 'https://www.sylviegarbagecollection.co.ke';
 
 export const metadata: Metadata = {
   title: 'Sanitary Bin Services in Kenya | Pedal & Automatic Bins | Sylvie',
