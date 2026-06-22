@@ -41,7 +41,7 @@ export default function QuotesPage() {
       console.log('🔄 Fetching quotes with token:', token ? 'Present' : 'Missing');
       
       // ✅ CORRECTED URL - Use your API domain directly
-      const response = await fetch('https://api.sylviegarbagecollection.co.ke/admin/quote-requests', {
+      const response = await fetch('https://api.sylviegarbagecollection.co.ke/api/admin/quote-requests', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -93,7 +93,7 @@ export default function QuotesPage() {
       console.log('🔄 Updating quote status:', { id, status });
       
       // ✅ CORRECTED URL
-      const response = await fetch(`https://api.sylviegarbagecollection.co.ke/admin/quote-requests/${id}`, {
+      const response = await fetch(`https://api.sylviegarbagecollection.co.ke/api/admin/quote-requests/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -130,7 +130,7 @@ export default function QuotesPage() {
       console.log('🗑️ Deleting quote:', id);
       
       // ✅ CORRECTED URL
-      const response = await fetch(`https://api.sylviegarbagecollection.co.ke/admin/quote-requests/${id}`, {
+      const response = await fetch(`https://api.sylviegarbagecollection.co.ke/api/admin/quote-requests/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
