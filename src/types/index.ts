@@ -12,6 +12,7 @@ export interface Carousel {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  src?: string; // Optional property for frontend use
 }
 
 export interface QuoteRequest {

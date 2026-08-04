@@ -46,21 +46,19 @@ export default function Carousel() {
     fetchCarousels();
   }, []);
 
-
   // Preload next image
   useEffect(() => {
     if (!carousels.length) return;
 
-    const nextImage =
-      new window.Image();
+    const nextImage = new window.Image();
+    const nextIndex = (currentIndex + 1) % carousels.length;
+    const nextImageUrl = carousels[nextIndex]?.image_url;
 
-    nextImage.src =
-      carousels[
-        (currentIndex + 1) % carousels.length
-      ].image_url;
+    if (nextImageUrl) {
+      nextImage.src = nextImageUrl;
+    }
 
   }, [currentIndex, carousels]);
-
 
   // Auto slide
   useEffect(() => {
@@ -75,14 +73,12 @@ export default function Carousel() {
 
     }, 6000);
 
-
     return () => {
       if (intervalRef.current)
         clearInterval(intervalRef.current);
     };
 
   }, [carousels]);
-
 
   const nextSlide = () => {
     setDirection(1);
@@ -91,7 +87,6 @@ export default function Carousel() {
       (prev + 1) % carousels.length
     );
   };
-
 
   const prevSlide = () => {
     setDirection(-1);
@@ -103,7 +98,6 @@ export default function Carousel() {
     );
   };
 
-
   const goToSlide = (index:number) => {
     setDirection(
       index > currentIndex ? 1 : -1
@@ -112,29 +106,22 @@ export default function Carousel() {
     setCurrentIndex(index);
   };
 
-
   const variants = {
-
     enter:(direction:number)=>({
       x: direction > 0 ? '100%' : '-100%',
       opacity:1
     }),
-
     center:{
       x:'0%',
       opacity:1
     },
-
     exit:(direction:number)=>({
       x: direction > 0 ? '-100%' : '100%',
       opacity:1
     })
-
   };
 
-
   if(isLoading){
-
     return(
       <div className="
         w-full h-[500px]
@@ -143,22 +130,15 @@ export default function Carousel() {
         rounded-2xl
       "/>
     );
-
   }
-
 
   if(!carousels.length){
-
     return null;
-
   }
-
 
   const slide = carousels[currentIndex];
 
-
   return (
-
     <div
       className="
         relative
@@ -170,32 +150,22 @@ export default function Carousel() {
         bg-black
       "
     >
-
       <AnimatePresence
         initial={false}
         custom={direction}
         mode="sync"
       >
-
         <motion.div
-
           key={currentIndex}
-
           custom={direction}
-
           variants={variants}
-
           initial="enter"
-
           animate="center"
-
           exit="exit"
-
           transition={{
             duration:0.6,
             ease:"easeInOut"
           }}
-
           className="
             absolute
             inset-0
@@ -203,12 +173,8 @@ export default function Carousel() {
             h-full
             will-change-transform
           "
-
         >
-
-
           {slide.button_link ? (
-
             <Link
               href={slide.button_link}
               className="
@@ -217,63 +183,35 @@ export default function Carousel() {
                 h-full
               "
             >
-
               <Image
-
-                src={slide.image_url}
-
+                src={slide.image_url || '/placeholder.jpg'}
                 alt="Carousel image"
-
                 fill
-
                 priority
-
                 sizes="100vw"
-
                 className="
                   object-cover
                   cursor-pointer
                 "
-
               />
-
             </Link>
-
-
           ) : (
-
             <Image
-
-              src={slide.image_url}
-
+              src={slide.image_url || '/placeholder.jpg'}
               alt="Carousel image"
-
               fill
-
               priority
-
               sizes="100vw"
-
               className="
                 object-cover
               "
-
             />
-
           )}
-
-
         </motion.div>
-
-
       </AnimatePresence>
 
-
-
       {/* Dots */}
-
       {carousels.length > 1 && (
-
         <div
           className="
             absolute
@@ -285,23 +223,17 @@ export default function Carousel() {
             z-20
           "
         >
-
           {carousels.map((_,index)=>(
-
             <button
-
               key={index}
-
               onClick={() =>
                 goToSlide(index)
               }
-
               className={`
                 w-3
                 h-3
                 rounded-full
                 transition-all
-
                 ${
                   index === currentIndex
                   ?
@@ -309,32 +241,17 @@ export default function Carousel() {
                   :
                   'bg-white/50'
                 }
-
               `}
-
             />
-
           ))}
-
-
         </div>
-
       )}
 
-
-
-
       {/* Arrows */}
-
       {carousels.length > 1 && (
-
         <>
-
-
           <button
-
             onClick={prevSlide}
-
             className="
               absolute
               left-5
@@ -347,19 +264,12 @@ export default function Carousel() {
               p-3
               rounded-full
             "
-
           >
-
             ‹
-
           </button>
 
-
-
           <button
-
             onClick={nextSlide}
-
             className="
               absolute
               right-5
@@ -372,21 +282,11 @@ export default function Carousel() {
               p-3
               rounded-full
             "
-
           >
-
             ›
-
           </button>
-
-
         </>
-
       )}
-
-
     </div>
-
   );
-
 }
