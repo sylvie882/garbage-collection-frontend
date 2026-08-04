@@ -101,7 +101,7 @@ export default function Header() {
               {cartCount > 0 && <span className="absolute -top-0.5 -right-0.5 bg-orange-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">{cartCount}</span>}
             </Link> */}
             <Link href="/quote" className="ml-2 bg-orange-500 hover:bg-orange-500 text-white text-xl font-bold px-5 py-2.5 rounded-xl transition-all duration-200 hover:shadow-md">
-              Get Free Quote
+              Quote
             </Link>
           </div>
 

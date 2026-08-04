@@ -124,10 +124,11 @@ export default function Carousel() {
   if(isLoading){
     return(
       <div className="
-        w-full h-[500px]
+        w-full 
+        h-[300px] sm:h-[400px] md:h-[500px]
         bg-gray-200
         animate-pulse
-        rounded-2xl
+        rounded-xl sm:rounded-2xl
       "/>
     );
   }
@@ -143,10 +144,10 @@ export default function Carousel() {
       className="
         relative
         w-full
-        h-[500px]
+        h-[300px] sm:h-[400px] md:h-[500px]
         overflow-hidden
-        rounded-2xl
-        shadow-2xl
+        rounded-xl sm:rounded-2xl
+        shadow-lg sm:shadow-2xl
         bg-black
       "
     >
@@ -215,11 +216,11 @@ export default function Carousel() {
         <div
           className="
             absolute
-            bottom-6
+            bottom-3 sm:bottom-4 md:bottom-6
             left-1/2
             -translate-x-1/2
             flex
-            gap-3
+            gap-2 sm:gap-3
             z-20
           "
         >
@@ -230,8 +231,7 @@ export default function Carousel() {
                 goToSlide(index)
               }
               className={`
-                w-3
-                h-3
+                w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3
                 rounded-full
                 transition-all
                 ${
@@ -254,15 +254,18 @@ export default function Carousel() {
             onClick={prevSlide}
             className="
               absolute
-              left-5
+              left-2 sm:left-3 md:left-5
               top-1/2
               -translate-y-1/2
               z-20
               bg-black/30
               hover:bg-black/50
               text-white
-              p-3
+              p-1.5 sm:p-2 md:p-3
               rounded-full
+              text-lg sm:text-xl md:text-2xl
+              w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12
+              flex items-center justify-center
             "
           >
             ‹
@@ -272,15 +275,18 @@ export default function Carousel() {
             onClick={nextSlide}
             className="
               absolute
-              right-5
+              right-2 sm:right-3 md:right-5
               top-1/2
               -translate-y-1/2
               z-20
               bg-black/30
               hover:bg-black/50
               text-white
-              p-3
+              p-1.5 sm:p-2 md:p-3
               rounded-full
+              text-lg sm:text-xl md:text-2xl
+              w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12
+              flex items-center justify-center
             "
           >
             ›
