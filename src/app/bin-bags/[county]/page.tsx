@@ -8,7 +8,7 @@ import Footer from '@/components/Footer';
 import BinBagQuoteForm from '@/components/BinBagQuoteForm';
 import { COUNTIES, getCountyBySlug, ALL_COUNTY_SLUGS } from '@/lib/counties';
 
-const SITE = 'https://sylviegarbagecollection.co.ke';
+const SITE = 'https://www.sylviegarbagecollection.co.ke';
 
 
 export async function generateStaticParams() {

@@ -78,11 +78,14 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Sylvie Garbage Collection | Professional Waste Management Across All 47 Kenyan Counties',
     description: 'Reliable garbage collection services across all 47 counties in Kenya. Kenya\'s first digital waste management company offering nationwide coverage.',
-    images: ['https://sylviegarbagecollection.co.ke/twitter-image.jpg'],
+    images: ['https://www.sylviegarbagecollection.co.ke/twitter-image.jpg'],
     site: '@sylvie_waste',
     creator: '@sylvie_waste',
   },
   verification: {
+    // TODO: replace with the real code from Google Search Console
+    // (Search Console > Settings > Ownership verification > HTML tag method)
+    // Until this is a real value, Google may not treat the site as verified.
     google: 'your-google-site-verification-code',
   },
   category: 'waste management',
@@ -138,8 +141,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               "name": "Sylvie Waste Collection",
               "alternateName": "Sylvie Garbage Collection",
               "description": "Kenya's first digital waste management company offering garbage collection, recycling, pest control, cleaning services, and hygiene products across all 47 counties in Kenya.",
-              "image": "https://sylviegarbagecollection.co.ke/logo.jpeg",
-              "url": "https://sylviegarbagecollection.co.ke",
+              "image": "https://www.sylviegarbagecollection.co.ke/logo.jpeg",
+              "url": "https://www.sylviegarbagecollection.co.ke",
               "telephone": "+254700000000",
               "email": "info@sylviegarbagecollection.co.ke",
               "priceRange": "$$",

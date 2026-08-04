@@ -9,7 +9,7 @@ export const metadata = {
 
 const structuredData = {
   '@context': 'https://schema.org','@type': 'Organization','name': 'Sylvie Garbage Collection',
-  'url': 'https://sylviegarbagecollection.co.ke/about','foundingDate': '2020',
+  'url': 'https://www.sylviegarbagecollection.co.ke/about','foundingDate': '2020',
   'areaServed': ['Nairobi','Nakuru','Narok','Laikipia'],
 };
 

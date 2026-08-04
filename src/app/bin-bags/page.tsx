@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import BinBagQuoteForm from '@/components/BinBagQuoteForm';
 import { COUNTIES, type CountyData } from '@/lib/counties';
 
-const SITE = 'https://sylviegarbagecollection.co.ke';
+const SITE = 'https://www.sylviegarbagecollection.co.ke';
 
 export const metadata: Metadata = {
   title: 'Color-Coded Bin Bags in Kenya | Bulk Supply Nationwide | Sylvie',

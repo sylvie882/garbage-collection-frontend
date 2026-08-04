@@ -19,7 +19,7 @@ export default function Footer() {
 
   const structuredData = {
     '@context': 'https://schema.org','@type': 'Organization','name': 'Sylvie Garbage Collection',
-    'url': 'https://sylviegarbagecollection.co.ke','telephone': '+254-711-515752',
+    'url': 'https://www.sylviegarbagecollection.co.ke','telephone': '+254-711-515752',
     'email': 'sylviegarbagecollection@gmail.com',
     'address': { '@type': 'PostalAddress','streetAddress': 'Dale House, Fox Close Off Rhapta Road','addressLocality': 'Westlands','addressRegion': 'Nairobi','addressCountry': 'KE' },
     'openingHours': ['Mo-Su 00:00-23:59'],
@@ -38,9 +38,19 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 relative rounded-xl overflow-hidden bg-green-900 border border-green-800">
-                <Image src="/logo.jpeg" alt="Sylvie Garbage Collection" fill className="object-contain p-1" />
+              <Link href="/" className="flex items-center flex-shrink-0">
+              <div className="relative h-20 w-[320px] lg:h-24 lg:w-[420px]">
+                <Image
+                  src="/logo2.png"
+                  alt="Sylvie Waste Collection"
+                  fill
+                  priority
+                  className="object-contain object-left"
+                />
               </div>
+            </Link>
+
+            
               <div>
                 <p className="font-bold text-white text-sm" style={{ fontFamily: "'Fraunces', serif" }}>Sylvie Garbage Collection</p>
                 <p className="text-xs text-slate-500">Professional Waste Management</p>

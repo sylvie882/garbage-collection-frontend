@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 const API = 'https://api.sylviegarbagecollection.co.ke/api';
-const SITE = 'https://sylviegarbagecollection.co.ke';
+const SITE = 'https://www.sylviegarbagecollection.co.ke';
 
 // ─── Data fetching ───────────────────────────────────────────
 async function getService(slug: string): Promise<Service | null> {
@@ -233,6 +233,7 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
 
       <Header />
 
+<br />
       {/* ── Breadcrumb ───────────────────────────────────────────── */}
       <div className="bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-3">

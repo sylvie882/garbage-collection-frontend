@@ -78,7 +78,7 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
               </div>
             </div>
             {/* Price card */}
-            <div className="bg-white/10 border border-white/20 backdrop-blur-sm rounded-2xl p-5 text-white min-w-[200px] flex-shrink-0">
+            {/* <div className="bg-white/10 border border-white/20 backdrop-blur-sm rounded-2xl p-5 text-white min-w-[200px] flex-shrink-0">
               {priceDisplay ? (
                 <>
                   <p className="text-xs text-green-300 uppercase tracking-wider mb-1">Starting from</p>
@@ -94,10 +94,13 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                 <Link href="/quote" className="block w-full bg-orange-500 hover:bg-orange-600 text-white text-center font-bold py-2.5 rounded-xl text-sm transition-colors">Free Quote</Link>
                 <a href="tel:+254711515752" className="block w-full bg-white/10 hover:bg-white/20 text-white text-center font-semibold py-2.5 rounded-xl text-sm transition-colors">Call Us</a>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
+
+
+
 
       {/* ── Main content ─────────────────────────────────────────── */}
       <section className="py-12">
@@ -271,12 +274,12 @@ export default function ServiceDetail({ service }: ServiceDetailProps) {
                       <span className="font-semibold text-slate-900">{service.category}</span>
                     </div>
                   )}
-                  {priceDisplay && (
+                  {/* {priceDisplay && (
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-500">Price</span>
                       <span className="font-bold text-green-700">{priceDisplay}</span>
                     </div>
-                  )}
+                  )} */}
                   {service.duration && (
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-500">Duration</span>

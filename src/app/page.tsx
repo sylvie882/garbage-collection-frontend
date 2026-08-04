@@ -18,9 +18,19 @@ async function getServices(): Promise<Service[]> {
 }
 
 export const metadata = {
-  title: 'Sylvie Garbage Collection | Professional Waste Management Kenya',
-  description: "Kenya's premier digital waste management company serving Nairobi, Nakuru, Narok, Laikipia and 500+ locations.",
-  openGraph: { title: 'Sylvie Garbage Collection', description: 'Digital waste management solutions across Kenya.', type: 'website', locale: 'en_KE' },
+  title: 'Sanitary Bins, Bin Bags & Garbage Collection Kenya | Sylvie',
+  description: "Sylvie supplies sanitary bins, bin bags, and reliable garbage collection across Nairobi, Nakuru, Narok, Laikipia and 500+ locations in Kenya. Free quotes, 24/7 support, eco-friendly disposal.",
+  keywords: [
+    'sanitary bins Kenya', 'sanitary bins Nairobi', 'bin bags Kenya', 'bin bags Nairobi',
+    'garbage collection Kenya', 'garbage collection Nairobi', 'waste collection Kenya',
+    'waste management Kenya', 'sanitary bin rental Kenya', 'buy bin bags Kenya',
+  ],
+  openGraph: {
+    title: 'Sanitary Bins, Bin Bags & Garbage Collection Kenya | Sylvie',
+    description: 'Reliable sanitary bins, bin bags, and garbage collection across Kenya. Serving Nairobi, Nakuru, Narok, Laikipia and 500+ locations.',
+    type: 'website',
+    locale: 'en_KE',
+  },
 };
 
 const seoLocations = {
@@ -37,7 +47,8 @@ export default async function Home() {
   return (
     <div className="min-h-screen bg-slate-50 pt-[72px] overflow-x-hidden" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <div className="sr-only" aria-hidden="true">
-        <h1>Sylvie Garbage Collection - Professional Waste Management Kenya</h1>
+        <h1>Sanitary Bins, Bin Bags &amp; Garbage Collection Kenya - Sylvie Waste Collection</h1>
+        <p>Sylvie supplies and services sanitary bins and bin bags for homes, offices, schools and hospitals across Kenya, alongside reliable garbage collection.</p>
         {Object.entries(seoLocations).map(([county, locs]) => (
           <p key={county}>{county}: {locs.join(', ')}</p>
         ))}
@@ -67,33 +78,589 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* Why us */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="text-center mb-14">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-600 mb-3">Why Choose Sylvie</p>
-            <h2 className="text-4xl lg:text-5xl font-bold text-slate-900 mb-4" style={{ fontFamily: "'Fraunces', serif" }}>
-              The Smart Choice for <span className="text-green-700">Waste Management</span>
-            </h2>
-            <p className="text-slate-500 max-w-xl mx-auto leading-relaxed">Kenya's premier digital waste management company providing modern solutions for homes and businesses.</p>
+      {/* Sanitary Bins & Bin Bags — priority keyword section */}
+<section className="py-20 bg-white">
+  <div className="max-w-7xl mx-auto px-4 lg:px-8">
+
+    <div className="text-center mb-12">
+      <p className="text-xs font-bold uppercase tracking-widest text-green-600 mb-2">
+        Our Most Requested Services
+      </p>
+
+      <h2
+        className="text-4xl font-bold text-slate-900 mb-3"
+        style={{ fontFamily: "'Fraunces', serif" }}
+      >
+        Sanitary Bins &amp;{" "}
+        <span className="text-green-700">Bin Bags</span> in Kenya
+      </h2>
+
+      <p className="text-slate-500 max-w-2xl mx-auto leading-relaxed">
+        Sylvie supplies, rents and services sanitary bins and bin bags for
+        homes, offices, schools, hospitals and factories across Kenya, with
+        scheduled servicing and disposal certificates included.
+      </p>
+    </div>
+
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+
+      {/* Sanitary Bins Card */}
+      <Link
+        href="/sanitary-bins"
+        className="
+          group relative overflow-hidden
+          rounded-3xl
+          bg-white
+          p-8
+          border border-green-100
+          shadow-[0_10px_40px_rgba(0,0,0,0.08)]
+          hover:shadow-[0_20px_60px_rgba(22,163,74,0.18)]
+          hover:-translate-y-2
+          transition-all duration-500
+        "
+      >
+
+        {/* Glow effect */}
+        <div
+          className="
+            absolute -top-20 -right-20
+            w-48 h-48
+            bg-green-100
+            rounded-full
+            opacity-50
+            group-hover:scale-150
+            transition-transform duration-700
+          "
+        />
+
+
+        <div className="relative z-10">
+
+          <div
+            className="
+              w-14 h-14
+              rounded-2xl
+              bg-green-100
+              flex items-center justify-center
+              mb-6
+              group-hover:bg-green-600
+              transition-colors duration-300
+            "
+          >
+            <svg
+              className="w-7 h-7 text-green-700 group-hover:text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[
-              { title: 'Digital First', desc: 'Schedule pickups, view invoices and make payments through our smart platform.', bg: 'bg-blue-50', ring: 'ring-blue-100' },
-              { title: 'Eco-Friendly', desc: 'Committed to 100% recycling and sustainable disposal across all service areas.', bg: 'bg-green-50', ring: 'ring-green-100' },
-              { title: '24/7 Support', desc: 'Round-the-clock customer support for all your waste management needs.', bg: 'bg-orange-50', ring: 'ring-orange-100' },
-              { title: 'Wide Coverage', desc: '500+ locations across Nairobi, Nakuru, Narok and Laikipia counties.', bg: 'bg-purple-50', ring: 'ring-purple-100' },
-              { title: 'Transparent Pricing', desc: 'Competitive rates with no hidden charges for residential and commercial clients.', bg: 'bg-teal-50', ring: 'ring-teal-100' },
-              { title: 'Certified Team', desc: 'Trained professionals ensuring safe, compliant waste handling every time.', bg: 'bg-amber-50', ring: 'ring-amber-100' },
-            ].map((f, i) => (
-              <div key={i} className={`${f.bg} ring-1 ${f.ring} rounded-2xl p-7 hover:shadow-md transition-all duration-300 hover:-translate-y-1`}>
-                <h3 className="text-lg font-bold text-slate-900 mb-2" style={{ fontFamily: "'Fraunces', serif" }}>{f.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
+
+
+          <h3
+            className="
+              text-2xl
+              font-bold
+              text-slate-900
+              mb-3
+              group-hover:text-green-800
+              transition-colors
+            "
+            style={{ fontFamily: "'Fraunces', serif" }}
+          >
+            Sanitary Bins
+          </h3>
+
+
+          <p className="text-slate-500 leading-relaxed mb-6">
+            Pedal and automatic sanitary bin rental and servicing across all
+            47 counties — hygienic, discreet, and compliant washroom solutions
+            for businesses and homes.
+          </p>
+
+
+          <span
+            className="
+              inline-flex items-center gap-2
+              text-sm font-bold
+              text-green-700
+            "
+          >
+            Get Sanitary Bins
+
+            <svg
+              className="
+                w-4 h-4
+                group-hover:translate-x-2
+                transition-transform
+              "
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+
+          </span>
+
         </div>
-      </section>
+
+      </Link>
+
+
+
+
+      {/* Bin Bags Card */}
+      <Link
+        href="/bin-bags"
+        className="
+          group relative overflow-hidden
+          rounded-3xl
+          bg-white
+          p-8
+          border border-green-100
+          shadow-[0_10px_40px_rgba(0,0,0,0.08)]
+          hover:shadow-[0_20px_60px_rgba(22,163,74,0.18)]
+          hover:-translate-y-2
+          transition-all duration-500
+        "
+      >
+
+        <div
+          className="
+            absolute -top-20 -right-20
+            w-48 h-48
+            bg-green-100
+            rounded-full
+            opacity-50
+            group-hover:scale-150
+            transition-transform duration-700
+          "
+        />
+
+
+        <div className="relative z-10">
+
+
+          <div
+            className="
+              w-14 h-14
+              rounded-2xl
+              bg-green-100
+              flex items-center justify-center
+              mb-6
+              group-hover:bg-green-600
+              transition-colors duration-300
+            "
+          >
+
+            <svg
+              className="w-7 h-7 text-green-700 group-hover:text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 7h16M4 7l2 14h12l2-14M9 7V4h6v3"
+              />
+            </svg>
+
+          </div>
+
+
+          <h3
+            className="
+              text-2xl
+              font-bold
+              text-slate-900
+              mb-3
+              group-hover:text-green-800
+              transition-colors
+            "
+            style={{ fontFamily: "'Fraunces', serif" }}
+          >
+            Bin Bags
+          </h3>
+
+
+          <p className="text-slate-500 leading-relaxed mb-6">
+            Durable, leak-proof bin bags in bulk for households and businesses,
+            delivered across Nairobi, Nakuru, Narok, Laikipia and beyond.
+          </p>
+
+
+          <span
+            className="
+              inline-flex items-center gap-2
+              text-sm font-bold
+              text-green-700
+            "
+          >
+            Shop Bin Bags
+
+            <svg
+              className="
+                w-4 h-4
+                group-hover:translate-x-2
+                transition-transform
+              "
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+
+          </span>
+
+
+        </div>
+
+      </Link>
+
+
+    </div>
+
+  </div>
+</section>
+
+
+      {/* Why us */}
+<section className="py-20 bg-white">
+  <div className="max-w-7xl mx-auto px-4 lg:px-8">
+
+    <div className="grid lg:grid-cols-2 gap-12 items-center">
+
+
+      {/* LEFT IMAGE */}
+      <div className="relative">
+
+        <div
+          className="
+            absolute
+            -inset-4
+            bg-green-100
+            rounded-3xl
+            blur-xl
+            opacity-50
+          "
+        />
+
+        <div
+          className="
+            relative
+            overflow-hidden
+            rounded-3xl
+            shadow-[0_25px_60px_rgba(0,0,0,0.15)]
+          "
+        >
+
+          <img
+            src="/images/images1.png"
+            alt="Sylvie Waste Management"
+            className="
+              w-full
+              h-[650px]
+              object-cover
+
+              hover:scale-105
+              transition-transform
+              duration-700
+            "
+          />
+
+        </div>
+
+
+        {/* Floating stat */}
+        <div
+          className="
+            absolute
+            bottom-8
+            left-8
+            bg-white
+            rounded-2xl
+            px-6
+            py-4
+            shadow-xl
+          "
+        >
+
+          <h3 className="
+            text-3xl
+            font-bold
+            text-green-700
+          ">
+            500+
+          </h3>
+
+          <p className="
+            text-sm
+            text-slate-500
+          ">
+            Service Locations
+          </p>
+
+        </div>
+
+
+      </div>
+
+
+
+
+      {/* RIGHT CONTENT */}
+      <div>
+
+
+        <div className="mb-10">
+
+          <p className="
+            text-xs
+            font-bold
+            uppercase
+            tracking-widest
+            text-green-600
+            mb-3
+          ">
+            Why Choose Sylvie
+          </p>
+
+
+          <h2
+            className="
+              text-4xl
+              lg:text-5xl
+              font-bold
+              text-slate-900
+              mb-4
+            "
+            style={{
+              fontFamily:"'Fraunces', serif"
+            }}
+          >
+
+            The Smart Choice for{" "}
+            <span className="text-green-700">
+              Waste Management
+            </span>
+
+          </h2>
+
+
+          <p className="
+            text-slate-500
+            leading-relaxed
+          ">
+            Kenya's premier digital waste management company
+            providing modern solutions for homes and businesses.
+          </p>
+
+
+        </div>
+
+
+
+        <div className="
+          grid
+          sm:grid-cols-2
+          gap-6
+        ">
+
+
+          {[
+            {
+              title:"Digital First",
+              desc:"Schedule pickups, view invoices and make payments through our smart platform.",
+              icon:"💻",
+              glow:"bg-blue-100",
+              bg:"from-blue-50"
+            },
+
+            {
+              title:"Eco-Friendly",
+              desc:"Committed to 100% recycling and sustainable disposal across all service areas.",
+              icon:"🌱",
+              glow:"bg-green-100",
+              bg:"from-green-50"
+            },
+
+            {
+              title:"24/7 Support",
+              desc:"Round-the-clock customer support for all your waste management needs.",
+              icon:"☎️",
+              glow:"bg-orange-100",
+              bg:"from-orange-50"
+            },
+
+            {
+              title:"Wide Coverage",
+              desc:"500+ locations across Nairobi, Nakuru, Narok and Laikipia counties.",
+              icon:"📍",
+              glow:"bg-purple-100",
+              bg:"from-purple-50"
+            },
+
+            {
+              title:"Transparent Pricing",
+              desc:"Competitive rates with no hidden charges for residential and commercial clients.",
+              icon:"💰",
+              glow:"bg-teal-100",
+              bg:"from-teal-50"
+            },
+
+            {
+              title:"Certified Team",
+              desc:"Trained professionals ensuring safe, compliant waste handling every time.",
+              icon:"✓",
+              glow:"bg-amber-100",
+              bg:"from-amber-50"
+            }
+
+          ].map((f,i)=>(
+
+
+            <div
+              key={i}
+              className={`
+                group
+                relative
+                overflow-hidden
+                rounded-3xl
+
+                bg-gradient-to-br
+                ${f.bg}
+                to-white
+
+                border
+                border-slate-100
+
+                p-6
+
+                shadow-[0_10px_35px_rgba(0,0,0,0.07)]
+
+                hover:-translate-y-2
+
+                hover:shadow-[0_25px_60px_rgba(22,163,74,0.18)]
+
+                transition-all
+                duration-500
+              `}
+            >
+
+
+              {/* Glow */}
+              <div
+                className={`
+                  absolute
+                  -top-14
+                  -right-14
+                  w-36
+                  h-36
+                  rounded-full
+                  ${f.glow}
+
+                  opacity-50
+
+                  group-hover:scale-150
+                  transition-transform
+                  duration-700
+                `}
+              />
+
+
+              <div className="relative z-10">
+
+
+                <div
+                  className="
+                    w-12
+                    h-12
+                    rounded-2xl
+                    bg-white
+                    shadow-md
+                    flex
+                    items-center
+                    justify-center
+                    text-xl
+                    mb-5
+
+                    group-hover:scale-110
+                    transition-transform
+                  "
+                >
+                  {f.icon}
+                </div>
+
+
+                <h3
+                  className="
+                    text-lg
+                    font-bold
+                    text-slate-900
+                    mb-2
+
+                    group-hover:text-green-700
+                    transition-colors
+                  "
+                  style={{
+                    fontFamily:"'Fraunces', serif"
+                  }}
+                >
+                  {f.title}
+                </h3>
+
+
+                <p className="
+                  text-sm
+                  text-slate-500
+                  leading-relaxed
+                ">
+                  {f.desc}
+                </p>
+
+
+              </div>
+
+
+            </div>
+
+
+          ))}
+
+
+        </div>
+
+
+      </div>
+
+
+    </div>
+
+  </div>
+</section>
+
 
       {/* Services */}
       <section className="py-20 bg-slate-50">
@@ -125,37 +692,397 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Coverage */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-600 mb-2">Service Coverage</p>
-            <h2 className="text-4xl font-bold text-slate-900 mb-3" style={{ fontFamily: "'Fraunces', serif" }}>Serving <span className="text-green-700">All Kenya</span></h2>
-            <p className="text-slate-500 max-w-xl mx-auto">Comprehensive waste management across multiple counties with reliable local teams.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-            {[
-              { county: 'Nairobi County', areas: '500+ locations', icon: '🏙️', href: '/services/nairobi', color: 'border-blue-200 hover:border-blue-400 hover:bg-blue-50' },
-              { county: 'Nakuru County', areas: '30+ locations', icon: '🏔️', href: '/services/nakuru', color: 'border-purple-200 hover:border-purple-400 hover:bg-purple-50' },
-              { county: 'Narok County', areas: '6 major areas', icon: '🦁', href: '/services/narok', color: 'border-orange-200 hover:border-orange-400 hover:bg-orange-50' },
-              { county: 'Laikipia County', areas: '6 key locations', icon: '🏞️', href: '/services/laikipia', color: 'border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50' },
-            ].map((c, i) => (
-              <Link key={i} href={c.href} className={`group border-2 rounded-2xl p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${c.color} bg-white`}>
-                <div className="text-3xl mb-3">{c.icon}</div>
-                <h3 className="font-bold text-slate-900 mb-1 text-base group-hover:text-green-800 transition-colors" style={{ fontFamily: "'Fraunces', serif" }}>{c.county}</h3>
-                <p className="text-sm text-green-600 font-semibold">{c.areas}</p>
-              </Link>
-            ))}
-          </div>
-          <div className="bg-green-50 border border-green-100 rounded-2xl p-7 text-center">
-            <p className="text-slate-600 text-sm mb-4">Not sure if we serve your area? Contact us — we are constantly expanding.</p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <Link href="/contact" className="bg-green-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-green-800 transition-colors">Contact Us</Link>
-              <Link href="/quote" className="bg-orange-500 text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-orange-600 transition-colors">Get Free Quote</Link>
+     {/* Coverage */}
+<section className="py-20 bg-white">
+  <div className="max-w-7xl mx-auto px-4 lg:px-8">
+
+
+    {/* Heading */}
+    <div className="text-center mb-12">
+
+      <p className="
+        text-xs
+        font-bold
+        uppercase
+        tracking-widest
+        text-green-600
+        mb-2
+      ">
+        Service Coverage
+      </p>
+
+
+      <h2
+        className="
+          text-4xl
+          font-bold
+          text-slate-900
+          mb-3
+        "
+        style={{
+          fontFamily:"'Fraunces', serif"
+        }}
+      >
+        Serving{" "}
+        <span className="text-green-700">
+          All Kenya
+        </span>
+      </h2>
+
+
+      <p className="
+        text-slate-500
+        max-w-xl
+        mx-auto
+      ">
+        Comprehensive waste management across multiple counties with
+        reliable local teams.
+      </p>
+
+    </div>
+
+
+
+    {/* County Cards */}
+    <div className="
+      grid
+      grid-cols-1
+      md:grid-cols-2
+      lg:grid-cols-4
+      gap-7
+      mb-10
+    ">
+
+
+      {[
+        {
+          county:"Nairobi County",
+          areas:"500+ locations",
+          icon:"🏙️",
+          href:"/services/nairobi",
+          bg:"from-blue-50",
+          glow:"bg-blue-100"
+        },
+
+        {
+          county:"Nakuru County",
+          areas:"30+ locations",
+          icon:"🏔️",
+          href:"/services/nakuru",
+          bg:"from-purple-50",
+          glow:"bg-purple-100"
+        },
+
+        {
+          county:"Narok County",
+          areas:"6 major areas",
+          icon:"🦁",
+          href:"/services/narok",
+          bg:"from-orange-50",
+          glow:"bg-orange-100"
+        },
+
+        {
+          county:"Laikipia County",
+          areas:"6 key locations",
+          icon:"🏞️",
+          href:"/services/laikipia",
+          bg:"from-indigo-50",
+          glow:"bg-indigo-100"
+        }
+
+      ].map((c,i)=>(
+
+
+        <Link
+          key={i}
+          href={c.href}
+
+          className={`
+            group
+            relative
+            overflow-hidden
+
+            rounded-3xl
+
+            bg-gradient-to-br
+            ${c.bg}
+            to-white
+
+            border
+            border-slate-100
+
+            p-7
+            text-center
+
+            shadow-[0_10px_35px_rgba(0,0,0,0.07)]
+
+            hover:-translate-y-2
+
+            hover:shadow-[0_25px_60px_rgba(22,163,74,0.18)]
+
+            transition-all
+            duration-500
+          `}
+        >
+
+
+          {/* Glow */}
+          <div
+            className={`
+              absolute
+              -top-14
+              -right-14
+
+              w-36
+              h-36
+
+              rounded-full
+
+              ${c.glow}
+
+              opacity-50
+
+              group-hover:scale-150
+
+              transition-transform
+              duration-700
+            `}
+          />
+
+
+
+          <div className="relative z-10">
+
+
+            {/* Icon */}
+            <div
+              className="
+                mx-auto
+
+                w-16
+                h-16
+
+                rounded-2xl
+
+                bg-white
+
+                shadow-md
+
+                flex
+                items-center
+                justify-center
+
+                text-3xl
+
+                mb-5
+
+                group-hover:scale-110
+
+                transition-transform
+                duration-300
+              "
+            >
+              {c.icon}
             </div>
+
+
+
+            <h3
+              className="
+                text-lg
+                font-bold
+                text-slate-900
+
+                mb-2
+
+                group-hover:text-green-700
+
+                transition-colors
+              "
+              style={{
+                fontFamily:"'Fraunces', serif"
+              }}
+            >
+              {c.county}
+            </h3>
+
+
+
+            <p
+              className="
+                text-sm
+                font-semibold
+                text-green-600
+              "
+            >
+              {c.areas}
+            </p>
+
+
+
+            <div
+              className="
+                mt-5
+                mx-auto
+
+                h-1
+
+                w-10
+
+                rounded-full
+
+                bg-green-600
+
+                group-hover:w-20
+
+                transition-all
+              "
+            />
+
+
           </div>
+
+
+        </Link>
+
+
+      ))}
+
+
+    </div>
+
+
+
+
+    {/* CTA */}
+    <div
+      className="
+        relative
+        overflow-hidden
+
+        bg-gradient-to-r
+        from-green-50
+        to-white
+
+        border
+        border-green-100
+
+        rounded-3xl
+
+        p-8
+
+        text-center
+
+        shadow-[0_10px_35px_rgba(0,0,0,0.06)]
+      "
+    >
+
+      <div
+        className="
+          absolute
+          -top-20
+          right-10
+
+          w-52
+          h-52
+
+          rounded-full
+
+          bg-green-100
+
+          opacity-50
+        "
+      />
+
+
+      <div className="relative z-10">
+
+
+        <p className="
+          text-slate-600
+          text-sm
+          mb-5
+        ">
+          Not sure if we serve your area? Contact us —
+          we are constantly expanding.
+        </p>
+
+
+
+        <div className="
+          flex
+          flex-wrap
+          gap-3
+          justify-center
+        ">
+
+
+          <Link
+            href="/contact"
+            className="
+              bg-green-700
+              text-white
+
+              px-7
+              py-3
+
+              rounded-xl
+
+              text-sm
+              font-semibold
+
+              hover:bg-green-800
+
+              shadow-lg
+
+              transition
+            "
+          >
+            Contact Us
+          </Link>
+
+
+
+          <Link
+            href="/quote"
+            className="
+              bg-orange-500
+              text-white
+
+              px-7
+              py-3
+
+              rounded-xl
+
+              text-sm
+              font-semibold
+
+              hover:bg-orange-600
+
+              shadow-lg
+
+              transition
+            "
+          >
+            Get Free Quote
+          </Link>
+
+
         </div>
-      </section>
+
+
+      </div>
+
+
+    </div>
+
+
+  </div>
+</section>
+
+
+
 
       {/* FAQ */}
       <FaqSection />

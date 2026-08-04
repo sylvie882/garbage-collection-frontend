@@ -11,7 +11,7 @@ Disallow: /wp-admin/
 Disallow: /wp-content/
 Disallow: /wp-includes/
 
-Sitemap: https://sylviegarbagecollection.co.ke/sitemap.xml
+Sitemap: https://www.sylviegarbagecollection.co.ke/sitemap.xml
   `.trim();
 
   return new NextResponse(robotsTxt, {

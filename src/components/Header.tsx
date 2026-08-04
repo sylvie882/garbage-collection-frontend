@@ -41,8 +41,8 @@ export default function Header() {
       <div className="bg-green-800 text-white overflow-hidden h-8 flex items-center">
         <div className="flex whitespace-nowrap" style={{ animation: 'marquee 32s linear infinite' }}>
           {[...marqueeItems, ...marqueeItems].map((item, i) => (
-            <span key={i} className="mx-8 text-xs font-medium text-green-100 flex-shrink-0">
-              {item} <span className="text-green-400 mx-3">·</span>
+            <span key={i} className="mx-8 text-xs font-bold text-white flex-shrink-0">
+              {item} <span className="text-white mx-3">·</span>
             </span>
           ))}
         </div>
@@ -52,18 +52,20 @@ export default function Header() {
       </div>
 
       {/* Main nav */}
-      <nav className="bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 h-16 flex items-center justify-between gap-6">
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 h-24 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 flex-shrink-0">
-            <div className="w-10 h-10 relative rounded-xl overflow-hidden bg-green-50 border border-green-100">
-              <Image src="/logo.jpeg" alt="Sylvie Waste Collection" fill className="object-contain p-1" priority />
-            </div>
-            <div className="leading-tight">
-<div className="font-bold text-green-800 text-[32px]" style={{ fontFamily: "'Fraunces', serif" }}>Sylvie</div>
-              <div className="text-xs font-semibold text-orange-500 tracking-wider -mt-0.5">Waste Collection</div>
-            </div>
-          </Link>
+          <Link href="/" className="flex items-center flex-shrink-0">
+              <div className="relative h-20 w-[320px] lg:h-24 lg:w-[420px]">
+                <Image
+                  src="/logo2.png"
+                  alt="Sylvie Waste Collection"
+                  fill
+                  priority
+                  className="object-contain object-left"
+                />
+              </div>
+            </Link>
 
           {/* Desktop nav */}
           <div className="hidden lg:flex items-center gap-1 flex-1 justify-center">
@@ -73,8 +75,8 @@ export default function Header() {
                 href={item.href}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                   isActive(item.href)
-                    ? 'text-green-700 bg-green-50'
-                    : 'text-slate-600 hover:text-green-700 hover:bg-slate-50'
+                    ? 'text-orange-500 bg-white-50'
+                    : 'text-slate-600 hover:text-orange-500 hover:bg-slate-50'
                 }`}
               >
                 {item.name}
@@ -98,8 +100,8 @@ export default function Header() {
               </svg>
               {cartCount > 0 && <span className="absolute -top-0.5 -right-0.5 bg-orange-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">{cartCount}</span>}
             </Link> */}
-            <Link href="/quote" className="ml-2 bg-green-700 hover:bg-green-800 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 hover:shadow-md">
-              Free Quote
+            <Link href="/quote" className="ml-2 bg-orange-500 hover:bg-orange-500 text-white text-xl font-bold px-5 py-2.5 rounded-xl transition-all duration-200 hover:shadow-md">
+              Get Free Quote
             </Link>
           </div>
 

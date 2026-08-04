@@ -9,7 +9,7 @@ import Footer from '@/components/Footer';
 interface SearchParams { search?: string; category?: string; page?: string; }
 
 const API = 'https://api.sylviegarbagecollection.co.ke/api';
-const SITE = 'https://sylviegarbagecollection.co.ke';
+const SITE = 'https://www.sylviegarbagecollection.co.ke';
 
 // ─── SEO metadata ───────────────────────────────────────────
 export async function generateMetadata({ searchParams }: { searchParams: Promise<SearchParams> }): Promise<Metadata> {
