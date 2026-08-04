@@ -148,7 +148,7 @@ export default function Carousel() {
         overflow-hidden
         rounded-xl sm:rounded-2xl
         shadow-lg sm:shadow-2xl
-        bg-black
+        bg-white sm:bg-black
       "
     >
       <AnimatePresence
@@ -191,9 +191,13 @@ export default function Carousel() {
                 priority
                 sizes="100vw"
                 className="
-                  object-cover
+                  object-contain sm:object-cover
                   cursor-pointer
+                  bg-white sm:bg-transparent
                 "
+                style={{
+                  objectPosition: 'center'
+                }}
               />
             </Link>
           ) : (
@@ -204,8 +208,12 @@ export default function Carousel() {
               priority
               sizes="100vw"
               className="
-                object-cover
+                object-contain sm:object-cover
+                bg-white sm:bg-transparent
               "
+              style={{
+                objectPosition: 'center'
+              }}
             />
           )}
         </motion.div>
@@ -237,9 +245,9 @@ export default function Carousel() {
                 ${
                   index === currentIndex
                   ?
-                  'bg-white scale-125'
+                  'bg-green-700 sm:bg-white scale-125'
                   :
-                  'bg-white/50'
+                  'bg-gray-400 sm:bg-white/50'
                 }
               `}
             />
@@ -258,14 +266,15 @@ export default function Carousel() {
               top-1/2
               -translate-y-1/2
               z-20
-              bg-black/30
-              hover:bg-black/50
-              text-white
+              bg-black/10 sm:bg-black/30
+              hover:bg-black/20 sm:hover:bg-black/50
+              text-black sm:text-white
               p-1.5 sm:p-2 md:p-3
               rounded-full
               text-lg sm:text-xl md:text-2xl
               w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12
               flex items-center justify-center
+              border border-gray-200 sm:border-none
             "
           >
             ‹
@@ -279,14 +288,15 @@ export default function Carousel() {
               top-1/2
               -translate-y-1/2
               z-20
-              bg-black/30
-              hover:bg-black/50
-              text-white
+              bg-black/10 sm:bg-black/30
+              hover:bg-black/20 sm:hover:bg-black/50
+              text-black sm:text-white
               p-1.5 sm:p-2 md:p-3
               rounded-full
               text-lg sm:text-xl md:text-2xl
               w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12
               flex items-center justify-center
+              border border-gray-200 sm:border-none
             "
           >
             ›
